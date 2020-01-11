@@ -1,0 +1,8 @@
+caricare tutto su github
+fare il makefile
+
+togliere i branch ridondanti
+aggiungere signal width
+
+
+ATTENZIONE: nella definizione di Area_new ci sono degli input args che non vengono usati (venivano usati in un if che è stato commentato). Se vedi che l'if non serve toglili.
