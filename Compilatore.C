@@ -14,7 +14,7 @@
 #include "include/general.hpp"
 #include "include/Chameleon.h"
 #include "include/ConfigFile.hpp"
-#include "Analyzer.hpp"
+#include "src/Analyzer.hpp"
 
 
 
@@ -22,6 +22,6 @@ void Compilatore(){
   gSystem->CompileMacro("src/general.cpp","kg");
   gSystem->CompileMacro("src/Chameleon.cpp","kg");
   gSystem->CompileMacro("src/ConfigFile.cpp","kg");
-  gSystem->CompileMacro("Analyzer.cpp","kg");
+  gSystem->CompileMacro("src/Analyzer.cpp","kg");
 
 }

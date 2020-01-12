@@ -33,7 +33,7 @@
 #include <TCanvas.h>
 
 //------Custom headers----------------//
-#include "Analyzer.hpp"
+#include "src/Analyzer.hpp"
 #include "include/ConfigFile.hpp"
 
 

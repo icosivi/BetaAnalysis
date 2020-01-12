@@ -104,7 +104,8 @@
 ./Compilatore_C.so: /home/federico/root/mybuild/include/TBits.h
 ./Compilatore_C.so: /home/federico/root/mybuild/include/TVirtualTreePlayer.h
 ./Compilatore_C.so: include/general.hpp include/Chameleon.h
-./Compilatore_C.so: include/ConfigFile.hpp include/Chameleon.h Analyzer.hpp
+./Compilatore_C.so: include/ConfigFile.hpp include/Chameleon.h
+./Compilatore_C.so: src/Analyzer.hpp
 ./Compilatore_C.so: /home/federico/root/mybuild/include/TTreeReader.h
 ./Compilatore_C.so: /home/federico/root/mybuild/include/TTreeReaderUtils.h
 ./Compilatore_C.so: /home/federico/root/mybuild/include/TBranchProxyDirector.h
