@@ -1033,6 +1033,38 @@ double Analyzer::Rising_Edge_CFD_Time_with_GausFit(const double fraction, const 
 }
 
 
+double Analyzer::Falling_Edge_CFD_Time_with_GausFit(const double fraction, const std::pair<double, double> Pmax, unsigned int imax){
+
+    double pmax = Pmax.first;
+    //unsigned int imax = Pmax.second;
+
+    double time_fraction = 0.0;
+    unsigned int ifraction = 0;
+    std::size_t npoints = this->pvoltage.size();
+
+    bool failure = true;
+
+    for( int j = imax; j>npoints; j++ )
+    {
+      if( this->pvoltage.at(j) <= pmax*fraction/100.0)
+      {
+        ifraction     = j;              //find index of first point before constant fraction of pulse
+        time_fraction = this->ptime.at(j);
+        failure = false;
+        break;
+      }
+    }
+    if(ifraction == this->pvoltage.size()-1) ifraction--;
+
+    if( failure ) time_fraction = this->ptime.at(npoints-1);
+    else time_fraction = time_fraction + (this->ptime.at(ifraction-1) - this->ptime.at(ifraction))* (pmax*fraction/100.0 - this->pvoltage.at(ifraction)) /(this->pvoltage.at(ifraction-1) - this->pvoltage.at(ifraction));
+
+    return time_fraction;
+
+}
+
+
+
 double Analyzer::Find_Time_At_Threshold(const double thresholdLevel, const std::pair<double,unsigned int> Pmax){
 
   double thr = thresholdLevel/1000;
@@ -1170,6 +1202,144 @@ double Analyzer::New_Pulse_Area( const std::pair<double,double> Pmax, unsigned i
       }
 
       for(unsigned int j = imax; j < npoints; j++)
+      {
+
+        if( this->ptime.at(j) >= end_time )
+        {
+          iend=j-1;
+          break;
+        }
+
+      }
+
+      //===========Simpson's rule=======
+      if( integration_option.compare("Simpson") == 0 )
+      {
+        std::vector<double> integration_y;
+        for ( unsigned int j = istart; j < iend; j++ )
+        {
+          integration_y.push_back( this->pvoltage.at(j) );
+        }
+        for( std::size_t i = 0, max = integration_y.size(); i < max; i++ )
+        {
+          if( i == 0 ) pulse_area = pulse_area + (time_difference/3.0) * (integration_y.at(i));
+          else if( i == integration_y.size()-1 ) pulse_area = pulse_area + (time_difference/3.0) * (integration_y.at(i));
+          else if( i % 2 == 0 ) pulse_area = pulse_area + 2 * (time_difference/3.0) * (integration_y.at(i));
+          else pulse_area = pulse_area + 4 * (time_difference/3.0) * (integration_y.at(i));
+        }
+      }
+
+      //===========Rectangular=========
+      else
+      {
+        for( unsigned int j = istart; j < iend; j++ )
+        {
+          pulse_area = pulse_area + (time_difference) * this->pvoltage.at(j);
+        }
+      }
+
+      return pulse_area; // collected pulse area, assuming voltage is in volts, time is in seconds
+
+    //}else return -1000;
+
+  }else return -1000;
+
+}
+
+
+// Similar to Find_Pulse_Area but start/end times of the pulse are defined analitically. Further checks are useful, there might be bugs. There are inputs args not needed!
+double Analyzer::New_Undershoot_Area( const std::pair<double,double> Pmax, const std::pair<double,double> Pmin, unsigned int imin, std::string integration_option, double range[2]){
+
+  if(Pmax.second > range[0] && Pmax.second < range[1]){
+
+    double pulse_area = 0.0;
+    const double time_difference = this->ptime.at(1) - this->ptime.at(0);
+
+    //unsigned int imin = Pmin.second;
+    std::size_t npoints = this->pvoltage.size();
+
+    if( imin == npoints-1 ) imin = imin - 1;//preventing out of range.
+
+    const double _20pmin = Pmin.first * 0.20;
+    const double _10pmin = Pmin.first * 0.10;
+    double _20pmin_time2 = 0.0;
+    double _10pmin_time2 = 0.0;
+    double _20pmin_time = 0.0;
+    double _10pmin_time = 0.0;
+    unsigned int istart = 0;
+    unsigned int iend;
+    double start_time = 0.0;
+    double end_time = 0.0;
+    bool found_20pmin2 = false;
+    bool found_10pmin2 = false;
+    bool found_20pmin = false;
+    bool found_10pmin = false;
+
+    for( int j = imin; j>-1; j-- ) // find index of start of pulse
+    {
+      if( !found_20pmin2 )
+      {
+        if( this->pvoltage.at(j) >= _20pmin ) //stop after crossing zero
+        {
+          _20pmin_time2 = xlinearInter( this->ptime.at(j), this->pvoltage.at(j), this->ptime.at(j+1), this->pvoltage.at(j+1), _20pmin );
+          found_20pmin2 = true;
+        }
+      }
+
+      if( !found_10pmin2 )
+      {
+        if( this->pvoltage.at(j) >= _10pmin ) //stop after crossing zero
+        {
+          _10pmin_time2 = xlinearInter( this->ptime.at(j), this->pvoltage.at(j), this->ptime.at(j+1), this->pvoltage.at(j+1), _10pmin );
+          found_10pmin2 = true;
+        }
+      }
+
+      if( found_10pmin2 && found_20pmin2 ) break;
+    }
+
+    start_time = xlinearInter( _10pmin_time2, _10pmin, _20pmin_time2, _20pmin, 0.0 );
+
+
+    for( unsigned int j = imin; j< npoints; j++ ) // find index of end of pulse
+    {
+      if( !found_20pmin )
+      {
+        if( this->pvoltage.at(j) >= _20pmin ) //stop after crossing zero
+        {
+          _20pmin_time = xlinearInter( this->ptime.at(j), this->pvoltage.at(j), this->ptime.at(j-1), this->pvoltage.at(j-1), _20pmin );
+          found_20pmin = true;
+        }
+      }
+
+      if( !found_10pmin )
+      {
+        if( this->pvoltage.at(j) >= _10pmin ) //stop after crossing zero
+        {
+          _10pmin_time = xlinearInter( this->ptime.at(j), this->pvoltage.at(j), this->ptime.at(j-1), this->pvoltage.at(j-1), _10pmin );
+          found_10pmin = true;
+        }
+      }
+
+      if( found_10pmin && found_20pmin ) break;
+    }
+
+    end_time = xlinearInter( _10pmin_time, _10pmin, _20pmin_time, _20pmin, 0.0 );
+
+
+      for( unsigned int j = 0; j < npoints; j++ )
+      {
+
+        if( this->ptime.at(j) >= start_time )
+        {
+          istart = j;
+          pulse_area = pulse_area + ((this->ptime.at(j)-start_time)) * this->pvoltage.at(j);
+          break;
+        }
+
+      }
+
+      for(unsigned int j = imin; j < npoints; j++)
       {
 
         if( this->ptime.at(j) >= end_time )

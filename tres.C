@@ -73,7 +73,7 @@ if(cfd!=10 && cfd!=20 && cfd!=30 && cfd!=40 && cfd!=50 && cfd!=60 && cfd!=70 ){
 
 }
 
-
+// absolute positions and propagations peed need to be added
 void tres_rsd(char *filename, int trigger_ch, int cfd){
 
  if(cfd!=10 && cfd!=20 && cfd!=30 && cfd!=40 && cfd!=50 && cfd!=60 && cfd!=70 ){
@@ -88,8 +88,8 @@ void tres_rsd(char *filename, int trigger_ch, int cfd){
 	 TTree *itree = dynamic_cast<TTree*>(file->Get("Analysis"));
 	 TTreeReader myReader("Analysis", file);
 
-	char *trigger_branch = Form("CFD%iFit",trigger_ch);
-	TTreeReaderArray<double> trigger(myReader, trigger_branch); 
+	 char *trigger_branch = Form("CFD%iFit",trigger_ch);
+	 TTreeReaderArray<double> trigger(myReader, trigger_branch); 
 
 	 TTreeReaderArray<double> dut1(myReader,"CFD1Fit");
 	 TTreeReaderValue<double> pmax1(myReader,"Pmax1");
@@ -104,6 +104,52 @@ void tres_rsd(char *filename, int trigger_ch, int cfd){
 	 TTreeReaderValue<double> pmax4(myReader,"Pmax4");
 
 	 TH1D *hist=new TH1D("hist","hist",2000,-10,10);
+
+	 // Absolute position of the pads. Used to calculate time resolution. In um !!!!!!
+	 double x_pos1;
+	 double x_pos2;
+	 double x_pos3;
+	 double x_pos4;
+
+	 // propagation velocity.
+	 const double speed;  //um/ns
+	 const double slope = 0.00074;  // ns/um   DA ESTRARRE PARTENDO DA t vs distance dove t è il tempo non corretto
+
+	 //hit position reconstructed with centroid method
+	 double x_centroid;
+
+	 while(myReader.Next()){
+
+	 	if(trigger_ch!=1){
+
+	 		x_centroid += *pmax1*x_pos1;
+	 		amp_sum += *pmax1;
+
+	 	}
+
+	 	if(trigger_ch!=2){
+
+	 		x_centroid += *pmax2*x_pos2;
+	 		amp_sum += *pmax2;
+
+	 	}
+
+	 	if(trigger_ch!=3){
+
+	 		x_centroid += *pmax3*x_pos3;
+	 		amp_sum += *pmax3;
+
+	 	}
+
+	 	if(trigger_ch!=4){
+
+	 		x_centroid += *pmax4*x_pos4;
+	 		amp_sum += *pmax4;
+
+	 	}
+
+	 }
+
 	 
 	 while(myReader.Next()){
 
@@ -112,28 +158,36 @@ void tres_rsd(char *filename, int trigger_ch, int cfd){
 
 	 	if(trigger_ch!=1){
 
-	 		rsd_time += *pmax1*dut1.At(index);
+	 		double x_i1 = x_centroid-x_pos1;
+	 		double t_offset1 = slope*x_i1;
+	 		rsd_time += *pmax1*(dut1.At(index)-x_i1/speed-t_offset1);
 	 		amp_sum += *pmax1;
 
 	 	}
 
 	 	if(trigger_ch!=2){
 
-	 		rsd_time += *pmax2*dut2.At(index);
+	 		double x_i2 = x_centroid-x_pos2;
+	 		double t_offset2 = slope*x_i2;
+	 		rsd_time += *pmax2*(dut2.At(index)-x_i2/speed-t_offset2);
 	 		amp_sum += *pmax2;
 
 	 	}
 
 	 	if(trigger_ch!=3){
 
-	 		rsd_time += *pmax3*dut3.At(index);
+	 		double x_i3 = x_centroid-x_pos3;
+	 		double t_offset3 = slope*x_i3;
+	 		rsd_time += *pmax3*(dut3.At(index)-x_i3/speed-t_offset3);
 	 		amp_sum += *pmax3;
 
 	 	}
 
 	 	if(trigger_ch!=4){
 
-	 		rsd_time += *pmax4*dut4.At(index);
+	 		double x_i4 = x_centroid-x_pos4;
+	 		double t_offset4 = slope*x_i4;
+	 		rsd_time += *pmax4*(dut4.At(index)-x_i4/speed-t_offset4);
 	 		amp_sum += *pmax4;
 
 	 	}

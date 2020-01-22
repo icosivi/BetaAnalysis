@@ -58,18 +58,14 @@ double Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(const std::pair<doub
 
 double New_Pulse_Area(const std::pair<double,double> Pmax, unsigned int imax, std::string integration_option, double range[2], double start_window, double end_window);
 
+double New_Undershoot_Area(const std::pair<double,double> Pmax, const std::pair<double,double> Pmin, unsigned int imin, std::string integration_option, double range[2]);
+
 
 //==========================================================================
 // CFD
 double Rising_Edge_CFD_Time(const double fraction, const std::pair<double,unsigned int> Pmax);
 double Rising_Edge_CFD_Time_with_GausFit(const double fraction, const std::pair<double,double> Pmax, unsigned int imax);
-
-/*double Falling_Edge_CFD_Time(
-  const int           fraction,
-  std::vector<double> voltageVec,
-  std::vector<double> timeVec,
-  const std::pair<double,unsigned int> Pmax
-);*/
+double Falling_Edge_CFD_Time_with_GausFit(const double fraction, const std::pair<double,double> Pmax, unsigned int imax);
 
 //==========================================================================
 // Rise Time

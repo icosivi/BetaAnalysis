@@ -124,13 +124,16 @@ void analisi(char *filename, char *output_filename){
  double AreaInterpolated1=-1000;
  double AreaInterpolated1Fit=-1000;
  double Area1_new=-1000;
+ double UArea1_new=-1000;
  double RiseTime1=-1000;
  double RiseTime1Fit=-1000;
  double dVdt1=-1000;
  double dVdt1Fit=-1000;
  double cfd1=-1000;
  double cfd1Fit=-1000;
+ double signal_width1=-1000;
  double CFD1Fit[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
+ double WIDTH1[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double t_thr1=-1000;
  double rms1=-1000;
  std::vector<double> w1o;
@@ -154,13 +157,16 @@ void analisi(char *filename, char *output_filename){
  double AreaInterpolated2=-1000;
  double AreaInterpolated2Fit=-1000;
  double Area2_new=-1000;
+ double UArea2_new=-1000;
  double RiseTime2=-1000;
  double RiseTime2Fit=-1000;
  double dVdt2=-1000;
  double dVdt2Fit=-1000;
  double cfd2=-1000;
  double cfd2Fit=-1000;
+ double signal_width2=-1000;
  double CFD2Fit[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
+ double WIDTH2[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double t_thr2=-1000;
  double rms2=-1000;
  std::vector<double> w2o;
@@ -188,13 +194,16 @@ void analisi(char *filename, char *output_filename){
  double AreaInterpolated3=-1000;
  double AreaInterpolated3Fit=-1000;
  double Area3_new=-1000;
+ double UArea3_new=-1000;
  double RiseTime3=-1000;
  double RiseTime3Fit=-1000;
  double dVdt3=-1000;
  double dVdt3Fit=-1000;
  double cfd3=-1000;
  double cfd3Fit=-1000;
+ double signal_width3=-1000;
  double CFD3Fit[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
+ double WIDTH3[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double t_thr3=-1000;
  double rms3=-1000;
  std::vector<double> w3o;
@@ -218,13 +227,16 @@ void analisi(char *filename, char *output_filename){
  double AreaInterpolated4=-1000;
  double AreaInterpolated4Fit=-1000;
  double Area4_new=-1000;
+ double UArea4_new=-1000;
  double RiseTime4=-1000;
  double RiseTime4Fit=-1000;
  double dVdt4=-1000;
  double dVdt4Fit=-1000;
  double cfd4=-1000;
  double cfd4Fit=-1000;
+ double signal_width4=-1000;
  double CFD4Fit[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
+ double WIDTH4[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double t_thr4=-1000;
  double rms4=-1000;
  std::vector<double> w4o;
@@ -270,13 +282,16 @@ void analisi(char *filename, char *output_filename){
 	 OutTree->Branch("AreaInterpolated1",&AreaInterpolated1,"AreaInterpolated1/D");
 	 OutTree->Branch("AreaInterpolated1Fit",&AreaInterpolated1Fit,"AreaInterpolated1Fit/D");
 	 OutTree->Branch("Area1_new",&Area1_new,"Area1_new/D");
+	 OutTree->Branch("UArea1_new",&UArea1_new,"UArea1_new/D");
 	 OutTree->Branch("RiseTime1",&RiseTime1,"RiseTime1/D");
 	 OutTree->Branch("RiseTime1Fit",&RiseTime1Fit,"RiseTime1Fit/D");
 	 OutTree->Branch("dVdt1",&dVdt1,"dVdt1/D");
 	 OutTree->Branch("dVdt1Fit",&dVdt1Fit,"dVdt1Fit/D");
 	 OutTree->Branch("cfd1",&cfd1,"cfd1/D");
 	 OutTree->Branch("cfd1Fit",&cfd1Fit,"cfd1Fit/D");
+	 OutTree->Branch("signal_width1",&signal_width1,"signal_width1/D");
 	 OutTree->Branch("CFD1Fit",&CFD1Fit,"CFD1Fit[7]/D");
+	 OutTree->Branch("WIDTH1",&WIDTH1,"WIDTH1[7]/D");
 	 OutTree->Branch("t_thr1",&t_thr1,"t_thr1/D");  // time at which a certain thr (in V) is passed
 	 OutTree->Branch("rms1",&rms1,"rms1/D");
 
@@ -304,13 +319,16 @@ void analisi(char *filename, char *output_filename){
 	 OutTree->Branch("AreaInterpolated2",&AreaInterpolated2,"AreaInterpolated2/D");
 	 OutTree->Branch("AreaInterpolated2Fit",&AreaInterpolated2Fit,"AreaInterpolated2Fit/D");
 	 OutTree->Branch("Area2_new",&Area2_new,"Area2_new/D");
+	 OutTree->Branch("UArea2_new",&UArea2_new,"UArea2_new/D");
 	 OutTree->Branch("RiseTime2",&RiseTime2,"RiseTime2/D");
 	 OutTree->Branch("RiseTime2Fit",&RiseTime2Fit,"RiseTime2Fit/D");
 	 OutTree->Branch("dVdt2",&dVdt2,"dVdt2/D");
 	 OutTree->Branch("dVdt2Fit",&dVdt2Fit,"dVdt2Fit/D");
 	 OutTree->Branch("cfd2",&cfd2,"cfd2/D");
 	 OutTree->Branch("cfd2Fit",&cfd2Fit,"cfd2Fit/D");
+	 OutTree->Branch("signal_width2",&signal_width2,"signal_width2/D");
 	 OutTree->Branch("CFD2Fit",&CFD2Fit,"CFD2Fit[7]/D");
+	 OutTree->Branch("WIDTH2",&WIDTH2,"WIDTH2[7]/D");
 	 OutTree->Branch("t_thr2",&t_thr2,"t_thr2/D");  // time at which a certain thr (in V) is passed
 	 OutTree->Branch("rms2",&rms2,"rms2/D");
 
@@ -338,13 +356,16 @@ void analisi(char *filename, char *output_filename){
 	 OutTree->Branch("AreaInterpolated3",&AreaInterpolated3,"AreaInterpolated3/D");
 	 OutTree->Branch("AreaInterpolated3Fit",&AreaInterpolated3Fit,"AreaInterpolated3Fit/D");
 	 OutTree->Branch("Area3_new",&Area3_new,"Area3_new/D");
+	 OutTree->Branch("UArea3_new",&UArea3_new,"UArea3_new/D");
 	 OutTree->Branch("RiseTime3",&RiseTime3,"RiseTime3/D");
 	 OutTree->Branch("RiseTime3Fit",&RiseTime3Fit,"RiseTime3Fit/D");
 	 OutTree->Branch("dVdt3",&dVdt3,"dVdt3/D");
 	 OutTree->Branch("dVdt3Fit",&dVdt3Fit,"dVdt3Fit/D");
 	 OutTree->Branch("cfd3",&cfd3,"cfd3/D");
 	 OutTree->Branch("cfd3Fit",&cfd3Fit,"cfd3Fit/D");
+	 OutTree->Branch("signal_width3",&signal_width3,"signal_width3/D");
 	 OutTree->Branch("CFD3Fit",&CFD3Fit,"CFD3Fit[7]/D");
+	 OutTree->Branch("WIDTH3",&WIDTH3,"WIDTH3[7]/D");
 	 OutTree->Branch("t_thr3",&t_thr3,"t_thr3/D");  // time at which a certain thr (in V) is passed
 	 OutTree->Branch("rms3",&rms3,"rms3/D");
 
@@ -372,13 +393,16 @@ void analisi(char *filename, char *output_filename){
 	 OutTree->Branch("AreaInterpolated4",&AreaInterpolated4,"AreaInterpolated4/D");
 	 OutTree->Branch("AreaInterpolated4Fit",&AreaInterpolated4Fit,"AreaInterpolated4Fit/D");
 	 OutTree->Branch("Area4_new",&Area4_new,"Area4_new/D");
+	 OutTree->Branch("UArea4_new",&UArea4_new,"UArea4_new/D");
 	 OutTree->Branch("RiseTime4",&RiseTime4,"RiseTime4/D");
 	 OutTree->Branch("RiseTime4Fit",&RiseTime4Fit,"RiseTime4Fit/D");
 	 OutTree->Branch("dVdt4",&dVdt4,"dVdt4/D");
 	 OutTree->Branch("dVdt4Fit",&dVdt4Fit,"dVdt4Fit/D");
 	 OutTree->Branch("cfd4",&cfd4,"cfd4/D");
 	 OutTree->Branch("cfd4Fit",&cfd4Fit,"cfd4Fit/D");
+	 OutTree->Branch("signal_width4",&signal_width4,"signal_width4/D");
 	 OutTree->Branch("CFD4Fit",&CFD4Fit,"CFD4Fit[7]/D");
+	 OutTree->Branch("WIDTH4",&WIDTH4,"WIDTH4[7]/D");
 	 OutTree->Branch("t_thr4",&t_thr4,"t_thr4/D");  // time at which a certain thr (in V) is passed
 	 OutTree->Branch("rms4",&rms4,"rms4/D");
 
@@ -464,18 +488,21 @@ void analisi(char *filename, char *output_filename){
 		AreaInterpolated1 = a1->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair1,"Simpson",true,1)*voltage_const*time_const; //mV*ns  4th argument is integration stop time. If 3rd arg is TRUE, stop time is calculated relative to the maximum, while it is absolute time in FALSE case.  
 		AreaInterpolated1Fit = a1->Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(tp_pair1_fit,tp_pair1.second,"Simpson",true,1)*voltage_const*time_const;
 		Area1_new = a1->New_Pulse_Area(tp_pair1_fit,tp_pair1.second,"Simpson",search_range, time_window[0], time_window[1])*voltage_const*time_const;//mV*ns  Similar to "Area1" method, but start/end times of the pulse are defined analitically. Should be the most accurate definition
+		UArea1_new = a1->New_Undershoot_Area(tp_pair1_fit,neg_tp_pair1_fit, neg_tp_pair1.second,"Simpson",search_range)*voltage_const*time_const;//mV*ns
 		RiseTime1 = a1->Find_Rise_Time(tp_pair1,0.1,0.9)*time_const; //ns
 		RiseTime1Fit = a1->Find_Rise_Time_with_GausFit(tp_pair1_fit, tp_pair1.second, 0.1, 0.9)*time_const; //ns
 		dVdt1 = a1->Find_Dvdt(20,0,tp_pair1)*(voltage_const/time_const);  //mV/ns     [20 is the % at which the signal derivative is computed]
 		dVdt1Fit = a1->Find_Dvdt_with_GausFit(20,0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const);  //mV/ns
 		cfd1 = a1->Rising_Edge_CFD_Time(20,tp_pair1)*time_const;  //ns   [standard CFD, 1st argument is the CFD %]
 		cfd1Fit = a1->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair1_fit,tp_pair1.second)*time_const;  //ns 
+		signal_width1 = a1->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair1_fit,tp_pair1.second)*time_const - cfd1Fit; //ns
 		t_thr1 = a1->Find_Time_At_Threshold(20,tp_pair1)*time_const; //ns    [time at which a thr (in mV !!!) is passed]
 		rms1 = a1->Find_Noise(100)*voltage_const; //mV
 
 		for(int j=0;j<7;j++){
 
 			CFD1Fit[j]=a1->Rising_Edge_CFD_Time(10+j*10,tp_pair1)*time_const;
+			WIDTH1[j]=a1->Falling_Edge_CFD_Time_with_GausFit(10+j*10,tp_pair1_fit,tp_pair1.second)*time_const - CFD1Fit[j];
 
 		}
 
@@ -549,18 +576,22 @@ void analisi(char *filename, char *output_filename){
 		AreaInterpolated2 = a2->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair2,"Simpson",true,1)*voltage_const*time_const; 
 		AreaInterpolated2Fit = a2->Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(tp_pair2_fit,tp_pair2.second,"Simpson",true,1)*voltage_const*time_const;
 		Area2_new = a2->New_Pulse_Area(tp_pair2_fit,tp_pair2.second,"Simpson",search_range, time_window[0], time_window[1])*voltage_const*time_const;
+		UArea2_new = a2->New_Undershoot_Area(tp_pair2_fit,neg_tp_pair2_fit, neg_tp_pair2.second,"Simpson",search_range)*voltage_const*time_const;//mV*ns
 		RiseTime2 = a2->Find_Rise_Time(tp_pair2,0.1,0.9)*time_const;
 		RiseTime2Fit = a2->Find_Rise_Time_with_GausFit(tp_pair2_fit, tp_pair2.second, 0.1, 0.9)*time_const; //ns
 		dVdt2 = a2->Find_Dvdt(20,0,tp_pair2)*(voltage_const/time_const);  
 		dVdt2Fit = a2->Find_Dvdt_with_GausFit(20,0,tp_pair2_fit,tp_pair2.second)*(voltage_const/time_const);
 		cfd2 = a2->Rising_Edge_CFD_Time(20,tp_pair2)*time_const;
 		cfd2Fit = a2->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair2_fit,tp_pair2.second)*time_const;  
+		signal_width2 = a2->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair2_fit,tp_pair2.second)*time_const - cfd2Fit;
 		t_thr2 = a2->Find_Time_At_Threshold(0.02,tp_pair2)*time_const;
 		rms2 = a2->Find_Noise(100)*voltage_const;
 
 		for(int j=0;j<7;j++){
 
 			CFD2Fit[j]=a2->Rising_Edge_CFD_Time(10+j*10,tp_pair2)*time_const;
+			WIDTH2[j]=a2->Falling_Edge_CFD_Time_with_GausFit(10+j*10,tp_pair2_fit,tp_pair2.second)*time_const - CFD2Fit[j];
+
 
 		}
 
@@ -636,18 +667,21 @@ void analisi(char *filename, char *output_filename){
 		AreaInterpolated3 = a3->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair3,"Simpson",true,1)*voltage_const*time_const;   
 		AreaInterpolated3Fit = a3->Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(tp_pair3_fit,tp_pair3.second,"Simpson",true,1)*voltage_const*time_const;
 		Area3_new = a3->New_Pulse_Area(tp_pair3_fit,tp_pair3.second,"Simpson",search_range, time_window[0], time_window[1])*voltage_const*time_const;
+		UArea3_new = a3->New_Undershoot_Area(tp_pair3_fit,neg_tp_pair3_fit, neg_tp_pair3.second,"Simpson",search_range)*voltage_const*time_const;//mV*ns
 		RiseTime3 = a3->Find_Rise_Time(tp_pair3,0.1,0.9)*time_const;
 		RiseTime3Fit = a3->Find_Rise_Time_with_GausFit(tp_pair3_fit, tp_pair3.second, 0.1, 0.9)*time_const; //ns
 		dVdt3 = a3->Find_Dvdt(20,0,tp_pair3)*(voltage_const/time_const);  
 		dVdt3Fit = a3->Find_Dvdt_with_GausFit(20,0,tp_pair3_fit,tp_pair3.second)*(voltage_const/time_const);
 		cfd3 = a3->Rising_Edge_CFD_Time(20,tp_pair3)*time_const; 
 		cfd3Fit = a3->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair3_fit,tp_pair3.second)*time_const; 
+		signal_width3 = a3->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair3_fit,tp_pair3.second)*time_const - cfd3Fit;
 		t_thr3 = a3->Find_Time_At_Threshold(0.02,tp_pair3)*time_const;
 		rms3 = a3->Find_Noise(100)*voltage_const;
 
 		for(int j=0;j<7;j++){
 
 			CFD3Fit[j]=a3->Rising_Edge_CFD_Time(10+j*10,tp_pair3)*time_const;
+			WIDTH3[j]=a3->Falling_Edge_CFD_Time_with_GausFit(10+j*10,tp_pair3_fit,tp_pair3.second)*time_const - CFD3Fit[j];
 
 		}
 
@@ -721,18 +755,22 @@ void analisi(char *filename, char *output_filename){
 		AreaInterpolated4 = a4->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair4,"Simpson",true,1)*voltage_const*time_const; 
 		AreaInterpolated4Fit = a4->Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(tp_pair4_fit,tp_pair4.second,"Simpson",true,1)*voltage_const*time_const;
 		Area4_new = a4->New_Pulse_Area(tp_pair4_fit,tp_pair4.second,"Simpson",search_range, time_window[0], time_window[1])*voltage_const*time_const;
+		UArea4_new = a4->New_Undershoot_Area(tp_pair4_fit,neg_tp_pair4_fit, neg_tp_pair4.second,"Simpson",search_range)*voltage_const*time_const;//mV*ns
 		RiseTime4 = a4->Find_Rise_Time(tp_pair4,0.1,0.9)*time_const;
 		RiseTime4Fit = a4->Find_Rise_Time_with_GausFit(tp_pair4_fit, tp_pair4.second, 0.1, 0.9)*time_const; //ns
 		dVdt4 = a4->Find_Dvdt(20,0,tp_pair4)*(voltage_const/time_const); 
 		dVdt4Fit = a4->Find_Dvdt_with_GausFit(20,0,tp_pair4_fit,tp_pair4.second)*(voltage_const/time_const); 
 		cfd4 = a4->Rising_Edge_CFD_Time(20,tp_pair4)*time_const; 
 		cfd4Fit = a4->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair4_fit,tp_pair4.second)*time_const; 
+		signal_width4 = a4->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair4_fit,tp_pair4.second)*time_const - cfd4Fit;
 		t_thr4 = a4->Find_Time_At_Threshold(0.02,tp_pair4)*time_const;
 		rms4 = a4->Find_Noise(100)*voltage_const;
 
 		for(int j=0;j<7;j++){
 
 			CFD4Fit[j]=a4->Rising_Edge_CFD_Time(10+j*10,tp_pair4)*time_const;
+			WIDTH1[j]=a4->Falling_Edge_CFD_Time_with_GausFit(10+j*10,tp_pair4_fit,tp_pair4.second)*time_const - CFD4Fit[j];
+
 
 		}
 
