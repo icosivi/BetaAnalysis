@@ -35,9 +35,9 @@ void Correct_Baseline( int ptN );
 //==========================================================================
 // Pulse Maximum (Pmax)
 std::pair<double, unsigned int> Find_Signal_Maximum(bool confineSearchRegion, double searchRange[2]);
-std::pair<double, double> Pmax_with_GausFit(const std::pair<double, unsigned int> Pmax);
+std::pair<double, double> Pmax_with_GausFit(const std::pair<double, unsigned int> Pmax, unsigned int maxIndex);
 std::pair<double, unsigned int> Find_Negative_Signal_Maximum(bool confineSearchRegion,double searchRange[2]);
-std::pair<double, double> Negative_Pmax_with_GausFit(const std::pair<double, unsigned int> NegPmax);
+std::pair<double, double> Negative_Pmax_with_GausFit(const std::pair<double, unsigned int> NegPmax, unsigned int maxIndex);
 
 // Time corresponding to Pmax
 double Get_Tmax(const std::pair<double, unsigned int> Pmax);

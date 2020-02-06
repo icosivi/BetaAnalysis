@@ -37,15 +37,14 @@
 #include "include/ConfigFile.hpp"
 
 
-void analisi(char *filename, char *output_filename){
-
- //gStyle->SetOptFit(0000);
-
+void analisi(){
 
 //Config file definition
  ConfigFile cf("beta_config.ini");
 
 //Input file
+ std::string Filename = cf.Value("HEADER","input_filename");
+ const char *filename = Filename.c_str();
  TFile *file = TFile::Open(filename);
  TTree *itree = dynamic_cast<TTree*>(file->Get("wfm"));
  TTreeReader myReader("wfm", file);
@@ -101,6 +100,8 @@ void analisi(char *filename, char *output_filename){
 // End of TTreeReaders definition
 
 // Output file & tree
+ std::string outFilename = cf.Value("HEADER","output_filename");
+ const char *output_filename = outFilename.c_str();
  TFile *OutputFile = new TFile(output_filename,"recreate");
  TTree *OutTree = new TTree("Analysis","Analysis");
  
@@ -108,6 +109,7 @@ void analisi(char *filename, char *output_filename){
 // Raw data have Voltage in V and Time in ns
  const double time_const = cf.Value("HEADER","time_scalar");  //multiply by this const to pass from s to ns
  const double voltage_const = cf.Value("HEADER","voltage_scalar"); // pass from V to mV
+ unsigned int maxIndex = cf.Value("HEADER","sampling_points"); //number of sampling points, default is 1002, assuming a 50ns time window with 20 GS
 
  double Pmax1=-1000;
  double Pmax1Fit=-1000;
@@ -129,17 +131,17 @@ void analisi(char *filename, char *output_filename){
  double RiseTime1Fit=-1000;
  double dVdt1=-1000;
  double dVdt1Fit=-1000;
- double cfd1=-1000;
- double cfd1Fit=-1000;
- double signal_width1=-1000;
+ //double cfd1=-1000;
+ //double cfd1Fit=-1000;
+ //double signal_width1=-1000;
  double CFD1Fit[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double WIDTH1[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double t_thr1=-1000;
  double rms1=-1000;
- std::vector<double> w1o;
- std::vector<double> t1o;
- w1o.reserve(221560);
- t1o.reserve(221560);
+ std::vector<double> w1;
+ std::vector<double> t1;
+ w1.reserve(221560);
+ t1.reserve(221560);
  Analyzer *a1=new Analyzer();
 
  double Pmax2=-1000;
@@ -162,17 +164,17 @@ void analisi(char *filename, char *output_filename){
  double RiseTime2Fit=-1000;
  double dVdt2=-1000;
  double dVdt2Fit=-1000;
- double cfd2=-1000;
- double cfd2Fit=-1000;
- double signal_width2=-1000;
+ //double cfd2=-1000;
+ //double cfd2Fit=-1000;
+ //double signal_width2=-1000;
  double CFD2Fit[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double WIDTH2[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double t_thr2=-1000;
  double rms2=-1000;
- std::vector<double> w2o;
- std::vector<double> t2o;
- w2o.reserve(221560);
- t2o.reserve(221560);
+ std::vector<double> w2;
+ std::vector<double> t2;
+ w2.reserve(221560);
+ t2.reserve(221560);
  Analyzer *a2=new Analyzer();
 
  
@@ -199,17 +201,17 @@ void analisi(char *filename, char *output_filename){
  double RiseTime3Fit=-1000;
  double dVdt3=-1000;
  double dVdt3Fit=-1000;
- double cfd3=-1000;
- double cfd3Fit=-1000;
- double signal_width3=-1000;
+ //double cfd3=-1000;
+ //double cfd3Fit=-1000;
+ //double signal_width3=-1000;
  double CFD3Fit[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double WIDTH3[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double t_thr3=-1000;
  double rms3=-1000;
- std::vector<double> w3o;
- std::vector<double> t3o;
- w3o.reserve(221560);
- t3o.reserve(221560);
+ std::vector<double> w3;
+ std::vector<double> t3;
+ w3.reserve(221560);
+ t3.reserve(221560);
  Analyzer *a3=new Analyzer();
 
  double Pmax4=-1000;
@@ -232,17 +234,17 @@ void analisi(char *filename, char *output_filename){
  double RiseTime4Fit=-1000;
  double dVdt4=-1000;
  double dVdt4Fit=-1000;
- double cfd4=-1000;
- double cfd4Fit=-1000;
- double signal_width4=-1000;
+ //double cfd4=-1000;
+ //double cfd4Fit=-1000;
+ //double signal_width4=-1000;
  double CFD4Fit[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double WIDTH4[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double t_thr4=-1000;
  double rms4=-1000;
- std::vector<double> w4o;
- std::vector<double> t4o;
- w4o.reserve(221560);
- t4o.reserve(221560);
+ std::vector<double> w4;
+ std::vector<double> t4;
+ w4.reserve(221560);
+ t4.reserve(221560);
  Analyzer *a4=new Analyzer();
 
  int ntrig,event;
@@ -265,8 +267,8 @@ void analisi(char *filename, char *output_filename){
 //Output branches declaration 	 
  if( enable_channel_1 == 1){
 
-	 OutTree->Branch("w1o",&w1o);
-	 OutTree->Branch("t1o",&t1o);
+	 OutTree->Branch("w1",&w1);
+	 OutTree->Branch("t1",&t1);
 	 OutTree->Branch("Pmax1",&Pmax1,"Pmax1/D");
 	 OutTree->Branch("Pmax1Fit",&Pmax1Fit,"Pmax1Fit/D");
 	 OutTree->Branch("negPmax1",&negPmax1,"negPmax1/D");
@@ -287,9 +289,9 @@ void analisi(char *filename, char *output_filename){
 	 OutTree->Branch("RiseTime1Fit",&RiseTime1Fit,"RiseTime1Fit/D");
 	 OutTree->Branch("dVdt1",&dVdt1,"dVdt1/D");
 	 OutTree->Branch("dVdt1Fit",&dVdt1Fit,"dVdt1Fit/D");
-	 OutTree->Branch("cfd1",&cfd1,"cfd1/D");
-	 OutTree->Branch("cfd1Fit",&cfd1Fit,"cfd1Fit/D");
-	 OutTree->Branch("signal_width1",&signal_width1,"signal_width1/D");
+	 //OutTree->Branch("cfd1",&cfd1,"cfd1/D");
+	 //OutTree->Branch("cfd1Fit",&cfd1Fit,"cfd1Fit/D");
+	 //OutTree->Branch("signal_width1",&signal_width1,"signal_width1/D");
 	 OutTree->Branch("CFD1Fit",&CFD1Fit,"CFD1Fit[7]/D");
 	 OutTree->Branch("WIDTH1",&WIDTH1,"WIDTH1[7]/D");
 	 OutTree->Branch("t_thr1",&t_thr1,"t_thr1/D");  // time at which a certain thr (in V) is passed
@@ -302,8 +304,8 @@ void analisi(char *filename, char *output_filename){
 
  if( enable_channel_2 == 1){
 
-	 OutTree->Branch("w2o",&w2o);
-	 OutTree->Branch("t2o",&t2o);
+	 OutTree->Branch("w2",&w2);
+	 OutTree->Branch("t2",&t2);
 	 OutTree->Branch("Pmax2",&Pmax2,"Pmax2/D");
 	 OutTree->Branch("Pmax2Fit",&Pmax2Fit,"Pmax2Fit/D");
 	 OutTree->Branch("Pmax2",&negPmax2,"negPmax2/D");
@@ -324,9 +326,9 @@ void analisi(char *filename, char *output_filename){
 	 OutTree->Branch("RiseTime2Fit",&RiseTime2Fit,"RiseTime2Fit/D");
 	 OutTree->Branch("dVdt2",&dVdt2,"dVdt2/D");
 	 OutTree->Branch("dVdt2Fit",&dVdt2Fit,"dVdt2Fit/D");
-	 OutTree->Branch("cfd2",&cfd2,"cfd2/D");
-	 OutTree->Branch("cfd2Fit",&cfd2Fit,"cfd2Fit/D");
-	 OutTree->Branch("signal_width2",&signal_width2,"signal_width2/D");
+	 //OutTree->Branch("cfd2",&cfd2,"cfd2/D");
+	 //OutTree->Branch("cfd2Fit",&cfd2Fit,"cfd2Fit/D");
+	 //OutTree->Branch("signal_width2",&signal_width2,"signal_width2/D");
 	 OutTree->Branch("CFD2Fit",&CFD2Fit,"CFD2Fit[7]/D");
 	 OutTree->Branch("WIDTH2",&WIDTH2,"WIDTH2[7]/D");
 	 OutTree->Branch("t_thr2",&t_thr2,"t_thr2/D");  // time at which a certain thr (in V) is passed
@@ -339,8 +341,8 @@ void analisi(char *filename, char *output_filename){
 
  if( enable_channel_3 == 1){
 
-	 OutTree->Branch("w3o",&w3o);
-	 OutTree->Branch("t3o",&t3o);
+	 OutTree->Branch("w3",&w3);
+	 OutTree->Branch("t3",&t3);
 	 OutTree->Branch("Pmax3",&Pmax3,"Pmax3/D");
 	 OutTree->Branch("Pmax3Fit",&Pmax3Fit,"Pmax3Fit/D");
 	 OutTree->Branch("negPmax3",&negPmax3,"negPmax3/D");
@@ -361,9 +363,9 @@ void analisi(char *filename, char *output_filename){
 	 OutTree->Branch("RiseTime3Fit",&RiseTime3Fit,"RiseTime3Fit/D");
 	 OutTree->Branch("dVdt3",&dVdt3,"dVdt3/D");
 	 OutTree->Branch("dVdt3Fit",&dVdt3Fit,"dVdt3Fit/D");
-	 OutTree->Branch("cfd3",&cfd3,"cfd3/D");
-	 OutTree->Branch("cfd3Fit",&cfd3Fit,"cfd3Fit/D");
-	 OutTree->Branch("signal_width3",&signal_width3,"signal_width3/D");
+	 //OutTree->Branch("cfd3",&cfd3,"cfd3/D");
+	 //OutTree->Branch("cfd3Fit",&cfd3Fit,"cfd3Fit/D");
+	 //OutTree->Branch("signal_width3",&signal_width3,"signal_width3/D");
 	 OutTree->Branch("CFD3Fit",&CFD3Fit,"CFD3Fit[7]/D");
 	 OutTree->Branch("WIDTH3",&WIDTH3,"WIDTH3[7]/D");
 	 OutTree->Branch("t_thr3",&t_thr3,"t_thr3/D");  // time at which a certain thr (in V) is passed
@@ -376,8 +378,8 @@ void analisi(char *filename, char *output_filename){
 
  if( enable_channel_4 == 1){
 
-	 OutTree->Branch("w4o",&w4o);
-	 OutTree->Branch("t4o",&t4o);
+	 OutTree->Branch("w4",&w4);
+	 OutTree->Branch("t4",&t4);
 	 OutTree->Branch("Pmax4",&Pmax4,"Pmax4/D");
 	 OutTree->Branch("Pmax4Fit",&Pmax4Fit,"Pmax4Fit/D");
 	 OutTree->Branch("negPmax4",&negPmax4,"negPmax4/D");
@@ -398,9 +400,9 @@ void analisi(char *filename, char *output_filename){
 	 OutTree->Branch("RiseTime4Fit",&RiseTime4Fit,"RiseTime4Fit/D");
 	 OutTree->Branch("dVdt4",&dVdt4,"dVdt4/D");
 	 OutTree->Branch("dVdt4Fit",&dVdt4Fit,"dVdt4Fit/D");
-	 OutTree->Branch("cfd4",&cfd4,"cfd4/D");
-	 OutTree->Branch("cfd4Fit",&cfd4Fit,"cfd4Fit/D");
-	 OutTree->Branch("signal_width4",&signal_width4,"signal_width4/D");
+	 //OutTree->Branch("cfd4",&cfd4,"cfd4/D");
+	 //OutTree->Branch("cfd4Fit",&cfd4Fit,"cfd4Fit/D");
+	 //OutTree->Branch("signal_width4",&signal_width4,"signal_width4/D");
 	 OutTree->Branch("CFD4Fit",&CFD4Fit,"CFD4Fit[7]/D");
 	 OutTree->Branch("WIDTH4",&WIDTH4,"WIDTH4[7]/D");
 	 OutTree->Branch("t_thr4",&t_thr4,"t_thr4/D");  // time at which a certain thr (in V) is passed
@@ -424,15 +426,15 @@ void analisi(char *filename, char *output_filename){
 
  	if( enable_channel_1 == 1){
 
-		w1o.clear();
-	 	t1o.clear();
+		w1.clear();
+	 	t1.clear();
 
  		if( invert_channel_1 == 1 ){
 
 	 		for(unsigned int i=0; i<voltageReader1.GetSize();i++){
 
-	 			w1o.push_back(-voltageReader1.At(i));
-	 			t1o.push_back(timeReader1.At(i));
+	 			w1.push_back(-voltageReader1.At(i));
+	 			t1.push_back(timeReader1.At(i));
 
  			}
 
@@ -440,39 +442,39 @@ void analisi(char *filename, char *output_filename){
 
 	 		for(unsigned int i=0; i<voltageReader1.GetSize();i++){
 
-	 			w1o.push_back(voltageReader1.At(i));
-	 			t1o.push_back(timeReader1.At(i));
+	 			w1.push_back(voltageReader1.At(i));
+	 			t1.push_back(timeReader1.At(i));
 
  			}
 
  			}
 
- 		if(w1o.size()<1000 || t1o.size()<1000){
+ 		if(w1.size()<maxIndex || t1.size()<maxIndex){
 
  			cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
  			continue;
  		}
 
- 		if(w1o.size()==0 || t1o.size()==0){
+ 		if(w1.size()==0 || t1.size()==0){
 
  			cout<<"Voltage or Time vector empty. Skipping whole event"<<endl;
  			continue;
  		}
 
- 		if(w1o.size()!= t1o.size()){
+ 		if(w1.size()!= t1.size()){
 
  			cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<endl;
  			continue;
  		}
 
 
-		*a1=Analyzer(w1o,t1o);  //to be checked: is this a correct usage of memory?
+		*a1=Analyzer(w1,t1);  //to be checked: is this a correct usage of memory?
 		a1->Correct_Baseline(100);
 
 		std::pair<double, unsigned int> tp_pair1 = a1->Find_Signal_Maximum(false,search_range); 
-		std::pair<double, double> tp_pair1_fit = a1->Pmax_with_GausFit(tp_pair1);
+		std::pair<double, double> tp_pair1_fit = a1->Pmax_with_GausFit(tp_pair1,maxIndex);
 		std::pair<double, unsigned int> neg_tp_pair1 = a1->Find_Negative_Signal_Maximum(false,search_range); 
-		std::pair<double, double> neg_tp_pair1_fit = a1->Negative_Pmax_with_GausFit(neg_tp_pair1);      
+		std::pair<double, double> neg_tp_pair1_fit = a1->Negative_Pmax_with_GausFit(neg_tp_pair1,maxIndex);      
 		Pmax1 = tp_pair1.first*voltage_const; //mV
 		negPmax1 = neg_tp_pair1.first*voltage_const; //mV
 		Pmax1Fit = tp_pair1_fit.first*voltage_const; //mV
@@ -493,9 +495,9 @@ void analisi(char *filename, char *output_filename){
 		RiseTime1Fit = a1->Find_Rise_Time_with_GausFit(tp_pair1_fit, tp_pair1.second, 0.1, 0.9)*time_const; //ns
 		dVdt1 = a1->Find_Dvdt(20,0,tp_pair1)*(voltage_const/time_const);  //mV/ns     [20 is the % at which the signal derivative is computed]
 		dVdt1Fit = a1->Find_Dvdt_with_GausFit(20,0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const);  //mV/ns
-		cfd1 = a1->Rising_Edge_CFD_Time(20,tp_pair1)*time_const;  //ns   [standard CFD, 1st argument is the CFD %]
-		cfd1Fit = a1->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair1_fit,tp_pair1.second)*time_const;  //ns 
-		signal_width1 = a1->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair1_fit,tp_pair1.second)*time_const - cfd1Fit; //ns
+		//cfd1 = a1->Rising_Edge_CFD_Time(20,tp_pair1)*time_const;  //ns   [standard CFD, 1st argument is the CFD %]
+		//cfd1Fit = a1->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair1_fit,tp_pair1.second)*time_const;  //ns 
+		//signal_width1 = a1->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair1_fit,tp_pair1.second)*time_const - cfd1Fit; //ns
 		t_thr1 = a1->Find_Time_At_Threshold(20,tp_pair1)*time_const; //ns    [time at which a thr (in mV !!!) is passed]
 		rms1 = a1->Find_Noise(100)*voltage_const; //mV
 
@@ -513,15 +515,15 @@ void analisi(char *filename, char *output_filename){
 
 	if( enable_channel_2 == 1){
 
-		w2o.clear();
-	 	t2o.clear();
+		w2.clear();
+	 	t2.clear();
 
  		if( invert_channel_2 == 1){
 
 	 		for(unsigned int i=0; i<voltageReader2.GetSize();i++){
 
-	 			w2o.push_back(-voltageReader2.At(i));
-	 			t2o.push_back(timeReader2.At(i));
+	 			w2.push_back(-voltageReader2.At(i));
+	 			t2.push_back(timeReader2.At(i));
 
  			}
 
@@ -529,38 +531,38 @@ void analisi(char *filename, char *output_filename){
 
 	 		for(unsigned int i=0; i<voltageReader2.GetSize();i++){
 
-	 			w2o.push_back(voltageReader2.At(i));
-	 			t2o.push_back(timeReader2.At(i));
+	 			w2.push_back(voltageReader2.At(i));
+	 			t2.push_back(timeReader2.At(i));
 
  			}
 
  			}
 
- 		if(w2o.size()<1000 || t2o.size()<1000){
+ 		if(w2.size()<maxIndex || t2.size()<maxIndex){
 
  			cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
  			continue;
  		}
 
- 		if(w2o.size()==0 || t2o.size()==0){
+ 		if(w2.size()==0 || t2.size()==0){
 
  			cout<<"Voltage or Time vector empty. Skipping whole event"<<endl;
  			continue;
  		}
 
- 		if(w2o.size()!= t2o.size()){
+ 		if(w2.size()!= t2.size()){
 
  			cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<endl;
  			continue;
  		}
 
-		*a2=Analyzer(w2o,t2o);  
+		*a2=Analyzer(w2,t2);  
 		a2->Correct_Baseline(100);
 
 		std::pair<double, unsigned int> tp_pair2 = a2->Find_Signal_Maximum(false,search_range); 
-		std::pair<double, double> tp_pair2_fit = a2->Pmax_with_GausFit(tp_pair2);
+		std::pair<double, double> tp_pair2_fit = a2->Pmax_with_GausFit(tp_pair2,maxIndex);
 		std::pair<double, unsigned int> neg_tp_pair2 = a2->Find_Negative_Signal_Maximum(false,search_range); 
-		std::pair<double, double> neg_tp_pair2_fit = a2->Negative_Pmax_with_GausFit(neg_tp_pair2);      
+		std::pair<double, double> neg_tp_pair2_fit = a2->Negative_Pmax_with_GausFit(neg_tp_pair2,maxIndex);      
 		Pmax2 = tp_pair2.first*voltage_const; //mV
 		negPmax2 = neg_tp_pair2.first*voltage_const; //mV
 		Pmax2Fit = tp_pair2_fit.first*voltage_const; //mV
@@ -581,9 +583,9 @@ void analisi(char *filename, char *output_filename){
 		RiseTime2Fit = a2->Find_Rise_Time_with_GausFit(tp_pair2_fit, tp_pair2.second, 0.1, 0.9)*time_const; //ns
 		dVdt2 = a2->Find_Dvdt(20,0,tp_pair2)*(voltage_const/time_const);  
 		dVdt2Fit = a2->Find_Dvdt_with_GausFit(20,0,tp_pair2_fit,tp_pair2.second)*(voltage_const/time_const);
-		cfd2 = a2->Rising_Edge_CFD_Time(20,tp_pair2)*time_const;
-		cfd2Fit = a2->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair2_fit,tp_pair2.second)*time_const;  
-		signal_width2 = a2->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair2_fit,tp_pair2.second)*time_const - cfd2Fit;
+		//cfd2 = a2->Rising_Edge_CFD_Time(20,tp_pair2)*time_const;
+		//cfd2Fit = a2->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair2_fit,tp_pair2.second)*time_const;  
+		//signal_width2 = a2->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair2_fit,tp_pair2.second)*time_const - cfd2Fit;
 		t_thr2 = a2->Find_Time_At_Threshold(0.02,tp_pair2)*time_const;
 		rms2 = a2->Find_Noise(100)*voltage_const;
 
@@ -604,15 +606,15 @@ void analisi(char *filename, char *output_filename){
 
 	if( enable_channel_3 == 1){
 
-		w3o.clear();
-	 	t3o.clear();
+		w3.clear();
+	 	t3.clear();
 
  		if( invert_channel_3 == 1){
 
 	 		for(unsigned int i=0; i<voltageReader3.GetSize();i++){
 
-	 			w3o.push_back(-voltageReader3.At(i));
-	 			t3o.push_back(timeReader3.At(i));
+	 			w3.push_back(-voltageReader3.At(i));
+	 			t3.push_back(timeReader3.At(i));
 
  			}
 
@@ -620,38 +622,38 @@ void analisi(char *filename, char *output_filename){
 
 	 		for(unsigned int i=0; i<voltageReader3.GetSize();i++){
 
-	 			w3o.push_back(voltageReader3.At(i));
-	 			t3o.push_back(timeReader3.At(i));
+	 			w3.push_back(voltageReader3.At(i));
+	 			t3.push_back(timeReader3.At(i));
 
  			}
 
  			}
 
- 		if(w3o.size()<1000 || t3o.size()<1000){
+ 		if(w3.size()<maxIndex || t3.size()<maxIndex){
 
  			cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
  			continue;
  		}
 
- 		if(w3o.size()==0 || t3o.size()==0){
+ 		if(w3.size()==0 || t3.size()==0){
 
  			cout<<"Voltage or Time vector empty. Skipping whole event"<<endl;
  			continue;
  		}
 
- 		if(w3o.size()!= t3o.size()){
+ 		if(w3.size()!= t3.size()){
 
  			cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<endl;
  			continue;
  		}
 
-		*a3 = Analyzer(w3o,t3o);  
+		*a3 = Analyzer(w3,t3);  
 		a3->Correct_Baseline(100);
 
 		std::pair<double, unsigned int> tp_pair3 = a3->Find_Signal_Maximum(false,search_range); 
-		std::pair<double, double> tp_pair3_fit = a3->Pmax_with_GausFit(tp_pair3);
+		std::pair<double, double> tp_pair3_fit = a3->Pmax_with_GausFit(tp_pair3,maxIndex);
 		std::pair<double, unsigned int> neg_tp_pair3 = a3->Find_Negative_Signal_Maximum(false,search_range); 
-		std::pair<double, double> neg_tp_pair3_fit = a3->Negative_Pmax_with_GausFit(neg_tp_pair3);      
+		std::pair<double, double> neg_tp_pair3_fit = a3->Negative_Pmax_with_GausFit(neg_tp_pair3,maxIndex);      
 		Pmax3 = tp_pair3.first*voltage_const; //mV
 		negPmax3 = neg_tp_pair3.first*voltage_const; //mV
 		Pmax3Fit = tp_pair3_fit.first*voltage_const; //mV
@@ -672,9 +674,9 @@ void analisi(char *filename, char *output_filename){
 		RiseTime3Fit = a3->Find_Rise_Time_with_GausFit(tp_pair3_fit, tp_pair3.second, 0.1, 0.9)*time_const; //ns
 		dVdt3 = a3->Find_Dvdt(20,0,tp_pair3)*(voltage_const/time_const);  
 		dVdt3Fit = a3->Find_Dvdt_with_GausFit(20,0,tp_pair3_fit,tp_pair3.second)*(voltage_const/time_const);
-		cfd3 = a3->Rising_Edge_CFD_Time(20,tp_pair3)*time_const; 
-		cfd3Fit = a3->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair3_fit,tp_pair3.second)*time_const; 
-		signal_width3 = a3->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair3_fit,tp_pair3.second)*time_const - cfd3Fit;
+		//cfd3 = a3->Rising_Edge_CFD_Time(20,tp_pair3)*time_const; 
+		//cfd3Fit = a3->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair3_fit,tp_pair3.second)*time_const; 
+		//signal_width3 = a3->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair3_fit,tp_pair3.second)*time_const - cfd3Fit;
 		t_thr3 = a3->Find_Time_At_Threshold(0.02,tp_pair3)*time_const;
 		rms3 = a3->Find_Noise(100)*voltage_const;
 
@@ -692,15 +694,15 @@ void analisi(char *filename, char *output_filename){
 
 	if( enable_channel_4 == 1){
 
-		w4o.clear();
-	 	t4o.clear();
+		w4.clear();
+	 	t4.clear();
 
  		if( invert_channel_4 == 1){
 
 	 		for(unsigned int i=0; i<voltageReader4.GetSize();i++){
 
-	 			w4o.push_back(-voltageReader4.At(i));
-	 			t4o.push_back(timeReader4.At(i));
+	 			w4.push_back(-voltageReader4.At(i));
+	 			t4.push_back(timeReader4.At(i));
 
  			}
 
@@ -708,38 +710,38 @@ void analisi(char *filename, char *output_filename){
 
 	 		for(unsigned int i=0; i<voltageReader4.GetSize();i++){
 
-	 			w4o.push_back(voltageReader4.At(i));
-	 			t4o.push_back(timeReader4.At(i));
+	 			w4.push_back(voltageReader4.At(i));
+	 			t4.push_back(timeReader4.At(i));
 
  			}
 
  			}
 
- 		if(w4o.size()<1000 || t4o.size()<1000){
+ 		if(w4.size()<maxIndex || t4.size()<maxIndex){
 
  			cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
  			continue;
  		}
 
- 		if(w4o.size()==0 || t4o.size()==0){
+ 		if(w4.size()==0 || t4.size()==0){
 
  			cout<<"Voltage or Time vector empty. Skipping whole event"<<endl;
  			continue;
  		}
 
- 		if(w4o.size()!= t4o.size()){
+ 		if(w4.size()!= t4.size()){
 
  			cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<endl;
  			continue;
  		}
 
-		*a4 = Analyzer(w4o,t4o);  
+		*a4 = Analyzer(w4,t4);  
 		a4->Correct_Baseline(100);
 
 		std::pair<double, unsigned int> tp_pair4 = a4->Find_Signal_Maximum(false,search_range); 
-		std::pair<double, double> tp_pair4_fit = a4->Pmax_with_GausFit(tp_pair4);
+		std::pair<double, double> tp_pair4_fit = a4->Pmax_with_GausFit(tp_pair4,maxIndex);
 		std::pair<double, unsigned int> neg_tp_pair4 = a4->Find_Negative_Signal_Maximum(false,search_range); 
-		std::pair<double, double> neg_tp_pair4_fit = a4->Negative_Pmax_with_GausFit(neg_tp_pair4);      
+		std::pair<double, double> neg_tp_pair4_fit = a4->Negative_Pmax_with_GausFit(neg_tp_pair4,maxIndex);      
 		Pmax4 = tp_pair4.first*voltage_const; //mV
 		negPmax4 = neg_tp_pair4.first*voltage_const; //mV
 		Pmax4Fit = tp_pair4_fit.first*voltage_const; //mV
@@ -760,9 +762,9 @@ void analisi(char *filename, char *output_filename){
 		RiseTime4Fit = a4->Find_Rise_Time_with_GausFit(tp_pair4_fit, tp_pair4.second, 0.1, 0.9)*time_const; //ns
 		dVdt4 = a4->Find_Dvdt(20,0,tp_pair4)*(voltage_const/time_const); 
 		dVdt4Fit = a4->Find_Dvdt_with_GausFit(20,0,tp_pair4_fit,tp_pair4.second)*(voltage_const/time_const); 
-		cfd4 = a4->Rising_Edge_CFD_Time(20,tp_pair4)*time_const; 
-		cfd4Fit = a4->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair4_fit,tp_pair4.second)*time_const; 
-		signal_width4 = a4->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair4_fit,tp_pair4.second)*time_const - cfd4Fit;
+		//cfd4 = a4->Rising_Edge_CFD_Time(20,tp_pair4)*time_const; 
+		//cfd4Fit = a4->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair4_fit,tp_pair4.second)*time_const; 
+		//signal_width4 = a4->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair4_fit,tp_pair4.second)*time_const - cfd4Fit;
 		t_thr4 = a4->Find_Time_At_Threshold(0.02,tp_pair4)*time_const;
 		rms4 = a4->Find_Noise(100)*voltage_const;
 

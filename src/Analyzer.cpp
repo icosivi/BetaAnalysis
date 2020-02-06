@@ -142,13 +142,13 @@ std::pair<double, unsigned int> Analyzer::Find_Signal_Maximum(bool confineSearch
 }
 
 
-std::pair<double, double> Analyzer::Pmax_with_GausFit(const std::pair<double, unsigned int> Pmax){
+std::pair<double, double> Analyzer::Pmax_with_GausFit(const std::pair<double, unsigned int> Pmax, unsigned int maxIndex){
 
   double pmax, tmax;
   int pmaxIndex = Pmax.second;
   double time_bin = this->ptime.at(1)-this->ptime.at(0);
 
-  if( pmaxIndex > 5 && pmaxIndex < 995 ){
+  if( pmaxIndex > 5 && pmaxIndex < maxIndex-5 ){
 
     double time_min = this->ptime.at(pmaxIndex-3);
     double time_max = this->ptime.at(pmaxIndex+3);
@@ -240,13 +240,13 @@ std::pair<double, unsigned int> Analyzer::Find_Negative_Signal_Maximum( bool con
 }
 
 
-std::pair<double, double> Analyzer::Negative_Pmax_with_GausFit(const std::pair<double, unsigned int> NegPmax){
+std::pair<double, double> Analyzer::Negative_Pmax_with_GausFit(const std::pair<double, unsigned int> NegPmax, unsigned int maxIndex){
 
   double pmax, tmax;
   int pmaxIndex = NegPmax.second;
   double time_bin = this->ptime.at(1)-this->ptime.at(0);
 
-  if( pmaxIndex > 5 && pmaxIndex < 995 ){
+  if( pmaxIndex > 5 && pmaxIndex < maxIndex-5 ){
 
     double time_min = this->ptime.at(pmaxIndex-3);
     double time_max = this->ptime.at(pmaxIndex+3);
