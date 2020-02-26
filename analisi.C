@@ -109,6 +109,7 @@ void analisi(){
 // Raw data have Voltage in V and Time in ns
  const double time_const = cf.Value("HEADER","time_scalar");  //multiply by this const to pass from s to ns
  const double voltage_const = cf.Value("HEADER","voltage_scalar"); // pass from V to mV
+ const double conversion_factor = cf.Value("HEADER","conversion_factor_area_charge"); //pass from Area to Charge
  unsigned int maxIndex = cf.Value("HEADER","sampling_points"); //number of sampling points, default is 1002, assuming a 50ns time window with 20 GS
 
  double Pmax1=-1000;
@@ -271,23 +272,23 @@ void analisi(){
 	 OutTree->Branch("t1",&t1);
 	 OutTree->Branch("Pmax1",&Pmax1,"Pmax1/D");
 	 OutTree->Branch("Pmax1Fit",&Pmax1Fit,"Pmax1Fit/D");
-	 OutTree->Branch("negPmax1",&negPmax1,"negPmax1/D");
+	 //OutTree->Branch("negPmax1",&negPmax1,"negPmax1/D");
 	 OutTree->Branch("negPmax1Fit",&negPmax1Fit,"negPmax1Fit/D");
 	 OutTree->Branch("Tmax1",&Tmax1,"Tmax1/D");
-	 OutTree->Branch("negTmax1",&negTmax1,"negTmax1/D");
+	 //OutTree->Branch("negTmax1",&negTmax1,"negTmax1/D");
 	 OutTree->Branch("Tmax1Fit",&Tmax1Fit,"Tmax1Fit/D");
 	 OutTree->Branch("negTmax1Fit",&negTmax1Fit,"negTmax1Fit/D");
 	 OutTree->Branch("Area1",&Area1,"Area1/D");
 	 OutTree->Branch("UArea1",&UArea1,"UArea1/D");
-	 OutTree->Branch("AreaFixed1",&AreaFixed1,"AreaFixed1/D");
+	 //OutTree->Branch("AreaFixed1",&AreaFixed1,"AreaFixed1/D");
 	 OutTree->Branch("AreaFixed1Fit",&AreaFixed1Fit,"AreaFixed1Fit/D");
-	 OutTree->Branch("AreaInterpolated1",&AreaInterpolated1,"AreaInterpolated1/D");
+	 //OutTree->Branch("AreaInterpolated1",&AreaInterpolated1,"AreaInterpolated1/D");
 	 OutTree->Branch("AreaInterpolated1Fit",&AreaInterpolated1Fit,"AreaInterpolated1Fit/D");
 	 OutTree->Branch("Area1_new",&Area1_new,"Area1_new/D");
 	 OutTree->Branch("UArea1_new",&UArea1_new,"UArea1_new/D");
-	 OutTree->Branch("RiseTime1",&RiseTime1,"RiseTime1/D");
+	 //OutTree->Branch("RiseTime1",&RiseTime1,"RiseTime1/D");
 	 OutTree->Branch("RiseTime1Fit",&RiseTime1Fit,"RiseTime1Fit/D");
-	 OutTree->Branch("dVdt1",&dVdt1,"dVdt1/D");
+	 //OutTree->Branch("dVdt1",&dVdt1,"dVdt1/D");
 	 OutTree->Branch("dVdt1Fit",&dVdt1Fit,"dVdt1Fit/D");
 	 //OutTree->Branch("cfd1",&cfd1,"cfd1/D");
 	 //OutTree->Branch("cfd1Fit",&cfd1Fit,"cfd1Fit/D");
@@ -308,23 +309,23 @@ void analisi(){
 	 OutTree->Branch("t2",&t2);
 	 OutTree->Branch("Pmax2",&Pmax2,"Pmax2/D");
 	 OutTree->Branch("Pmax2Fit",&Pmax2Fit,"Pmax2Fit/D");
-	 OutTree->Branch("Pmax2",&negPmax2,"negPmax2/D");
+	 //OutTree->Branch("negPmax2",&negPmax2,"negPmax2/D");
 	 OutTree->Branch("negPmax2Fit",&negPmax2Fit,"negPmax2Fit/D");
 	 OutTree->Branch("Tmax2",&Tmax2,"Tmax2/D");
-	 OutTree->Branch("negTmax2",&negTmax2,"negTmax2/D");
+	 //OutTree->Branch("negTmax2",&negTmax2,"negTmax2/D");
 	 OutTree->Branch("Tmax2Fit",&Tmax2Fit,"Tmax2Fit/D");
 	 OutTree->Branch("negTmax2Fit",&negTmax2Fit,"negTmax2Fit/D");
 	 OutTree->Branch("Area2",&Area2,"Area2/D");
 	 OutTree->Branch("UArea2",&UArea2,"UArea2/D");
-	 OutTree->Branch("AreaFixed2",&AreaFixed2,"AreaFixed2/D");
+	 //OutTree->Branch("AreaFixed2",&AreaFixed2,"AreaFixed2/D");
 	 OutTree->Branch("AreaFixed2Fit",&AreaFixed2Fit,"AreaFixed2Fit/D");
-	 OutTree->Branch("AreaInterpolated2",&AreaInterpolated2,"AreaInterpolated2/D");
+	 //OutTree->Branch("AreaInterpolated2",&AreaInterpolated2,"AreaInterpolated2/D");
 	 OutTree->Branch("AreaInterpolated2Fit",&AreaInterpolated2Fit,"AreaInterpolated2Fit/D");
 	 OutTree->Branch("Area2_new",&Area2_new,"Area2_new/D");
 	 OutTree->Branch("UArea2_new",&UArea2_new,"UArea2_new/D");
-	 OutTree->Branch("RiseTime2",&RiseTime2,"RiseTime2/D");
+	 //OutTree->Branch("RiseTime2",&RiseTime2,"RiseTime2/D");
 	 OutTree->Branch("RiseTime2Fit",&RiseTime2Fit,"RiseTime2Fit/D");
-	 OutTree->Branch("dVdt2",&dVdt2,"dVdt2/D");
+	 //OutTree->Branch("dVdt2",&dVdt2,"dVdt2/D");
 	 OutTree->Branch("dVdt2Fit",&dVdt2Fit,"dVdt2Fit/D");
 	 //OutTree->Branch("cfd2",&cfd2,"cfd2/D");
 	 //OutTree->Branch("cfd2Fit",&cfd2Fit,"cfd2Fit/D");
@@ -345,23 +346,23 @@ void analisi(){
 	 OutTree->Branch("t3",&t3);
 	 OutTree->Branch("Pmax3",&Pmax3,"Pmax3/D");
 	 OutTree->Branch("Pmax3Fit",&Pmax3Fit,"Pmax3Fit/D");
-	 OutTree->Branch("negPmax3",&negPmax3,"negPmax3/D");
+	 //OutTree->Branch("negPmax3",&negPmax3,"negPmax3/D");
 	 OutTree->Branch("negPmax3Fit",&negPmax3Fit,"negPmax3Fit/D");
 	 OutTree->Branch("Tmax3",&Tmax3,"Tmax3/D");
-	 OutTree->Branch("negTmax3",&negTmax3,"negTmax3/D");
+	 //OutTree->Branch("negTmax3",&negTmax3,"negTmax3/D");
 	 OutTree->Branch("Tmax3Fit",&Tmax3Fit,"Tmax3Fit/D");
 	 OutTree->Branch("negTmax3Fit",&negTmax3Fit,"negTmax3Fit/D");
 	 OutTree->Branch("Area3",&Area3,"Area3/D");
 	 OutTree->Branch("UArea3",&UArea3,"UArea3/D");
-	 OutTree->Branch("AreaFixed3",&AreaFixed3,"AreaFixed3/D");
+	 //OutTree->Branch("AreaFixed3",&AreaFixed3,"AreaFixed3/D");
 	 OutTree->Branch("AreaFixed3Fit",&AreaFixed3Fit,"AreaFixed3Fit/D");
-	 OutTree->Branch("AreaInterpolated3",&AreaInterpolated3,"AreaInterpolated3/D");
+	 //OutTree->Branch("AreaInterpolated3",&AreaInterpolated3,"AreaInterpolated3/D");
 	 OutTree->Branch("AreaInterpolated3Fit",&AreaInterpolated3Fit,"AreaInterpolated3Fit/D");
 	 OutTree->Branch("Area3_new",&Area3_new,"Area3_new/D");
 	 OutTree->Branch("UArea3_new",&UArea3_new,"UArea3_new/D");
-	 OutTree->Branch("RiseTime3",&RiseTime3,"RiseTime3/D");
+	 //OutTree->Branch("RiseTime3",&RiseTime3,"RiseTime3/D");
 	 OutTree->Branch("RiseTime3Fit",&RiseTime3Fit,"RiseTime3Fit/D");
-	 OutTree->Branch("dVdt3",&dVdt3,"dVdt3/D");
+	 //OutTree->Branch("dVdt3",&dVdt3,"dVdt3/D");
 	 OutTree->Branch("dVdt3Fit",&dVdt3Fit,"dVdt3Fit/D");
 	 //OutTree->Branch("cfd3",&cfd3,"cfd3/D");
 	 //OutTree->Branch("cfd3Fit",&cfd3Fit,"cfd3Fit/D");
@@ -382,23 +383,23 @@ void analisi(){
 	 OutTree->Branch("t4",&t4);
 	 OutTree->Branch("Pmax4",&Pmax4,"Pmax4/D");
 	 OutTree->Branch("Pmax4Fit",&Pmax4Fit,"Pmax4Fit/D");
-	 OutTree->Branch("negPmax4",&negPmax4,"negPmax4/D");
+	 //OutTree->Branch("negPmax4",&negPmax4,"negPmax4/D");
 	 OutTree->Branch("negPmax4Fit",&negPmax4Fit,"negPmax4Fit/D");
 	 OutTree->Branch("Tmax4",&Tmax4,"Tmax4/D");
-	 OutTree->Branch("negTmax4",&negTmax4,"negTmax4/D");
+	 //OutTree->Branch("negTmax4",&negTmax4,"negTmax4/D");
 	 OutTree->Branch("Tmax4Fit",&Tmax4Fit,"Tmax4Fit/D");
 	 OutTree->Branch("negTmax4Fit",&negTmax4Fit,"negTmax4Fit/D");
 	 OutTree->Branch("Area4",&Area4,"Area4/D");
 	 OutTree->Branch("UArea4",&UArea4,"UArea4/D");
-	 OutTree->Branch("AreaFixed4",&AreaFixed4,"AreaFixed4/D");
+	 //OutTree->Branch("AreaFixed4",&AreaFixed4,"AreaFixed4/D");
 	 OutTree->Branch("AreaFixed4Fit",&AreaFixed4Fit,"AreaFixed4Fit/D");
-	 OutTree->Branch("AreaInterpolated4",&AreaInterpolated4,"AreaInterpolated4/D");
+	 //OutTree->Branch("AreaInterpolated4",&AreaInterpolated4,"AreaInterpolated4/D");
 	 OutTree->Branch("AreaInterpolated4Fit",&AreaInterpolated4Fit,"AreaInterpolated4Fit/D");
 	 OutTree->Branch("Area4_new",&Area4_new,"Area4_new/D");
 	 OutTree->Branch("UArea4_new",&UArea4_new,"UArea4_new/D");
-	 OutTree->Branch("RiseTime4",&RiseTime4,"RiseTime4/D");
+	 //OutTree->Branch("RiseTime4",&RiseTime4,"RiseTime4/D");
 	 OutTree->Branch("RiseTime4Fit",&RiseTime4Fit,"RiseTime4Fit/D");
-	 OutTree->Branch("dVdt4",&dVdt4,"dVdt4/D");
+	 //OutTree->Branch("dVdt4",&dVdt4,"dVdt4/D");
 	 OutTree->Branch("dVdt4Fit",&dVdt4Fit,"dVdt4Fit/D");
 	 //OutTree->Branch("cfd4",&cfd4,"cfd4/D");
 	 //OutTree->Branch("cfd4Fit",&cfd4Fit,"cfd4Fit/D");
@@ -476,24 +477,24 @@ void analisi(){
 		std::pair<double, unsigned int> neg_tp_pair1 = a1->Find_Negative_Signal_Maximum(false,search_range); 
 		std::pair<double, double> neg_tp_pair1_fit = a1->Negative_Pmax_with_GausFit(neg_tp_pair1,maxIndex);      
 		Pmax1 = tp_pair1.first*voltage_const; //mV
-		negPmax1 = neg_tp_pair1.first*voltage_const; //mV
+		//negPmax1 = neg_tp_pair1.first*voltage_const; //mV
 		Pmax1Fit = tp_pair1_fit.first*voltage_const; //mV
 		negPmax1Fit = neg_tp_pair1_fit.first*voltage_const; //mV
 		Tmax1 = a1->Get_Tmax(tp_pair1)*time_const; //ns
-		negTmax1 = a1->Get_Negative_Tmax(neg_tp_pair1)*time_const; //ns
+		//negTmax1 = a1->Get_Negative_Tmax(neg_tp_pair1)*time_const; //ns
 		Tmax1Fit = tp_pair1_fit.second*time_const; //ns
 		negTmax1Fit = neg_tp_pair1_fit.second*time_const; //ns
 		Area1 = a1->Find_Pulse_Area(tp_pair1)*voltage_const*time_const; //mV*ns
 		UArea1 = a1->Find_Undershoot_Area(tp_pair1)*voltage_const*time_const; //mV*ns
-		AreaFixed1 = a1->Pulse_Integration_with_Fixed_Window_Size(tp_pair1,"Simpson",1,1)*voltage_const*time_const; //mV*ns  ["Simpson" or "Rectangluar" are the 2 integration methods] 3rd and 4th arguments define the time window around Tmax (in ns!!!)
+		//AreaFixed1 = a1->Pulse_Integration_with_Fixed_Window_Size(tp_pair1,"Simpson",1,1)*voltage_const*time_const; //mV*ns  ["Simpson" or "Rectangluar" are the 2 integration methods] 3rd and 4th arguments define the time window around Tmax (in ns!!!)
 		AreaFixed1Fit = a1->Pulse_Integration_with_Fixed_Window_Size_with_GausFit(tp_pair1_fit,tp_pair1.second,"Simpson",1,1)*voltage_const*time_const; //mV*ns
-		AreaInterpolated1 = a1->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair1,"Simpson",true,1)*voltage_const*time_const; //mV*ns  4th argument is integration stop time. If 3rd arg is TRUE, stop time is calculated relative to the maximum, while it is absolute time in FALSE case.  
+		//AreaInterpolated1 = a1->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair1,"Simpson",true,1)*voltage_const*time_const; //mV*ns  4th argument is integration stop time. If 3rd arg is TRUE, stop time is calculated relative to the maximum, while it is absolute time in FALSE case.  
 		AreaInterpolated1Fit = a1->Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(tp_pair1_fit,tp_pair1.second,"Simpson",true,1)*voltage_const*time_const;
 		Area1_new = a1->New_Pulse_Area(tp_pair1_fit,tp_pair1.second,"Simpson",search_range, time_window[0], time_window[1])*voltage_const*time_const;//mV*ns  Similar to "Area1" method, but start/end times of the pulse are defined analitically. Should be the most accurate definition
 		UArea1_new = a1->New_Undershoot_Area(tp_pair1_fit,neg_tp_pair1_fit, neg_tp_pair1.second,"Simpson",search_range)*voltage_const*time_const;//mV*ns
-		RiseTime1 = a1->Find_Rise_Time(tp_pair1,0.1,0.9)*time_const; //ns
+		//RiseTime1 = a1->Find_Rise_Time(tp_pair1,0.1,0.9)*time_const; //ns
 		RiseTime1Fit = a1->Find_Rise_Time_with_GausFit(tp_pair1_fit, tp_pair1.second, 0.1, 0.9)*time_const; //ns
-		dVdt1 = a1->Find_Dvdt(20,0,tp_pair1)*(voltage_const/time_const);  //mV/ns     [20 is the % at which the signal derivative is computed]
+		//dVdt1 = a1->Find_Dvdt(20,0,tp_pair1)*(voltage_const/time_const);  //mV/ns     [20 is the % at which the signal derivative is computed]
 		dVdt1Fit = a1->Find_Dvdt_with_GausFit(20,0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const);  //mV/ns
 		//cfd1 = a1->Rising_Edge_CFD_Time(20,tp_pair1)*time_const;  //ns   [standard CFD, 1st argument is the CFD %]
 		//cfd1Fit = a1->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair1_fit,tp_pair1.second)*time_const;  //ns 
@@ -564,24 +565,24 @@ void analisi(){
 		std::pair<double, unsigned int> neg_tp_pair2 = a2->Find_Negative_Signal_Maximum(false,search_range); 
 		std::pair<double, double> neg_tp_pair2_fit = a2->Negative_Pmax_with_GausFit(neg_tp_pair2,maxIndex);      
 		Pmax2 = tp_pair2.first*voltage_const; //mV
-		negPmax2 = neg_tp_pair2.first*voltage_const; //mV
+		//negPmax2 = neg_tp_pair2.first*voltage_const; //mV
 		Pmax2Fit = tp_pair2_fit.first*voltage_const; //mV
 		negPmax2Fit = neg_tp_pair2_fit.first*voltage_const; //mV
 		Tmax2 = a2->Get_Tmax(tp_pair2)*time_const; //ns
-		negTmax2 = a2->Get_Negative_Tmax(neg_tp_pair2)*time_const; //ns
+		//negTmax2 = a2->Get_Negative_Tmax(neg_tp_pair2)*time_const; //ns
 		Tmax2Fit = tp_pair2_fit.second*time_const; //ns
 		negTmax2Fit = neg_tp_pair2_fit.second*time_const; //ns
 		Area2 = a2->Find_Pulse_Area(tp_pair2)*voltage_const*time_const;
 		UArea2 = a2->Find_Undershoot_Area(tp_pair2)*voltage_const*time_const;
-		AreaFixed2 = a2->Pulse_Integration_with_Fixed_Window_Size(tp_pair2,"Simpson",1,1)*voltage_const*time_const;
+		//AreaFixed2 = a2->Pulse_Integration_with_Fixed_Window_Size(tp_pair2,"Simpson",1,1)*voltage_const*time_const;
 		AreaFixed2Fit = a2->Pulse_Integration_with_Fixed_Window_Size_with_GausFit(tp_pair2_fit,tp_pair2.second,"Simpson",1,1)*voltage_const*time_const;
-		AreaInterpolated2 = a2->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair2,"Simpson",true,1)*voltage_const*time_const; 
+		//AreaInterpolated2 = a2->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair2,"Simpson",true,1)*voltage_const*time_const; 
 		AreaInterpolated2Fit = a2->Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(tp_pair2_fit,tp_pair2.second,"Simpson",true,1)*voltage_const*time_const;
 		Area2_new = a2->New_Pulse_Area(tp_pair2_fit,tp_pair2.second,"Simpson",search_range, time_window[0], time_window[1])*voltage_const*time_const;
 		UArea2_new = a2->New_Undershoot_Area(tp_pair2_fit,neg_tp_pair2_fit, neg_tp_pair2.second,"Simpson",search_range)*voltage_const*time_const;//mV*ns
-		RiseTime2 = a2->Find_Rise_Time(tp_pair2,0.1,0.9)*time_const;
+		//RiseTime2 = a2->Find_Rise_Time(tp_pair2,0.1,0.9)*time_const;
 		RiseTime2Fit = a2->Find_Rise_Time_with_GausFit(tp_pair2_fit, tp_pair2.second, 0.1, 0.9)*time_const; //ns
-		dVdt2 = a2->Find_Dvdt(20,0,tp_pair2)*(voltage_const/time_const);  
+		//dVdt2 = a2->Find_Dvdt(20,0,tp_pair2)*(voltage_const/time_const);  
 		dVdt2Fit = a2->Find_Dvdt_with_GausFit(20,0,tp_pair2_fit,tp_pair2.second)*(voltage_const/time_const);
 		//cfd2 = a2->Rising_Edge_CFD_Time(20,tp_pair2)*time_const;
 		//cfd2Fit = a2->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair2_fit,tp_pair2.second)*time_const;  
@@ -655,24 +656,24 @@ void analisi(){
 		std::pair<double, unsigned int> neg_tp_pair3 = a3->Find_Negative_Signal_Maximum(false,search_range); 
 		std::pair<double, double> neg_tp_pair3_fit = a3->Negative_Pmax_with_GausFit(neg_tp_pair3,maxIndex);      
 		Pmax3 = tp_pair3.first*voltage_const; //mV
-		negPmax3 = neg_tp_pair3.first*voltage_const; //mV
+		//negPmax3 = neg_tp_pair3.first*voltage_const; //mV
 		Pmax3Fit = tp_pair3_fit.first*voltage_const; //mV
 		negPmax3Fit = neg_tp_pair3_fit.first*voltage_const; //mV
 		Tmax3 = a3->Get_Tmax(tp_pair3)*time_const; //ns
-		negTmax3 = a3->Get_Negative_Tmax(neg_tp_pair3)*time_const; //ns
+		//negTmax3 = a3->Get_Negative_Tmax(neg_tp_pair3)*time_const; //ns
 		Tmax3Fit = tp_pair3_fit.second*time_const; //ns
 		negTmax3Fit = neg_tp_pair3_fit.second*time_const; //ns
 		Area3 = a3->Find_Pulse_Area(tp_pair3)*voltage_const*time_const;
 		UArea3 = a3->Find_Undershoot_Area(tp_pair3)*voltage_const*time_const;
-		AreaFixed3 = a3->Pulse_Integration_with_Fixed_Window_Size(tp_pair3,"Simpson",1,1)*voltage_const*time_const;
+		//AreaFixed3 = a3->Pulse_Integration_with_Fixed_Window_Size(tp_pair3,"Simpson",1,1)*voltage_const*time_const;
 		AreaFixed3Fit = a3->Pulse_Integration_with_Fixed_Window_Size_with_GausFit(tp_pair3_fit,tp_pair3.second,"Simpson",1,1)*voltage_const*time_const;
-		AreaInterpolated3 = a3->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair3,"Simpson",true,1)*voltage_const*time_const;   
+		//AreaInterpolated3 = a3->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair3,"Simpson",true,1)*voltage_const*time_const;   
 		AreaInterpolated3Fit = a3->Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(tp_pair3_fit,tp_pair3.second,"Simpson",true,1)*voltage_const*time_const;
 		Area3_new = a3->New_Pulse_Area(tp_pair3_fit,tp_pair3.second,"Simpson",search_range, time_window[0], time_window[1])*voltage_const*time_const;
 		UArea3_new = a3->New_Undershoot_Area(tp_pair3_fit,neg_tp_pair3_fit, neg_tp_pair3.second,"Simpson",search_range)*voltage_const*time_const;//mV*ns
-		RiseTime3 = a3->Find_Rise_Time(tp_pair3,0.1,0.9)*time_const;
+		//RiseTime3 = a3->Find_Rise_Time(tp_pair3,0.1,0.9)*time_const;
 		RiseTime3Fit = a3->Find_Rise_Time_with_GausFit(tp_pair3_fit, tp_pair3.second, 0.1, 0.9)*time_const; //ns
-		dVdt3 = a3->Find_Dvdt(20,0,tp_pair3)*(voltage_const/time_const);  
+		//dVdt3 = a3->Find_Dvdt(20,0,tp_pair3)*(voltage_const/time_const);  
 		dVdt3Fit = a3->Find_Dvdt_with_GausFit(20,0,tp_pair3_fit,tp_pair3.second)*(voltage_const/time_const);
 		//cfd3 = a3->Rising_Edge_CFD_Time(20,tp_pair3)*time_const; 
 		//cfd3Fit = a3->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair3_fit,tp_pair3.second)*time_const; 
@@ -743,24 +744,24 @@ void analisi(){
 		std::pair<double, unsigned int> neg_tp_pair4 = a4->Find_Negative_Signal_Maximum(false,search_range); 
 		std::pair<double, double> neg_tp_pair4_fit = a4->Negative_Pmax_with_GausFit(neg_tp_pair4,maxIndex);      
 		Pmax4 = tp_pair4.first*voltage_const; //mV
-		negPmax4 = neg_tp_pair4.first*voltage_const; //mV
+		//negPmax4 = neg_tp_pair4.first*voltage_const; //mV
 		Pmax4Fit = tp_pair4_fit.first*voltage_const; //mV
 		negPmax4Fit = neg_tp_pair4_fit.first*voltage_const; //mV
 		Tmax4 = a4->Get_Tmax(tp_pair4)*time_const; //ns
-		negTmax4 = a4->Get_Negative_Tmax(neg_tp_pair4)*time_const; //ns
+		//negTmax4 = a4->Get_Negative_Tmax(neg_tp_pair4)*time_const; //ns
 		Tmax4Fit = tp_pair4_fit.second*time_const; //ns
 		negTmax4Fit = neg_tp_pair4_fit.second*time_const; //ns
 		Area4 = a4->Find_Pulse_Area(tp_pair4)*voltage_const*time_const;
 		UArea4 = a4->Find_Undershoot_Area(tp_pair4)*voltage_const*time_const;
-		AreaFixed4 = a4->Pulse_Integration_with_Fixed_Window_Size(tp_pair4,"Simpson",1,1)*voltage_const*time_const;
+		//AreaFixed4 = a4->Pulse_Integration_with_Fixed_Window_Size(tp_pair4,"Simpson",1,1)*voltage_const*time_const;
 		AreaFixed4Fit = a4->Pulse_Integration_with_Fixed_Window_Size_with_GausFit(tp_pair4_fit,tp_pair4.second,"Simpson",1,1)*voltage_const*time_const;
-		AreaInterpolated4 = a4->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair4,"Simpson",true,1)*voltage_const*time_const; 
+		//AreaInterpolated4 = a4->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair4,"Simpson",true,1)*voltage_const*time_const; 
 		AreaInterpolated4Fit = a4->Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(tp_pair4_fit,tp_pair4.second,"Simpson",true,1)*voltage_const*time_const;
 		Area4_new = a4->New_Pulse_Area(tp_pair4_fit,tp_pair4.second,"Simpson",search_range, time_window[0], time_window[1])*voltage_const*time_const;
 		UArea4_new = a4->New_Undershoot_Area(tp_pair4_fit,neg_tp_pair4_fit, neg_tp_pair4.second,"Simpson",search_range)*voltage_const*time_const;//mV*ns
-		RiseTime4 = a4->Find_Rise_Time(tp_pair4,0.1,0.9)*time_const;
+		//RiseTime4 = a4->Find_Rise_Time(tp_pair4,0.1,0.9)*time_const;
 		RiseTime4Fit = a4->Find_Rise_Time_with_GausFit(tp_pair4_fit, tp_pair4.second, 0.1, 0.9)*time_const; //ns
-		dVdt4 = a4->Find_Dvdt(20,0,tp_pair4)*(voltage_const/time_const); 
+		//dVdt4 = a4->Find_Dvdt(20,0,tp_pair4)*(voltage_const/time_const); 
 		dVdt4Fit = a4->Find_Dvdt_with_GausFit(20,0,tp_pair4_fit,tp_pair4.second)*(voltage_const/time_const); 
 		//cfd4 = a4->Rising_Edge_CFD_Time(20,tp_pair4)*time_const; 
 		//cfd4Fit = a4->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair4_fit,tp_pair4.second)*time_const; 
