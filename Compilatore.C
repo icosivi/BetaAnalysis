@@ -1,4 +1,6 @@
+{
 #include <Riostream.h>
+#include <TROOT.h>
 #include <TObject.h>
 #include <TSystem.h>
 #include "TStopwatch.h"
@@ -18,10 +20,15 @@
 
 
 
-void Compilatore(){
+
   gSystem->CompileMacro("src/general.cpp","kg");
   gSystem->CompileMacro("src/Chameleon.cpp","kg");
   gSystem->CompileMacro("src/ConfigFile.cpp","kg");
   gSystem->CompileMacro("src/Analyzer.cpp","kg");
+  gSystem->CompileMacro("analisi.C","kg");
+
+  gROOT->ProcessLine("analisi()");
+  
 
 }
+

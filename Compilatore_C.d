@@ -2,6 +2,9 @@
 # DO NOT DELETE
 
 ./Compilatore_C.so: /home/federico/mybuild/include/Riostream.h
+./Compilatore_C.so: /home/federico/mybuild/include/TROOT.h
+./Compilatore_C.so: /home/federico/mybuild/include/TDirectory.h
+./Compilatore_C.so: /home/federico/mybuild/include/TBuffer.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TObject.h
 ./Compilatore_C.so: /home/federico/mybuild/include/RConfigure.h
 ./Compilatore_C.so: /home/federico/mybuild/include/Rtypes.h
@@ -18,7 +21,6 @@
 ./Compilatore_C.so: /home/federico/mybuild/include/TStorage.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TVersionCheck.h
 ./Compilatore_C.so: /home/federico/mybuild/include/RVersion.h
-./Compilatore_C.so: /home/federico/mybuild/include/TSystem.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TNamed.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TString.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TMathBase.h
@@ -28,17 +30,20 @@
 ./Compilatore_C.so: /home/federico/mybuild/include/ROOT/TypeTraits.hxx
 ./Compilatore_C.so: /home/federico/mybuild/include/ROOT/RSpan.hxx
 ./Compilatore_C.so: /home/federico/mybuild/include/ROOT/span.hxx
-./Compilatore_C.so: /home/federico/mybuild/include/TInetAddress.h
-./Compilatore_C.so: /home/federico/mybuild/include/TTimer.h
-./Compilatore_C.so: /home/federico/mybuild/include/TSysEvtHandler.h
-./Compilatore_C.so: /home/federico/mybuild/include/TQObject.h
-./Compilatore_C.so: /home/federico/mybuild/include/TError.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TList.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TSeqCollection.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TCollection.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TIterator.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TVirtualRWMutex.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TVirtualMutex.h
+./Compilatore_C.so: /home/federico/mybuild/include/TDatime.h
+./Compilatore_C.so: /home/federico/mybuild/include/TUUID.h
+./Compilatore_C.so: /home/federico/mybuild/include/TSystem.h
+./Compilatore_C.so: /home/federico/mybuild/include/TInetAddress.h
+./Compilatore_C.so: /home/federico/mybuild/include/TTimer.h
+./Compilatore_C.so: /home/federico/mybuild/include/TSysEvtHandler.h
+./Compilatore_C.so: /home/federico/mybuild/include/TQObject.h
+./Compilatore_C.so: /home/federico/mybuild/include/TError.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TVirtualQConnection.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TInterpreter.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TDictionary.h
@@ -53,10 +58,6 @@
 ./Compilatore_C.so: /home/federico/mybuild/include/TArray.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TFile.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TDirectoryFile.h
-./Compilatore_C.so: /home/federico/mybuild/include/TDirectory.h
-./Compilatore_C.so: /home/federico/mybuild/include/TBuffer.h
-./Compilatore_C.so: /home/federico/mybuild/include/TDatime.h
-./Compilatore_C.so: /home/federico/mybuild/include/TUUID.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TMap.h
 ./Compilatore_C.so: /home/federico/mybuild/include/THashTable.h
 ./Compilatore_C.so: /home/federico/mybuild/include/TUrl.h

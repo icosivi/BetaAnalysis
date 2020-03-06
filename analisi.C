@@ -797,3 +797,12 @@ void analisi(){
  OutputFile->Write();
 
 }
+
+
+int main(){
+
+analisi();
+
+return 0;
+
+}
