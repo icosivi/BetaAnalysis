@@ -15,7 +15,7 @@
 #include "TObject.h"
 
 
-class Analyzer : public TObject
+class Analyzer
 {
 
  public:
@@ -23,10 +23,10 @@ class Analyzer : public TObject
   Analyzer(std::vector<double> voltage, std::vector<double> time);
   Analyzer();
   Analyzer(const Analyzer &a);
-  
+
   virtual ~Analyzer();
 
-  
+
   // Baseline Correction
 void Correct_Baseline( int ptN );
 //void Correct_Baseline2( std::vector<double> &voltageVec, double fractional_pts );
@@ -134,14 +134,13 @@ double Find_Time_At_Threshold(const double thresholdLevel, const std::pair<doubl
   const unsigned int  expect_count = 6
 );*/
 
-  
+
  private:
 
  std::vector<double> pvoltage;
  std::vector<double> ptime;
-  
-  ClassDef(Analyzer,1)
-  
+
+
 };
 
 #endif
