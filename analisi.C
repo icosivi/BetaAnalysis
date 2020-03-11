@@ -416,8 +416,10 @@ void analisi(){
 
 	
 
- double search_range[2] = {-2e-9,2e-9};
- double time_window[2] = {-25e-9,25e-9}; // Can be included in beta_config
+ //double search_range[2] = {-2e-9,2e-9};
+ //double time_window[2] = {-25e-9,25e-9}; // Can be included in beta_config
+ double search_range[2] = {20,30};
+ double time_window[2] = {0,50};
  int j = 0;
 
 //Loop over raw data and fill output branches. Analyzer class manages output variables calculation 
