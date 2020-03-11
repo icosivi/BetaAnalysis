@@ -29,27 +29,21 @@
 #include <TCanvas.h>
 
 
-
-
-
-
-ClassImp(Analyzer)
-
-Analyzer::Analyzer(std::vector<double> voltage, std::vector<double> time):TObject(),
+Analyzer::Analyzer(std::vector<double> voltage, std::vector<double> time):
 pvoltage(voltage),
 ptime(time){
 
 }
 
 
-Analyzer::Analyzer():TObject(),
+Analyzer::Analyzer():
 pvoltage(0),
 ptime(0){
 
 }
 
 
-Analyzer::Analyzer(const Analyzer &a):TObject(),
+Analyzer::Analyzer(const Analyzer &a):
 pvoltage(a.pvoltage),
 ptime(a.ptime){
 
@@ -400,7 +394,7 @@ double Analyzer::Find_Undershoot_Area(const std::pair<double, unsigned int> Pmax
 
 
 double Analyzer::Pulse_Integration_with_Fixed_Window_Size(const std::pair<double,unsigned int> Pmax, std::string integration_option, double t_beforeSignal, double t_afterSignal){
-  
+
   double pulse_area = 0.0;
   const double time_difference = this->ptime.at(1) - this->ptime.at(0);
   double tRange[2] = {t_beforeSignal*10e-9, t_afterSignal*10e-9};
@@ -482,7 +476,7 @@ double Analyzer::Pulse_Integration_with_Fixed_Window_Size(const std::pair<double
 
 
 double Analyzer::Pulse_Integration_with_Fixed_Window_Size_with_GausFit(const std::pair<double,double> Pmax, unsigned int imax, std::string integration_option, double t_beforeSignal, double t_afterSignal){
-  
+
   double pulse_area = 0.0;
   const double time_difference = this->ptime.at(1) - this->ptime.at(0);
   double tRange[2] = {t_beforeSignal*10e-9, t_afterSignal*10e-9};
@@ -1184,7 +1178,7 @@ double Analyzer::New_Pulse_Area( const std::pair<double,double> Pmax, unsigned i
     end_time = xlinearInter( _10pmax_time_2, _10pmax, _20pmax_time_2, _20pmax, 0.0 );
     //cout<<end_time<<endl;
     //end_time = Pmax.second+3e-9;
-    
+
     //if(end_time > end_window || isinf(end_time)) end_time = Pmax.first+5e-9;
     //if(start_time > start_window || isinf(start_time)) start_time = 0;
     //if(start_time > start_window && end_time < end_window && !isinf(start_time) && !isinf(end_time)){

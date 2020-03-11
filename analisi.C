@@ -48,7 +48,7 @@ void analisi(){
  TFile *file = TFile::Open(filename);
  TTree *itree = dynamic_cast<TTree*>(file->Get("wfm"));
  TTreeReader myReader("wfm", file);
- 
+
 //Definition of TTreeReaders
  int ch_number = cf.Value("HEADER","active_channels");
  char *branch[ch_number];
@@ -62,7 +62,7 @@ void analisi(){
 
 		ch_cont[j]=1;
 		cont=j+1;
-	 	
+
 	}else{
 
 		ch_cont[j]=0;
@@ -71,7 +71,7 @@ void analisi(){
  }
 
 
- 
+
 
  for(int j=0;j<4;j++){
 
@@ -79,23 +79,23 @@ void analisi(){
 
 	 	branch[j] = Form("w%i",j+1);
 	 	t_branch[j] = Form("t%i",j+1);
-	 		
+
 	}else{
 
 	 	branch[j] = Form("w%i",cont);
 	 	t_branch[j] = Form("t%i",cont);
-	  		
+
 	}
 
  }
 
- TTreeReaderArray<double> voltageReader1(myReader, branch[0]);  
+ TTreeReaderArray<double> voltageReader1(myReader, branch[0]);
  TTreeReaderArray<double> timeReader1(myReader, t_branch[0]);
- TTreeReaderArray<double> voltageReader2(myReader, branch[1]);  
+ TTreeReaderArray<double> voltageReader2(myReader, branch[1]);
  TTreeReaderArray<double> timeReader2(myReader, t_branch[1]);
- TTreeReaderArray<double> voltageReader3(myReader, branch[2]);  
+ TTreeReaderArray<double> voltageReader3(myReader, branch[2]);
  TTreeReaderArray<double> timeReader3(myReader, t_branch[2]);
- TTreeReaderArray<double> voltageReader4(myReader, branch[3]);  
+ TTreeReaderArray<double> voltageReader4(myReader, branch[3]);
  TTreeReaderArray<double> timeReader4(myReader, t_branch[3]);
 // End of TTreeReaders definition
 
@@ -104,8 +104,8 @@ void analisi(){
  const char *output_filename = outFilename.c_str();
  TFile *OutputFile = new TFile(output_filename,"recreate");
  TTree *OutTree = new TTree("Analysis","Analysis");
- 
-// Variable declaration and Analyzer objects 
+
+// Variable declaration and Analyzer objects
 // Raw data have Voltage in V and Time in ns
  const double time_const = cf.Value("HEADER","time_scalar");  //multiply by this const to pass from s to ns
  const double voltage_const = cf.Value("HEADER","voltage_scalar"); // pass from V to mV
@@ -178,9 +178,9 @@ void analisi(){
  t2.reserve(221560);
  Analyzer *a2=new Analyzer();
 
- 
 
- 
+
+
 
  double Pmax3=-1000;
  double Pmax3Fit=-1000;
@@ -265,7 +265,7 @@ void analisi(){
 
  int counter = 0;
 
-//Output branches declaration 	 
+//Output branches declaration
  if( enable_channel_1 == 1){
 
 	 OutTree->Branch("w1",&w1);
@@ -299,7 +299,7 @@ void analisi(){
 	 OutTree->Branch("rms1",&rms1,"rms1/D");
 
 	 counter++;
- 
+
  	}
 
 
@@ -412,15 +412,15 @@ void analisi(){
 	 counter++;
 
  	}
-	
 
-	
+
+
 
  double search_range[2] = {-2e-9,2e-9};
  double time_window[2] = {-25e-9,25e-9}; // Can be included in beta_config
  int j = 0;
 
-//Loop over raw data and fill output branches. Analyzer class manages output variables calculation 
+//Loop over raw data and fill output branches. Analyzer class manages output variables calculation
  while(myReader.Next()){
 
  	int counter2 = 0;
@@ -452,19 +452,19 @@ void analisi(){
 
  		if(w1.size()<maxIndex || t1.size()<maxIndex){
 
- 			cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w1.size()==0 || t1.size()==0){
 
- 			cout<<"Voltage or Time vector empty. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector empty. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w1.size()!= t1.size()){
 
- 			cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<endl;
+ 			std::cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<std::endl;
  			continue;
  		}
 
@@ -472,10 +472,10 @@ void analisi(){
 		*a1=Analyzer(w1,t1);  //to be checked: is this a correct usage of memory?
 		a1->Correct_Baseline(100);
 
-		std::pair<double, unsigned int> tp_pair1 = a1->Find_Signal_Maximum(false,search_range); 
+		std::pair<double, unsigned int> tp_pair1 = a1->Find_Signal_Maximum(false,search_range);
 		std::pair<double, double> tp_pair1_fit = a1->Pmax_with_GausFit(tp_pair1,maxIndex);
-		std::pair<double, unsigned int> neg_tp_pair1 = a1->Find_Negative_Signal_Maximum(false,search_range); 
-		std::pair<double, double> neg_tp_pair1_fit = a1->Negative_Pmax_with_GausFit(neg_tp_pair1,maxIndex);      
+		std::pair<double, unsigned int> neg_tp_pair1 = a1->Find_Negative_Signal_Maximum(false,search_range);
+		std::pair<double, double> neg_tp_pair1_fit = a1->Negative_Pmax_with_GausFit(neg_tp_pair1,maxIndex);
 		Pmax1 = tp_pair1.first*voltage_const; //mV
 		//negPmax1 = neg_tp_pair1.first*voltage_const; //mV
 		Pmax1Fit = tp_pair1_fit.first*voltage_const; //mV
@@ -488,7 +488,7 @@ void analisi(){
 		UArea1 = a1->Find_Undershoot_Area(tp_pair1)*voltage_const*time_const; //mV*ns
 		//AreaFixed1 = a1->Pulse_Integration_with_Fixed_Window_Size(tp_pair1,"Simpson",1,1)*voltage_const*time_const; //mV*ns  ["Simpson" or "Rectangluar" are the 2 integration methods] 3rd and 4th arguments define the time window around Tmax (in ns!!!)
 		AreaFixed1Fit = a1->Pulse_Integration_with_Fixed_Window_Size_with_GausFit(tp_pair1_fit,tp_pair1.second,"Simpson",1,1)*voltage_const*time_const; //mV*ns
-		//AreaInterpolated1 = a1->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair1,"Simpson",true,1)*voltage_const*time_const; //mV*ns  4th argument is integration stop time. If 3rd arg is TRUE, stop time is calculated relative to the maximum, while it is absolute time in FALSE case.  
+		//AreaInterpolated1 = a1->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair1,"Simpson",true,1)*voltage_const*time_const; //mV*ns  4th argument is integration stop time. If 3rd arg is TRUE, stop time is calculated relative to the maximum, while it is absolute time in FALSE case.
 		AreaInterpolated1Fit = a1->Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(tp_pair1_fit,tp_pair1.second,"Simpson",true,1)*voltage_const*time_const;
 		Area1_new = a1->New_Pulse_Area(tp_pair1_fit,tp_pair1.second,"Simpson",search_range, time_window[0], time_window[1])*voltage_const*time_const;//mV*ns  Similar to "Area1" method, but start/end times of the pulse are defined analitically. Should be the most accurate definition
 		UArea1_new = a1->New_Undershoot_Area(tp_pair1_fit,neg_tp_pair1_fit, neg_tp_pair1.second,"Simpson",search_range)*voltage_const*time_const;//mV*ns
@@ -497,7 +497,7 @@ void analisi(){
 		//dVdt1 = a1->Find_Dvdt(20,0,tp_pair1)*(voltage_const/time_const);  //mV/ns     [20 is the % at which the signal derivative is computed]
 		dVdt1Fit = a1->Find_Dvdt_with_GausFit(20,0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const);  //mV/ns
 		//cfd1 = a1->Rising_Edge_CFD_Time(20,tp_pair1)*time_const;  //ns   [standard CFD, 1st argument is the CFD %]
-		//cfd1Fit = a1->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair1_fit,tp_pair1.second)*time_const;  //ns 
+		//cfd1Fit = a1->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair1_fit,tp_pair1.second)*time_const;  //ns
 		//signal_width1 = a1->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair1_fit,tp_pair1.second)*time_const - cfd1Fit; //ns
 		t_thr1 = a1->Find_Time_At_Threshold(20,tp_pair1)*time_const; //ns    [time at which a thr (in mV !!!) is passed]
 		rms1 = a1->Find_Noise(100)*voltage_const; //mV
@@ -541,29 +541,29 @@ void analisi(){
 
  		if(w2.size()<maxIndex || t2.size()<maxIndex){
 
- 			cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w2.size()==0 || t2.size()==0){
 
- 			cout<<"Voltage or Time vector empty. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector empty. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w2.size()!= t2.size()){
 
- 			cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<endl;
+ 			std::cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<std::endl;
  			continue;
  		}
 
-		*a2=Analyzer(w2,t2);  
+		*a2=Analyzer(w2,t2);
 		a2->Correct_Baseline(100);
 
-		std::pair<double, unsigned int> tp_pair2 = a2->Find_Signal_Maximum(false,search_range); 
+		std::pair<double, unsigned int> tp_pair2 = a2->Find_Signal_Maximum(false,search_range);
 		std::pair<double, double> tp_pair2_fit = a2->Pmax_with_GausFit(tp_pair2,maxIndex);
-		std::pair<double, unsigned int> neg_tp_pair2 = a2->Find_Negative_Signal_Maximum(false,search_range); 
-		std::pair<double, double> neg_tp_pair2_fit = a2->Negative_Pmax_with_GausFit(neg_tp_pair2,maxIndex);      
+		std::pair<double, unsigned int> neg_tp_pair2 = a2->Find_Negative_Signal_Maximum(false,search_range);
+		std::pair<double, double> neg_tp_pair2_fit = a2->Negative_Pmax_with_GausFit(neg_tp_pair2,maxIndex);
 		Pmax2 = tp_pair2.first*voltage_const; //mV
 		//negPmax2 = neg_tp_pair2.first*voltage_const; //mV
 		Pmax2Fit = tp_pair2_fit.first*voltage_const; //mV
@@ -576,16 +576,16 @@ void analisi(){
 		UArea2 = a2->Find_Undershoot_Area(tp_pair2)*voltage_const*time_const;
 		//AreaFixed2 = a2->Pulse_Integration_with_Fixed_Window_Size(tp_pair2,"Simpson",1,1)*voltage_const*time_const;
 		AreaFixed2Fit = a2->Pulse_Integration_with_Fixed_Window_Size_with_GausFit(tp_pair2_fit,tp_pair2.second,"Simpson",1,1)*voltage_const*time_const;
-		//AreaInterpolated2 = a2->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair2,"Simpson",true,1)*voltage_const*time_const; 
+		//AreaInterpolated2 = a2->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair2,"Simpson",true,1)*voltage_const*time_const;
 		AreaInterpolated2Fit = a2->Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(tp_pair2_fit,tp_pair2.second,"Simpson",true,1)*voltage_const*time_const;
 		Area2_new = a2->New_Pulse_Area(tp_pair2_fit,tp_pair2.second,"Simpson",search_range, time_window[0], time_window[1])*voltage_const*time_const;
 		UArea2_new = a2->New_Undershoot_Area(tp_pair2_fit,neg_tp_pair2_fit, neg_tp_pair2.second,"Simpson",search_range)*voltage_const*time_const;//mV*ns
 		//RiseTime2 = a2->Find_Rise_Time(tp_pair2,0.1,0.9)*time_const;
 		RiseTime2Fit = a2->Find_Rise_Time_with_GausFit(tp_pair2_fit, tp_pair2.second, 0.1, 0.9)*time_const; //ns
-		//dVdt2 = a2->Find_Dvdt(20,0,tp_pair2)*(voltage_const/time_const);  
+		//dVdt2 = a2->Find_Dvdt(20,0,tp_pair2)*(voltage_const/time_const);
 		dVdt2Fit = a2->Find_Dvdt_with_GausFit(20,0,tp_pair2_fit,tp_pair2.second)*(voltage_const/time_const);
 		//cfd2 = a2->Rising_Edge_CFD_Time(20,tp_pair2)*time_const;
-		//cfd2Fit = a2->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair2_fit,tp_pair2.second)*time_const;  
+		//cfd2Fit = a2->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair2_fit,tp_pair2.second)*time_const;
 		//signal_width2 = a2->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair2_fit,tp_pair2.second)*time_const - cfd2Fit;
 		t_thr2 = a2->Find_Time_At_Threshold(0.02,tp_pair2)*time_const;
 		rms2 = a2->Find_Noise(100)*voltage_const;
@@ -598,7 +598,7 @@ void analisi(){
 
 		}
 
-		
+
 
 		counter2++;
 
@@ -632,29 +632,29 @@ void analisi(){
 
  		if(w3.size()<maxIndex || t3.size()<maxIndex){
 
- 			cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w3.size()==0 || t3.size()==0){
 
- 			cout<<"Voltage or Time vector empty. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector empty. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w3.size()!= t3.size()){
 
- 			cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<endl;
+ 			std::cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<std::endl;
  			continue;
  		}
 
-		*a3 = Analyzer(w3,t3);  
+		*a3 = Analyzer(w3,t3);
 		a3->Correct_Baseline(100);
 
-		std::pair<double, unsigned int> tp_pair3 = a3->Find_Signal_Maximum(false,search_range); 
+		std::pair<double, unsigned int> tp_pair3 = a3->Find_Signal_Maximum(false,search_range);
 		std::pair<double, double> tp_pair3_fit = a3->Pmax_with_GausFit(tp_pair3,maxIndex);
-		std::pair<double, unsigned int> neg_tp_pair3 = a3->Find_Negative_Signal_Maximum(false,search_range); 
-		std::pair<double, double> neg_tp_pair3_fit = a3->Negative_Pmax_with_GausFit(neg_tp_pair3,maxIndex);      
+		std::pair<double, unsigned int> neg_tp_pair3 = a3->Find_Negative_Signal_Maximum(false,search_range);
+		std::pair<double, double> neg_tp_pair3_fit = a3->Negative_Pmax_with_GausFit(neg_tp_pair3,maxIndex);
 		Pmax3 = tp_pair3.first*voltage_const; //mV
 		//negPmax3 = neg_tp_pair3.first*voltage_const; //mV
 		Pmax3Fit = tp_pair3_fit.first*voltage_const; //mV
@@ -667,16 +667,16 @@ void analisi(){
 		UArea3 = a3->Find_Undershoot_Area(tp_pair3)*voltage_const*time_const;
 		//AreaFixed3 = a3->Pulse_Integration_with_Fixed_Window_Size(tp_pair3,"Simpson",1,1)*voltage_const*time_const;
 		AreaFixed3Fit = a3->Pulse_Integration_with_Fixed_Window_Size_with_GausFit(tp_pair3_fit,tp_pair3.second,"Simpson",1,1)*voltage_const*time_const;
-		//AreaInterpolated3 = a3->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair3,"Simpson",true,1)*voltage_const*time_const;   
+		//AreaInterpolated3 = a3->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair3,"Simpson",true,1)*voltage_const*time_const;
 		AreaInterpolated3Fit = a3->Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(tp_pair3_fit,tp_pair3.second,"Simpson",true,1)*voltage_const*time_const;
 		Area3_new = a3->New_Pulse_Area(tp_pair3_fit,tp_pair3.second,"Simpson",search_range, time_window[0], time_window[1])*voltage_const*time_const;
 		UArea3_new = a3->New_Undershoot_Area(tp_pair3_fit,neg_tp_pair3_fit, neg_tp_pair3.second,"Simpson",search_range)*voltage_const*time_const;//mV*ns
 		//RiseTime3 = a3->Find_Rise_Time(tp_pair3,0.1,0.9)*time_const;
 		RiseTime3Fit = a3->Find_Rise_Time_with_GausFit(tp_pair3_fit, tp_pair3.second, 0.1, 0.9)*time_const; //ns
-		//dVdt3 = a3->Find_Dvdt(20,0,tp_pair3)*(voltage_const/time_const);  
+		//dVdt3 = a3->Find_Dvdt(20,0,tp_pair3)*(voltage_const/time_const);
 		dVdt3Fit = a3->Find_Dvdt_with_GausFit(20,0,tp_pair3_fit,tp_pair3.second)*(voltage_const/time_const);
-		//cfd3 = a3->Rising_Edge_CFD_Time(20,tp_pair3)*time_const; 
-		//cfd3Fit = a3->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair3_fit,tp_pair3.second)*time_const; 
+		//cfd3 = a3->Rising_Edge_CFD_Time(20,tp_pair3)*time_const;
+		//cfd3Fit = a3->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair3_fit,tp_pair3.second)*time_const;
 		//signal_width3 = a3->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair3_fit,tp_pair3.second)*time_const - cfd3Fit;
 		t_thr3 = a3->Find_Time_At_Threshold(0.02,tp_pair3)*time_const;
 		rms3 = a3->Find_Noise(100)*voltage_const;
@@ -720,29 +720,29 @@ void analisi(){
 
  		if(w4.size()<maxIndex || t4.size()<maxIndex){
 
- 			cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w4.size()==0 || t4.size()==0){
 
- 			cout<<"Voltage or Time vector empty. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector empty. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w4.size()!= t4.size()){
 
- 			cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<endl;
+ 			std::cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<std::endl;
  			continue;
  		}
 
-		*a4 = Analyzer(w4,t4);  
+		*a4 = Analyzer(w4,t4);
 		a4->Correct_Baseline(100);
 
-		std::pair<double, unsigned int> tp_pair4 = a4->Find_Signal_Maximum(false,search_range); 
+		std::pair<double, unsigned int> tp_pair4 = a4->Find_Signal_Maximum(false,search_range);
 		std::pair<double, double> tp_pair4_fit = a4->Pmax_with_GausFit(tp_pair4,maxIndex);
-		std::pair<double, unsigned int> neg_tp_pair4 = a4->Find_Negative_Signal_Maximum(false,search_range); 
-		std::pair<double, double> neg_tp_pair4_fit = a4->Negative_Pmax_with_GausFit(neg_tp_pair4,maxIndex);      
+		std::pair<double, unsigned int> neg_tp_pair4 = a4->Find_Negative_Signal_Maximum(false,search_range);
+		std::pair<double, double> neg_tp_pair4_fit = a4->Negative_Pmax_with_GausFit(neg_tp_pair4,maxIndex);
 		Pmax4 = tp_pair4.first*voltage_const; //mV
 		//negPmax4 = neg_tp_pair4.first*voltage_const; //mV
 		Pmax4Fit = tp_pair4_fit.first*voltage_const; //mV
@@ -755,16 +755,16 @@ void analisi(){
 		UArea4 = a4->Find_Undershoot_Area(tp_pair4)*voltage_const*time_const;
 		//AreaFixed4 = a4->Pulse_Integration_with_Fixed_Window_Size(tp_pair4,"Simpson",1,1)*voltage_const*time_const;
 		AreaFixed4Fit = a4->Pulse_Integration_with_Fixed_Window_Size_with_GausFit(tp_pair4_fit,tp_pair4.second,"Simpson",1,1)*voltage_const*time_const;
-		//AreaInterpolated4 = a4->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair4,"Simpson",true,1)*voltage_const*time_const; 
+		//AreaInterpolated4 = a4->Pulse_Area_With_Linear_Interpolate_Edge(tp_pair4,"Simpson",true,1)*voltage_const*time_const;
 		AreaInterpolated4Fit = a4->Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(tp_pair4_fit,tp_pair4.second,"Simpson",true,1)*voltage_const*time_const;
 		Area4_new = a4->New_Pulse_Area(tp_pair4_fit,tp_pair4.second,"Simpson",search_range, time_window[0], time_window[1])*voltage_const*time_const;
 		UArea4_new = a4->New_Undershoot_Area(tp_pair4_fit,neg_tp_pair4_fit, neg_tp_pair4.second,"Simpson",search_range)*voltage_const*time_const;//mV*ns
 		//RiseTime4 = a4->Find_Rise_Time(tp_pair4,0.1,0.9)*time_const;
 		RiseTime4Fit = a4->Find_Rise_Time_with_GausFit(tp_pair4_fit, tp_pair4.second, 0.1, 0.9)*time_const; //ns
-		//dVdt4 = a4->Find_Dvdt(20,0,tp_pair4)*(voltage_const/time_const); 
-		dVdt4Fit = a4->Find_Dvdt_with_GausFit(20,0,tp_pair4_fit,tp_pair4.second)*(voltage_const/time_const); 
-		//cfd4 = a4->Rising_Edge_CFD_Time(20,tp_pair4)*time_const; 
-		//cfd4Fit = a4->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair4_fit,tp_pair4.second)*time_const; 
+		//dVdt4 = a4->Find_Dvdt(20,0,tp_pair4)*(voltage_const/time_const);
+		dVdt4Fit = a4->Find_Dvdt_with_GausFit(20,0,tp_pair4_fit,tp_pair4.second)*(voltage_const/time_const);
+		//cfd4 = a4->Rising_Edge_CFD_Time(20,tp_pair4)*time_const;
+		//cfd4Fit = a4->Rising_Edge_CFD_Time_with_GausFit(20,tp_pair4_fit,tp_pair4.second)*time_const;
 		//signal_width4 = a4->Falling_Edge_CFD_Time_with_GausFit(20,tp_pair4_fit,tp_pair4.second)*time_const - cfd4Fit;
 		t_thr4 = a4->Find_Time_At_Threshold(0.02,tp_pair4)*time_const;
 		rms4 = a4->Find_Noise(100)*voltage_const;
@@ -781,18 +781,18 @@ void analisi(){
 
 	ntrig=j;
 	event=j;
-		
+
 	OutTree->Fill();
 
-	if(j%10000 == 0) cout<<"processed events:"<<j<<endl;
-	//cout<<"processed events:"<<j<<endl;
+	if(j%10000 == 0) std::cout<<"processed events:"<<j<<std::endl;
+	//std::cout<<"processed events:"<<j<<std::endl;
 
 	j++;
-		
+
 
 	}
 
-	
+
  OutTree->Write();
  OutputFile->Write();
 
