@@ -1044,7 +1044,7 @@ double Analyzer::Falling_Edge_CFD_Time_with_GausFit(const double fraction, const
 
     bool failure = true;
 
-    for( int j = imax; j>npoints; j++ )
+    for( int j = imax; j<npoints; j++ )
     {
       if( this->pvoltage.at(j) <= pmax*fraction/100.0)
       {
