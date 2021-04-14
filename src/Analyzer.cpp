@@ -145,7 +145,7 @@ std::pair<double, unsigned int> Analyzer::Find_Signal_Maximum(bool confineSearch
 std::pair<double, double> Analyzer::Pmax_with_GausFit(const std::pair<double, unsigned int> Pmax, unsigned int maxIndex){
 
   double pmax, tmax;
-  int pmaxIndex = Pmax.second;
+  unsigned int pmaxIndex = Pmax.second;
   double time_bin = this->ptime.at(1)-this->ptime.at(0);
 
   if( pmaxIndex > 5 && pmaxIndex < maxIndex-5 ){
@@ -243,7 +243,7 @@ std::pair<double, unsigned int> Analyzer::Find_Negative_Signal_Maximum( bool con
 std::pair<double, double> Analyzer::Negative_Pmax_with_GausFit(const std::pair<double, unsigned int> NegPmax, unsigned int maxIndex){
 
   double pmax, tmax;
-  int pmaxIndex = NegPmax.second;
+  unsigned int pmaxIndex = NegPmax.second;
   double time_bin = this->ptime.at(1)-this->ptime.at(0);
 
   if( pmaxIndex > 5 && pmaxIndex < maxIndex-5 ){
@@ -582,7 +582,7 @@ double Analyzer::Pulse_Area_With_Linear_Interpolate_Edge( const std::pair<double
   double _20pmax_time = 0.0;
   double _10pmax_time = 0.0;
   unsigned int istart = 0;
-  unsigned int iend;
+  unsigned int iend = 0;
   double start_time = 0.0;
   bool found_20pmax = false;
   bool found_10pmax = false;
@@ -696,7 +696,7 @@ double Analyzer::Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit( const std
   double _20pmax_time = 0.0;
   double _10pmax_time = 0.0;
   unsigned int istart = 0;
-  unsigned int iend;
+  unsigned int iend = 0;
   double start_time = 0.0;
   bool found_20pmax = false;
   bool found_10pmax = false;
@@ -849,7 +849,8 @@ double Analyzer::Find_Rise_Time_with_GausFit(const std::pair<double, double> Pma
 
 double rise = 0.0;
 
-  unsigned int itop = this->pvoltage.size()-2, ibottom = 0;
+  //unsigned int itop = this->pvoltage.size()-2, ibottom = 0;
+  unsigned int itop = 500, ibottom = 500;
 
   bool ten = true, ninety = true;
 
@@ -859,7 +860,7 @@ double rise = 0.0;
   double lowerval = pmax * bottom;
   double upperval = pmax * top;
 
-  for( int j = imax; j > -1; j--)
+  for( int j = imax; j > 0; j--)
   {
     if( ninety && this->pvoltage.at(j) < upperval)
     {
@@ -886,6 +887,64 @@ double rise = 0.0;
   double pt = this->pvoltage.at(itop);
   double tt_1 =  this->ptime.at(itop + 1);
   double pt_1 = this->pvoltage.at(itop + 1);
+
+  double tbottom = xlinearInter( tb, pb, tb_1, pb_1, lowerval);
+  double ttop    = xlinearInter( tt, pt, tt_1, pt_1, upperval);
+
+  rise  = ttop - tbottom; // rise
+  return rise;
+
+
+}
+
+
+double Analyzer::Find_Fall_Time_with_GausFit(const std::pair<double, double> Pmax, unsigned int imax, double bottom , double top){
+
+
+double rise = 0.0;
+
+  //unsigned int itop = this->pvoltage.size()-2, ibottom = 0;
+  unsigned int itop = 500, ibottom = 500;
+
+  bool ten = true, ninety = true;
+  std::size_t npoints = this->pvoltage.size()-1;
+
+  //unsigned int imax = Pmax.second;
+  double pmax = Pmax.first;
+
+  double lowerval = pmax * bottom;
+  double upperval = pmax * top;
+
+  for( unsigned int j = imax; j < npoints; j++)
+  {
+    if( ninety && this->pvoltage.at(j) < upperval)
+    {
+      itop    = j;     //find the index right below 90%
+      ninety  = false;
+      //std::cout<<"pippo"<<std::endl;
+    }
+    if( ten && this->pvoltage.at(j) < lowerval)
+    {
+      ibottom = j;      //find the index right below 10%
+      ten     = false;
+      //std::cout<<"pippo2"<<std::endl;
+    }
+    if( !ten && !ninety ){ break; }
+  }
+  if(ibottom == this->pvoltage.size()-1){ibottom--;}
+  if(itop == this->pvoltage.size()-1){itop--;}
+  //std::cout<<itop<<std::endl;
+  //std::cout<<ibottom<<std::endl;
+  //std::cout<<" "<<std::endl;
+  double tb = this->ptime.at(ibottom);
+  double pb = this->pvoltage.at(ibottom);
+  double tb_1 =  this->ptime.at(ibottom - 1);
+  double pb_1 = this->pvoltage.at(ibottom - 1);
+
+  double tt = this->ptime.at(itop);
+  double pt = this->pvoltage.at(itop);
+  double tt_1 =  this->ptime.at(itop - 1);
+  double pt_1 = this->pvoltage.at(itop - 1);
 
   double tbottom = xlinearInter( tb, pb, tb_1, pb_1, lowerval);
   double ttop    = xlinearInter( tt, pt, tt_1, pt_1, upperval);
@@ -939,7 +998,8 @@ double Analyzer::Find_Dvdt_with_GausFit(const int fraction, const int ndif, cons
 
     double time_difference = 0.0;
     double dvdt = 0.0;
-    unsigned int ifraction = 0;
+    //unsigned int ifraction = 0;
+    int ifraction = 0;
 
     time_difference = this->ptime.at(1) - this->ptime.at(0);
 
@@ -956,9 +1016,9 @@ double Analyzer::Find_Dvdt_with_GausFit(const int fraction, const int ndif, cons
       }
     }//find index of first point before constant fraction of pulse
 
-    if(ifraction == this->pvoltage.size()-1) ifraction--;
+    if(ifraction == int(this->pvoltage.size())-1) ifraction--;
 
-    if(ndif == 0)
+    if(ndif == 0 || imax<100 || imax>(this->pvoltage.size()-100))
     {
       dvdt = (this->pvoltage.at(ifraction+1) - this->pvoltage.at(ifraction))/time_difference;
     }
@@ -967,6 +1027,55 @@ double Analyzer::Find_Dvdt_with_GausFit(const int fraction, const int ndif, cons
     {
       dvdt = (this->pvoltage.at(ifraction+ndif) - this->pvoltage.at(ifraction-ndif))/(time_difference*(ndif*2));
     }
+
+    return dvdt;
+
+}
+
+
+double Analyzer::Find_Dvdt2080_with_GausFit(const int ndif, const std::pair<double,double> Pmax, unsigned int imax){
+
+    double time_difference = 0.0;
+    double dvdt = 0.0;
+    //unsigned int ifraction = 0;
+    int ifraction = 0;
+    int ifraction2 = 0;
+
+    double _20pmax_time = 0;
+    double _80pmax_time = 0;
+
+    time_difference = this->ptime.at(1) - this->ptime.at(0);
+
+    double pmax = Pmax.first;
+    //unsigned int imax = Pmax.second;
+
+    for( int j = imax; j>-1; j--)
+    {
+      if( this->pvoltage.at(j) <= pmax*double(20)/100)
+      {
+        ifraction = j;
+
+        break;
+      }
+    }//find index of first point before constant fraction of pulse
+
+    for( int j = imax; j>-1; j--)
+    {
+      if( this->pvoltage.at(j) <= pmax*double(80)/100)
+      {
+        ifraction2 = j;
+
+        break;
+      }
+    }//find index of first point before constant fraction of pulse
+
+    if(ifraction == int(this->pvoltage.size())-1) ifraction--;
+    if(ifraction2 == int(this->pvoltage.size())-1) ifraction2--;
+
+    _20pmax_time = xlinearInter( this->ptime.at(ifraction), this->pvoltage.at(ifraction), this->ptime.at(ifraction+1), this->pvoltage.at(ifraction+1), pmax*0.2 );
+    _80pmax_time = xlinearInter( this->ptime.at(ifraction2), this->pvoltage.at(ifraction2), this->ptime.at(ifraction2+1), this->pvoltage.at(ifraction2+1), pmax*0.8 );
+
+    dvdt = 0.6*pmax/(_80pmax_time - _20pmax_time);
 
     return dvdt;
 
@@ -1013,7 +1122,7 @@ double Analyzer::Rising_Edge_CFD_Time_with_GausFit(const double fraction, const 
 
     bool failure = true;
 
-    for( int j = imax; j>-1; j-- )
+    for( int j = imax; j>0; j-- )
     {
       if( this->pvoltage.at(j) <= pmax*fraction/100.0)
       {
@@ -1028,6 +1137,10 @@ double Analyzer::Rising_Edge_CFD_Time_with_GausFit(const double fraction, const 
     if( failure ) time_fraction = this->ptime.at(0);
     else time_fraction = time_fraction + (this->ptime.at(ifraction+1) - this->ptime.at(ifraction))* (pmax*fraction/100.0 - this->pvoltage.at(ifraction)) /(this->pvoltage.at(ifraction+1) - this->pvoltage.at(ifraction));
 
+    //cout<< this->ptime.at(ifraction) << " " << this->pvoltage.at(ifraction) << endl;
+    //cout<< this->ptime.at(ifraction+1) << " " << this->pvoltage.at(ifraction+1) << endl;
+    //cout<< "time at 20: " << time_fraction << " voltage at 20: " << pmax*fraction/100.0 << endl;
+    //cout<<" "<<endl;
     return time_fraction;
 
 }
@@ -1039,12 +1152,12 @@ double Analyzer::Falling_Edge_CFD_Time_with_GausFit(const double fraction, const
     //unsigned int imax = Pmax.second;
 
     double time_fraction = 0.0;
-    unsigned int ifraction = 0;
-    std::size_t npoints = this->pvoltage.size();
+    unsigned int ifraction = 1;
+    std::size_t npoints = this->pvoltage.size()-1;
 
     bool failure = true;
 
-    for( int j = imax; j<npoints; j++ )
+    for( unsigned int j = imax; j<npoints; j++ )
     {
       if( this->pvoltage.at(j) <= pmax*fraction/100.0)
       {
@@ -1054,7 +1167,7 @@ double Analyzer::Falling_Edge_CFD_Time_with_GausFit(const double fraction, const
         break;
       }
     }
-    if(ifraction == this->pvoltage.size()-1) ifraction--;
+    if(ifraction == 0) ifraction = 10;
 
     if( failure ) time_fraction = this->ptime.at(npoints-1);
     else time_fraction = time_fraction + (this->ptime.at(ifraction-1) - this->ptime.at(ifraction))* (pmax*fraction/100.0 - this->pvoltage.at(ifraction)) /(this->pvoltage.at(ifraction-1) - this->pvoltage.at(ifraction));
@@ -1115,7 +1228,7 @@ double Analyzer::New_Pulse_Area( const std::pair<double,double> Pmax, unsigned i
     double timeOfMaximum = Pmax.second;
     std::size_t npoints = this->pvoltage.size();
 
-    if( imax == npoints-1 ) imax = imax - 1;//preventing out of range.
+    //if( imax == npoints-1 ) imax = imax - 1;//preventing out of range.
 
     const double _20pmax = Pmax.first * 0.20;
     const double _10pmax = Pmax.first * 0.10;
@@ -1124,7 +1237,7 @@ double Analyzer::New_Pulse_Area( const std::pair<double,double> Pmax, unsigned i
     double _20pmax_time_2 = 0.0;
     double _10pmax_time_2 = 0.0;
     unsigned int istart = 0;
-    unsigned int iend;
+    unsigned int iend = 0;
     double start_time = 0.0;
     double end_time = 0.0;
     bool found_20pmax = false;
@@ -1132,7 +1245,7 @@ double Analyzer::New_Pulse_Area( const std::pair<double,double> Pmax, unsigned i
     bool found_20pmax_2 = false;
     bool found_10pmax_2 = false;
 
-    for( int j = imax; j>-1; j-- ) // find index of start of pulse
+    for( int j = imax; j>0; j-- ) // find index of start of pulse
     {
       if( !found_20pmax )
       {
@@ -1158,7 +1271,7 @@ double Analyzer::New_Pulse_Area( const std::pair<double,double> Pmax, unsigned i
     start_time = xlinearInter( _10pmax_time, _10pmax, _20pmax_time, _20pmax, 0.0 );
 
 
-    for( unsigned int j = imax; j< npoints; j++ ) // find index of end of pulse
+    for( unsigned int j = imax; j< npoints-1; j++ ) // find index of end of pulse
     {
       if( !found_20pmax_2 )
       {
@@ -1189,7 +1302,7 @@ double Analyzer::New_Pulse_Area( const std::pair<double,double> Pmax, unsigned i
     //if(start_time > start_window || isinf(start_time)) start_time = 0;
     //if(start_time > start_window && end_time < end_window && !isinf(start_time) && !isinf(end_time)){
 
-      for( unsigned int j = 0; j < npoints; j++ )
+      for( unsigned int j = 0; j < npoints-1; j++ )
       {
 
         if( this->ptime.at(j) >= start_time )
@@ -1201,7 +1314,7 @@ double Analyzer::New_Pulse_Area( const std::pair<double,double> Pmax, unsigned i
 
       }
 
-      for(unsigned int j = imax; j < npoints; j++)
+      for(unsigned int j = imax; j < npoints-1; j++)
       {
 
         if( this->ptime.at(j) >= end_time )
@@ -1242,7 +1355,7 @@ double Analyzer::New_Pulse_Area( const std::pair<double,double> Pmax, unsigned i
 
     //}else return -1000;
 
-  }else return -1000;
+  }else return -1;
 
 }
 
@@ -1258,7 +1371,7 @@ double Analyzer::New_Undershoot_Area( const std::pair<double,double> Pmax, const
     //unsigned int imin = Pmin.second;
     std::size_t npoints = this->pvoltage.size();
 
-    if( imin == npoints-1 ) imin = imin - 1;//preventing out of range.
+    //if( imin == npoints-1 ) imin = imin - 1;//preventing out of range.
 
     const double _20pmin = Pmin.first * 0.20;
     const double _10pmin = Pmin.first * 0.10;
@@ -1267,7 +1380,7 @@ double Analyzer::New_Undershoot_Area( const std::pair<double,double> Pmax, const
     double _20pmin_time = 0.0;
     double _10pmin_time = 0.0;
     unsigned int istart = 0;
-    unsigned int iend;
+    unsigned int iend = 0;
     double start_time = 0.0;
     double end_time = 0.0;
     bool found_20pmin2 = false;
@@ -1275,7 +1388,7 @@ double Analyzer::New_Undershoot_Area( const std::pair<double,double> Pmax, const
     bool found_20pmin = false;
     bool found_10pmin = false;
 
-    for( int j = imin; j>-1; j-- ) // find index of start of pulse
+    for( int j = imin; j>0; j-- ) // find index of start of pulse
     {
       if( !found_20pmin2 )
       {
@@ -1301,7 +1414,7 @@ double Analyzer::New_Undershoot_Area( const std::pair<double,double> Pmax, const
     start_time = xlinearInter( _10pmin_time2, _10pmin, _20pmin_time2, _20pmin, 0.0 );
 
 
-    for( unsigned int j = imin; j< npoints; j++ ) // find index of end of pulse
+    for( unsigned int j = imin; j< npoints-1; j++ ) // find index of end of pulse
     {
       if( !found_20pmin )
       {
@@ -1327,7 +1440,7 @@ double Analyzer::New_Undershoot_Area( const std::pair<double,double> Pmax, const
     end_time = xlinearInter( _10pmin_time, _10pmin, _20pmin_time, _20pmin, 0.0 );
 
 
-      for( unsigned int j = 0; j < npoints; j++ )
+      for( unsigned int j = 0; j < npoints-1; j++ )
       {
 
         if( this->ptime.at(j) >= start_time )
@@ -1339,7 +1452,7 @@ double Analyzer::New_Undershoot_Area( const std::pair<double,double> Pmax, const
 
       }
 
-      for(unsigned int j = imin; j < npoints; j++)
+      for(unsigned int j = imin; j < npoints-1; j++)
       {
 
         if( this->ptime.at(j) >= end_time )
@@ -1380,6 +1493,6 @@ double Analyzer::New_Undershoot_Area( const std::pair<double,double> Pmax, const
 
     //}else return -1000;
 
-  }else return -1000;
+  }else return -1;
 
 }
