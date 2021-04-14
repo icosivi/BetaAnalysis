@@ -18,7 +18,7 @@
 #include "include/ConfigFile.hpp"
 #include "src/Analyzer.hpp"
 
-
+//void Compilatore(){
 
 
   gSystem->CompileMacro("src/general.cpp","kg");
