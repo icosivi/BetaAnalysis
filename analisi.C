@@ -48,7 +48,7 @@ void analisi(){
  TFile *file = TFile::Open(filename);
  TTree *itree = dynamic_cast<TTree*>(file->Get("wfm"));
  TTreeReader myReader("wfm", file);
- 
+
 //Definition of TTreeReaders
  int ch_number = cf.Value("HEADER","active_channels");
  char *branch[ch_number];
@@ -62,7 +62,7 @@ void analisi(){
 
 		ch_cont[j]=1;
 		cont=j+1;
-	 	
+
 	}else{
 
 		ch_cont[j]=0;
@@ -71,7 +71,7 @@ void analisi(){
  }
 
 
- 
+
 
  for(int j=0;j<4;j++){
 
@@ -79,23 +79,23 @@ void analisi(){
 
 	 	branch[j] = Form("w%i",j+1);
 	 	t_branch[j] = Form("t%i",j+1);
-	 		
+
 	}else{
 
 	 	branch[j] = Form("w%i",cont);
 	 	t_branch[j] = Form("t%i",cont);
-	  		
+
 	}
 
  }
 
- TTreeReaderArray<double> voltageReader1(myReader, branch[0]);  
+ TTreeReaderArray<double> voltageReader1(myReader, branch[0]);
  TTreeReaderArray<double> timeReader1(myReader, t_branch[0]);
- TTreeReaderArray<double> voltageReader2(myReader, branch[1]);  
+ TTreeReaderArray<double> voltageReader2(myReader, branch[1]);
  TTreeReaderArray<double> timeReader2(myReader, t_branch[1]);
- TTreeReaderArray<double> voltageReader3(myReader, branch[2]);  
+ TTreeReaderArray<double> voltageReader3(myReader, branch[2]);
  TTreeReaderArray<double> timeReader3(myReader, t_branch[2]);
- TTreeReaderArray<double> voltageReader4(myReader, branch[3]);  
+ TTreeReaderArray<double> voltageReader4(myReader, branch[3]);
  TTreeReaderArray<double> timeReader4(myReader, t_branch[3]);
 
  TTreeReaderValue<double> xReader(myReader,"x_pos");
@@ -107,8 +107,8 @@ void analisi(){
  const char *output_filename = outFilename.c_str();
  TFile *OutputFile = new TFile(output_filename,"recreate");
  TTree *OutTree = new TTree("Analysis","Analysis");
- 
-// Variable declaration and Analyzer objects 
+
+// Variable declaration and Analyzer objects
 // Raw data have Voltage in V and Time in ns
  const double time_const = cf.Value("HEADER","time_scalar");  //multiply by this const to pass from s to ns
  const double voltage_const = cf.Value("HEADER","voltage_scalar"); // pass from V to mV
@@ -225,7 +225,7 @@ void analisi(){
 
  int counter = 0;
 
-//Output branches declaration 	 
+//Output branches declaration
  if( enable_channel_1 == 1){
 
 	 OutTree->Branch("w1",&w1);
@@ -248,7 +248,7 @@ void analisi(){
 	 OutTree->Branch("rms1",&rms1,"rms1/D");
 
 	 counter++;
- 
+
  	}
 
 
@@ -328,9 +328,9 @@ void analisi(){
 	 counter++;
 
  	}
-	
 
-	
+
+
 
  //double search_range[2] = {-2e-9,2e-9};
  //double time_window[2] = {-25e-9,25e-9}; // Can be included in beta_config
@@ -340,7 +340,7 @@ void analisi(){
  //double time_window[2] = {-0.22e-6,-0.19e-6};
  int j = 0;
 
-//Loop over raw data and fill output branches. Analyzer class manages output variables calculation 
+//Loop over raw data and fill output branches. Analyzer class manages output variables calculation
  while(myReader.Next()){
 
  	int counter2 = 0;
@@ -372,19 +372,19 @@ void analisi(){
 
  		if(w1.size()<maxIndex || t1.size()<maxIndex){
 
- 			cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w1.size()==0 || t1.size()==0){
 
- 			cout<<"Voltage or Time vector empty. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector empty. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w1.size()!= t1.size()){
 
- 			cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<endl;
+ 			std::cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<std::endl;
  			continue;
  		}
 
@@ -392,10 +392,10 @@ void analisi(){
 		*a1=Analyzer(w1,t1);  //to be checked: is this a correct usage of memory?
 		a1->Correct_Baseline(100);
 
-		std::pair<double, unsigned int> tp_pair1 = a1->Find_Signal_Maximum(false,search_range); 
+		std::pair<double, unsigned int> tp_pair1 = a1->Find_Signal_Maximum(false,search_range);
 		std::pair<double, double> tp_pair1_fit = a1->Pmax_with_GausFit(tp_pair1,maxIndex);
-		std::pair<double, unsigned int> neg_tp_pair1 = a1->Find_Negative_Signal_Maximum(false,search_range); 
-		std::pair<double, double> neg_tp_pair1_fit = a1->Negative_Pmax_with_GausFit(neg_tp_pair1,maxIndex);      
+		std::pair<double, unsigned int> neg_tp_pair1 = a1->Find_Negative_Signal_Maximum(false,search_range);
+		std::pair<double, double> neg_tp_pair1_fit = a1->Negative_Pmax_with_GausFit(neg_tp_pair1,maxIndex);
 		Pmax1 = tp_pair1.first*voltage_const; //mV
 		Pmax1Fit = tp_pair1_fit.first*voltage_const; //mV
 		negPmax1Fit = neg_tp_pair1_fit.first*voltage_const; //mV
@@ -451,29 +451,29 @@ void analisi(){
 
  		if(w2.size()<maxIndex || t2.size()<maxIndex){
 
- 			cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w2.size()==0 || t2.size()==0){
 
- 			cout<<"Voltage or Time vector empty. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector empty. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w2.size()!= t2.size()){
 
- 			cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<endl;
+ 			std::cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<std::endl;
  			continue;
  		}
 
-		*a2=Analyzer(w2,t2);  
+		*a2=Analyzer(w2,t2);
 		a2->Correct_Baseline(100);
 
-		std::pair<double, unsigned int> tp_pair2 = a2->Find_Signal_Maximum(false,search_range); 
+		std::pair<double, unsigned int> tp_pair2 = a2->Find_Signal_Maximum(false,search_range);
 		std::pair<double, double> tp_pair2_fit = a2->Pmax_with_GausFit(tp_pair2,maxIndex);
-		std::pair<double, unsigned int> neg_tp_pair2 = a2->Find_Negative_Signal_Maximum(false,search_range); 
-		std::pair<double, double> neg_tp_pair2_fit = a2->Negative_Pmax_with_GausFit(neg_tp_pair2,maxIndex);      
+		std::pair<double, unsigned int> neg_tp_pair2 = a2->Find_Negative_Signal_Maximum(false,search_range);
+		std::pair<double, double> neg_tp_pair2_fit = a2->Negative_Pmax_with_GausFit(neg_tp_pair2,maxIndex);
 		Pmax2 = tp_pair2.first*voltage_const; //mV
 		Pmax2Fit = tp_pair2_fit.first*voltage_const; //mV
 		negPmax2Fit = neg_tp_pair2_fit.first*voltage_const; //mV
@@ -497,7 +497,7 @@ void analisi(){
 
 		}
 
-		
+
 
 		counter2++;
 
@@ -531,29 +531,29 @@ void analisi(){
 
  		if(w3.size()<maxIndex || t3.size()<maxIndex){
 
- 			cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w3.size()==0 || t3.size()==0){
 
- 			cout<<"Voltage or Time vector empty. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector empty. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w3.size()!= t3.size()){
 
- 			cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<endl;
+ 			std::cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<std::endl;
  			continue;
  		}
 
-		*a3 = Analyzer(w3,t3);  
+		*a3 = Analyzer(w3,t3);
 		a3->Correct_Baseline(100);
 
-		std::pair<double, unsigned int> tp_pair3 = a3->Find_Signal_Maximum(false,search_range); 
+		std::pair<double, unsigned int> tp_pair3 = a3->Find_Signal_Maximum(false,search_range);
 		std::pair<double, double> tp_pair3_fit = a3->Pmax_with_GausFit(tp_pair3,maxIndex);
-		std::pair<double, unsigned int> neg_tp_pair3 = a3->Find_Negative_Signal_Maximum(false,search_range); 
-		std::pair<double, double> neg_tp_pair3_fit = a3->Negative_Pmax_with_GausFit(neg_tp_pair3,maxIndex);      
+		std::pair<double, unsigned int> neg_tp_pair3 = a3->Find_Negative_Signal_Maximum(false,search_range);
+		std::pair<double, double> neg_tp_pair3_fit = a3->Negative_Pmax_with_GausFit(neg_tp_pair3,maxIndex);
 		Pmax3 = tp_pair3.first*voltage_const; //mV
 		Pmax3Fit = tp_pair3_fit.first*voltage_const; //mV
 		negPmax3Fit = neg_tp_pair3_fit.first*voltage_const; //mV
@@ -566,6 +566,7 @@ void analisi(){
 		UArea3_new = a3->New_Undershoot_Area(tp_pair3_fit,neg_tp_pair3_fit, neg_tp_pair3.second,"Simpson",search_range)*voltage_const*time_const;//mV*ns
 		RiseTime3Fit = a3->Find_Rise_Time_with_GausFit(tp_pair3_fit, tp_pair3.second, 0.1, 0.9)*time_const; //ns
 		dVdt3Fit = a3->Find_Dvdt_with_GausFit(20,0,tp_pair3_fit,tp_pair3.second)*(voltage_const/time_const);
+
 		t_thr3 = a3->Find_Time_At_Threshold(0.02,tp_pair3)*time_const;
 		rms3 = a3->Find_Noise(100)*voltage_const;
 
@@ -608,29 +609,29 @@ void analisi(){
 
  		if(w4.size()<maxIndex || t4.size()<maxIndex){
 
- 			cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w4.size()==0 || t4.size()==0){
 
- 			cout<<"Voltage or Time vector empty. Skipping whole event"<<endl;
+ 			std::cout<<"Voltage or Time vector empty. Skipping whole event"<<std::endl;
  			continue;
  		}
 
  		if(w4.size()!= t4.size()){
 
- 			cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<endl;
+ 			std::cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<std::endl;
  			continue;
  		}
 
-		*a4 = Analyzer(w4,t4);  
+		*a4 = Analyzer(w4,t4);
 		a4->Correct_Baseline(100);
 
-		std::pair<double, unsigned int> tp_pair4 = a4->Find_Signal_Maximum(false,search_range); 
+		std::pair<double, unsigned int> tp_pair4 = a4->Find_Signal_Maximum(false,search_range);
 		std::pair<double, double> tp_pair4_fit = a4->Pmax_with_GausFit(tp_pair4,maxIndex);
-		std::pair<double, unsigned int> neg_tp_pair4 = a4->Find_Negative_Signal_Maximum(false,search_range); 
-		std::pair<double, double> neg_tp_pair4_fit = a4->Negative_Pmax_with_GausFit(neg_tp_pair4,maxIndex);      
+		std::pair<double, unsigned int> neg_tp_pair4 = a4->Find_Negative_Signal_Maximum(false,search_range);
+		std::pair<double, double> neg_tp_pair4_fit = a4->Negative_Pmax_with_GausFit(neg_tp_pair4,maxIndex);
 		Pmax4 = tp_pair4.first*voltage_const; //mV
 		Pmax4Fit = tp_pair4_fit.first*voltage_const; //mV
 		negPmax4Fit = neg_tp_pair4_fit.first*voltage_const; //mV
@@ -659,20 +660,17 @@ void analisi(){
 	ntrig=j;
 	event=j;
 
-	x_pos = *xReader;
- 	y_pos = *yReader;
-		
 	OutTree->Fill();
 
-	if(j%10000 == 0) cout<<"processed events:"<<j<<endl;
-	//cout<<"processed events:"<<j<<endl;
+	if(j%10000 == 0) std::cout<<"processed events:"<<j<<std::endl;
+	//std::cout<<"processed events:"<<j<<std::endl;
 
 	j++;
-		
+
 
 	}
 
-	
+
  OutTree->Write();
  OutputFile->Write();
 
