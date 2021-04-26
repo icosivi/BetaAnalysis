@@ -125,7 +125,9 @@ int Signal_Peak_Counter(
 
 //==========================================================================
 // time at threshold
-double Find_Time_At_Threshold(const double thresholdLevel, const std::pair<double,unsigned int> Pmax);
+double Find_Time_At_Threshold_with_GausFit(const double thresholdLevel, const std::pair<double,double> Pmax, unsigned int imax);
+double Find_Time_At_Threshold_Falling_Edge_with_GausFit(const double thresholdLevel, const std::pair<double,double> Pmax, unsigned int imax);
+double Find_Time_Over_Threshold(const double thresholdLevel, const std::pair<double,unsigned int> Pmax, const double second_thresholdLevel);
 
 /* void Get_TimeAcrossThreshold(
   const double        thresholdLevel,

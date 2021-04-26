@@ -52,6 +52,8 @@ void analisi(){
 double search_range[2] = {0,0};
 double time_window[2] = {0,0}; 
 
+double tot_levels[2] = {20,20};
+
 
 //Config file definition
  ConfigFile cf("beta_config.ini");
@@ -146,6 +148,8 @@ double time_window[2] = {0,0};
  double CFD1Fit[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double WIDTH1[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double t_thr1=-1000;
+ double tot1=-1000;
+ //double tot1_fs=-1000;
  double rms1=-1000;
  std::vector<double> w1;
  std::vector<double> t1;
@@ -170,6 +174,7 @@ double time_window[2] = {0,0};
  double CFD2Fit[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double WIDTH2[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double t_thr2=-1000;
+ double tot2=-1000;
  double rms2=-1000;
  std::vector<double> w2;
  std::vector<double> t2;
@@ -194,6 +199,7 @@ double time_window[2] = {0,0};
  double CFD3Fit[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double WIDTH3[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double t_thr3=-1000;
+ double tot3=-1000;
  double rms3=-1000;
  std::vector<double> w3;
  std::vector<double> t3;
@@ -218,6 +224,7 @@ double time_window[2] = {0,0};
  double CFD4Fit[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double WIDTH4[7]={-1000,-1000,-1000,-1000,-1000,-1000,-1000};
  double t_thr4=-1000;
+ double tot4=-1000;
  double rms4=-1000;
  std::vector<double> w4;
  std::vector<double> t4;
@@ -259,7 +266,7 @@ double time_window[2] = {0,0};
 	 OutTree->Branch("tmax1",&Tmax1Fit,"Tmax1Fit/D");
 	 OutTree->Branch("negtmax1",&negTmax1Fit,"negTmax1Fit/D");
 	 OutTree->Branch("area1",&Area1,"Area1/D");
-	 OutTree->Branch("Uarea1",&UArea1,"UArea1/D");
+	 OutTree->Branch("uarea1",&UArea1,"UArea1/D");
 	 OutTree->Branch("area1_new",&Area1_new,"Area1_new/D");
 	 OutTree->Branch("uarea1_new",&UArea1_new,"UArea1_new/D");
 	 OutTree->Branch("risetime1",&RiseTime1Fit,"RiseTime1Fit/D");
@@ -269,6 +276,8 @@ double time_window[2] = {0,0};
 	 OutTree->Branch("cfd1",&CFD1Fit,"CFD1Fit[7]/D");
 	 OutTree->Branch("width1",&WIDTH1,"WIDTH1[7]/D");
 	 OutTree->Branch("t_thr1",&t_thr1,"t_thr1/D");  // time at which a certain thr (in V) is passed
+	 OutTree->Branch("tot1",&tot1,"tot1/D");
+	 //OutTree->Branch("tot1_fs",&tot1_fs,"tot1_fs/D");
 	 OutTree->Branch("rms1",&rms1,"rms1/D");
 
 	 counter++;
@@ -297,6 +306,7 @@ double time_window[2] = {0,0};
 	 OutTree->Branch("cfd2",&CFD2Fit,"CFD2Fit[7]/D");
 	 OutTree->Branch("width2",&WIDTH2,"WIDTH2[7]/D");
 	 OutTree->Branch("t_thr2",&t_thr2,"t_thr2/D");  // time at which a certain thr (in V) is passed
+	 OutTree->Branch("tot2",&tot2,"tot2/D");
 	 OutTree->Branch("rms2",&rms2,"rms2/D");
 
 	 counter++;
@@ -325,6 +335,7 @@ double time_window[2] = {0,0};
 	 OutTree->Branch("cfd3",&CFD3Fit,"CFD3Fit[7]/D");
 	 OutTree->Branch("width3",&WIDTH3,"WIDTH3[7]/D");
 	 OutTree->Branch("t_thr3",&t_thr3,"t_thr3/D");  // time at which a certain thr (in V) is passed
+	 OutTree->Branch("tot3",&tot3,"tot3/D");
 	 OutTree->Branch("rms3",&rms3,"rms3/D");
 
 	 counter++;
@@ -353,6 +364,7 @@ double time_window[2] = {0,0};
 	 OutTree->Branch("cfd4",&CFD4Fit,"CFD4Fit[7]/D");
 	 OutTree->Branch("width4",&WIDTH4,"WIDTH4[7]/D");
 	 OutTree->Branch("t_thr4",&t_thr4,"t_thr4/D");  // time at which a certain thr (in V) is passed
+	 OutTree->Branch("tot4",&tot4,"tot4/D");
 	 OutTree->Branch("rms4",&rms4,"rms4/D");
 
 	 counter++;
@@ -492,7 +504,9 @@ double time_window[2] = {0,0};
 		FallTime1Fit = a1->Find_Fall_Time_with_GausFit(tp_pair1_fit, tp_pair1.second, 0.1, 0.9)*time_const; //ns
 		dVdt1Fit = a1->Find_Dvdt_with_GausFit(20,0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const);  //mV/ns
 		dVdt1Fit_2080 = a1->Find_Dvdt2080_with_GausFit(0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const);  //mV/ns
-		t_thr1 = a1->Find_Time_At_Threshold(20,tp_pair1)*time_const; //ns    [time at which a thr (in mV !!!) is passed]
+		t_thr1 = a1->Find_Time_At_Threshold_with_GausFit(tot_levels[0],tp_pair1_fit,tp_pair1.second)*time_const; //ns    [time at which a thr (in mV !!!) is passed]
+		//tot1_fs = a1->Find_Time_At_Threshold_Falling_Edge_with_GausFit(tot_levels[1],tp_pair1_fit,tp_pair1.second)*time_const - t_thr1 ;
+		tot1 = a1->Find_Time_Over_Threshold(tot_levels[0],tp_pair1,tot_levels[1])*time_const ;
 		rms1 = a1->Find_Noise(100)*voltage_const; //mV
 
 		for(int j=0;j<7;j++){
@@ -571,7 +585,8 @@ double time_window[2] = {0,0};
 		FallTime2Fit = a2->Find_Fall_Time_with_GausFit(tp_pair2_fit, tp_pair2.second, 0.1, 0.9)*time_const; //ns
 		dVdt2Fit = a2->Find_Dvdt_with_GausFit(20,0,tp_pair2_fit,tp_pair2.second)*(voltage_const/time_const);
 		dVdt2Fit_2080 = a2->Find_Dvdt2080_with_GausFit(0,tp_pair2_fit,tp_pair2.second)*(voltage_const/time_const);  //mV/ns
-		t_thr2 = a2->Find_Time_At_Threshold(0.02,tp_pair2)*time_const;
+		t_thr2 = a2->Find_Time_At_Threshold_with_GausFit(tot_levels[0],tp_pair2_fit,tp_pair2.second)*time_const;
+		tot2 = a2->Find_Time_Over_Threshold(tot_levels[0],tp_pair2,tot_levels[1])*time_const ;
 		rms2 = a2->Find_Noise(100)*voltage_const;
 
 		for(int j=0;j<7;j++){
@@ -653,7 +668,8 @@ double time_window[2] = {0,0};
 		FallTime3Fit = a3->Find_Fall_Time_with_GausFit(tp_pair3_fit, tp_pair3.second, 0.1, 0.9)*time_const; //ns
 		dVdt3Fit = a3->Find_Dvdt_with_GausFit(20,0,tp_pair3_fit,tp_pair3.second)*(voltage_const/time_const);
 		dVdt3Fit_2080 = a3->Find_Dvdt2080_with_GausFit(0,tp_pair3_fit,tp_pair3.second)*(voltage_const/time_const);  //mV/ns
-		t_thr3 = a3->Find_Time_At_Threshold(0.02,tp_pair3)*time_const;
+		t_thr3 = a3->Find_Time_At_Threshold_with_GausFit(tot_levels[0],tp_pair3_fit,tp_pair3.second)*time_const;
+		tot3 = a3->Find_Time_Over_Threshold(tot_levels[0],tp_pair3,tot_levels[1])*time_const ;
 		rms3 = a3->Find_Noise(100)*voltage_const;
 
 		for(int j=0;j<7;j++){
@@ -732,7 +748,8 @@ double time_window[2] = {0,0};
 		FallTime4Fit = a4->Find_Fall_Time_with_GausFit(tp_pair4_fit, tp_pair4.second, 0.1, 0.9)*time_const; //ns
 		dVdt4Fit = a4->Find_Dvdt_with_GausFit(20,0,tp_pair4_fit,tp_pair4.second)*(voltage_const/time_const); 
 		dVdt4Fit_2080 = a4->Find_Dvdt2080_with_GausFit(0,tp_pair4_fit,tp_pair4.second)*(voltage_const/time_const);  //mV/ns
-		t_thr4 = a4->Find_Time_At_Threshold(0.02,tp_pair4)*time_const;
+		t_thr4 = a4->Find_Time_At_Threshold_with_GausFit(tot_levels[0],tp_pair4_fit,tp_pair4.second)*time_const;
+		tot4 = a4->Find_Time_Over_Threshold(tot_levels[0],tp_pair4,tot_levels[1])*time_const ;
 		rms4 = a4->Find_Noise(100)*voltage_const;
 
 		for(int j=0;j<7;j++){

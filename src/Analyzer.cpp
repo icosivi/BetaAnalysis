@@ -1178,7 +1178,7 @@ double Analyzer::Falling_Edge_CFD_Time_with_GausFit(const double fraction, const
 
 
 
-double Analyzer::Find_Time_At_Threshold(const double thresholdLevel, const std::pair<double,unsigned int> Pmax){
+double Analyzer::Find_Time_At_Threshold_with_GausFit(const double thresholdLevel, const std::pair<double,double> Pmax, unsigned int imax){
 
   double thr = thresholdLevel/1000;
 
@@ -1186,13 +1186,13 @@ double Analyzer::Find_Time_At_Threshold(const double thresholdLevel, const std::
 
   unsigned int timeBelowThreshold_index = 0;
 
-  unsigned int pmax_index = Pmax.second;
+  unsigned int pmax_index = imax;
   double pmax = Pmax.first;
   std::size_t npoints = this->pvoltage.size();
 
   if( pmax_index == npoints-1 ) pmax_index = pmax_index - 1;//preventing out of range
 
-    if( pmax < thr ){ return 9999.0;}
+    if( pmax < thr ){ return -1000.0;}
     else
     {
       for( int i = pmax_index; i > -1; i-- )
@@ -1200,18 +1200,119 @@ double Analyzer::Find_Time_At_Threshold(const double thresholdLevel, const std::
         if( this->pvoltage.at(i) <= thr )
         {
           timeBelowThreshold_index = i;
-
           timeBelowThreshold = this->ptime.at(i);
 
           break;
         }
       }
 
-      timeAtThreshold = xlinearInter( timeBelowThreshold, this->pvoltage.at(timeBelowThreshold_index), this->pvoltage.at(timeBelowThreshold_index+1), this->pvoltage.at(timeBelowThreshold_index+1), thr );
+      timeAtThreshold = xlinearInter( timeBelowThreshold, this->pvoltage.at(timeBelowThreshold_index), this->ptime.at(timeBelowThreshold_index+1), this->pvoltage.at(timeBelowThreshold_index+1), thr );
 
       return timeAtThreshold;
     }
 
+}
+
+
+double Analyzer::Find_Time_At_Threshold_Falling_Edge_with_GausFit(const double thresholdLevel, const std::pair<double,double> Pmax, unsigned int imax){
+
+  double thr = thresholdLevel/1000;
+
+  double timeAtThreshold = 0.0, timeBelowThreshold = 0.0;
+
+  unsigned int timeBelowThreshold_index = 0;
+
+  unsigned int pmax_index = imax;
+  double pmax = Pmax.first;
+  std::size_t npoints = this->pvoltage.size();
+
+  bool failure = true;
+
+  if( pmax_index == npoints-1 ) pmax_index = pmax_index - 1;//preventing out of range
+
+    if( pmax < thr ){ return -1000.0;}
+    else
+    {
+      for( int i = pmax_index; i < npoints; i++ )
+      {
+        if( this->pvoltage.at(i) <= thr )
+        {
+          timeBelowThreshold_index = i;
+          timeBelowThreshold = this->ptime.at(i);
+          failure = false;
+
+          break;
+        }
+      }
+
+      if( failure ){
+
+        timeBelowThreshold_index = npoints - 1;
+        timeBelowThreshold = this->ptime.at( npoints-1 );
+
+      }
+
+      timeAtThreshold = xlinearInter( timeBelowThreshold, this->pvoltage.at(timeBelowThreshold_index), this->ptime.at(timeBelowThreshold_index-1), this->pvoltage.at(timeBelowThreshold_index-1), thr );
+
+      return timeAtThreshold;
+    }
+
+}
+
+
+//Self explainatory
+double Analyzer::Find_Time_Over_Threshold(const double first_thresholdLevel, const std::pair<double,unsigned int> Pmax, const double second_thresholdLevel){
+
+  double thr1 = first_thresholdLevel/1000;
+  double thr2 = second_thresholdLevel/1000;
+
+  double timeAtThreshold1 = 0.0, timeBelowThreshold1 = 0.0;
+  double timeAtThreshold2 = 0.0, timeBelowThreshold2 = 0.0;
+
+  unsigned int timeBelowThreshold1_index = 0;
+  unsigned int timeBelowThreshold2_index = 0;
+
+  unsigned int pmax_index = Pmax.second;
+  double pmax = Pmax.first;
+  std::size_t npoints = this->pvoltage.size();
+
+  if( pmax_index == npoints-1 ) pmax_index = pmax_index - 1;//preventing out of range
+
+//finds time at first threshold
+    if( pmax < thr1 || pmax < thr2 ){ return -1000.0;}
+    else
+    {
+      for( int i = pmax_index; i > -1; i-- )
+      {
+        if( this->pvoltage.at(i) <= thr1 )
+        {
+          timeBelowThreshold1_index = i;
+
+          timeBelowThreshold1 = this->ptime.at(i);
+
+          break;
+        }
+      }
+
+      timeAtThreshold1 = xlinearInter( timeBelowThreshold1, this->pvoltage.at(timeBelowThreshold1_index), this->ptime.at(timeBelowThreshold1_index+1), this->pvoltage.at(timeBelowThreshold1_index+1), thr1 );
+
+      //finds time at first threshold
+      for( int i = pmax_index; i < (int) npoints-1 ; i++)
+      {
+        if( this->pvoltage.at(i) <= thr2 )
+        {
+          timeBelowThreshold2_index = i-1;
+
+          timeBelowThreshold2       = this -> ptime.at(i-1);
+
+          break;
+        }
+      }
+
+      timeAtThreshold2 = xlinearInter( timeBelowThreshold2, this->pvoltage.at(timeBelowThreshold2_index), this->ptime.at(timeBelowThreshold2_index+1), this->pvoltage.at(timeBelowThreshold2_index+1), thr2 );
+
+    }
+  return TMath::Abs(timeAtThreshold1 - timeAtThreshold2);
 }
 
 
