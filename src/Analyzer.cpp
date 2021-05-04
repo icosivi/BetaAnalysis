@@ -399,7 +399,8 @@ double Analyzer::Find_Undershoot_Area(const std::pair<double, unsigned int> Pmax
 }
 
 
-double Analyzer::Pulse_Integration_with_Fixed_Window_Size(const std::pair<double,unsigned int> Pmax, std::string integration_option, double t_beforeSignal, double t_afterSignal){
+double Analyzer::Pulse_Integration_with_Fixed_Window_Size(const std::pair<double,unsigned int> Pmax, std::string integration_option, 
+                                                          double t_beforeSignal, double t_afterSignal){
   
   double pulse_area = 0.0;
   const double time_difference = this->ptime.at(1) - this->ptime.at(0);
@@ -481,7 +482,8 @@ double Analyzer::Pulse_Integration_with_Fixed_Window_Size(const std::pair<double
 }
 
 
-double Analyzer::Pulse_Integration_with_Fixed_Window_Size_with_GausFit(const std::pair<double,double> Pmax, unsigned int imax, std::string integration_option, double t_beforeSignal, double t_afterSignal){
+double Analyzer::Pulse_Integration_with_Fixed_Window_Size_with_GausFit(const std::pair<double,double> Pmax, unsigned int imax, 
+                                                                       std::string integration_option, double t_beforeSignal, double t_afterSignal){
   
   double pulse_area = 0.0;
   const double time_difference = this->ptime.at(1) - this->ptime.at(0);
@@ -563,7 +565,8 @@ double Analyzer::Pulse_Integration_with_Fixed_Window_Size_with_GausFit(const std
 }
 
 
-double Analyzer::Pulse_Area_With_Linear_Interpolate_Edge( const std::pair<double,unsigned int> Pmax, std::string integration_option, bool relativeTimeWindow, double StopTime ){
+double Analyzer::Pulse_Area_With_Linear_Interpolate_Edge( const std::pair<double,unsigned int> Pmax, std::string integration_option, 
+                                                          bool relativeTimeWindow, double StopTime ){
 
   double pulse_area = 0.0;
   const double time_difference = this->ptime.at(1) - this->ptime.at(0);
@@ -677,7 +680,8 @@ double Analyzer::Pulse_Area_With_Linear_Interpolate_Edge( const std::pair<double
 }
 
 
-double Analyzer::Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit( const std::pair<double,double> Pmax, unsigned int imax, std::string integration_option, bool relativeTimeWindow, double StopTime ){
+double Analyzer::Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit( const std::pair<double,double> Pmax, unsigned int imax, 
+                                                                       std::string integration_option, bool relativeTimeWindow, double StopTime ){
 
   double pulse_area = 0.0;
   const double time_difference = this->ptime.at(1) - this->ptime.at(0);
@@ -1072,8 +1076,11 @@ double Analyzer::Find_Dvdt2080_with_GausFit(const int ndif, const std::pair<doub
     if(ifraction == int(this->pvoltage.size())-1) ifraction--;
     if(ifraction2 == int(this->pvoltage.size())-1) ifraction2--;
 
-    _20pmax_time = xlinearInter( this->ptime.at(ifraction), this->pvoltage.at(ifraction), this->ptime.at(ifraction+1), this->pvoltage.at(ifraction+1), pmax*0.2 );
-    _80pmax_time = xlinearInter( this->ptime.at(ifraction2), this->pvoltage.at(ifraction2), this->ptime.at(ifraction2+1), this->pvoltage.at(ifraction2+1), pmax*0.8 );
+    _20pmax_time = xlinearInter( this->ptime.at(ifraction), this->pvoltage.at(ifraction), this->ptime.at(ifraction+1), 
+                                 this->pvoltage.at(ifraction+1), pmax*0.2 );
+
+    _80pmax_time = xlinearInter( this->ptime.at(ifraction2), this->pvoltage.at(ifraction2), this->ptime.at(ifraction2+1), 
+                                 this->pvoltage.at(ifraction2+1), pmax*0.8 );
 
     dvdt = 0.6*pmax/(_80pmax_time - _20pmax_time);
 
@@ -1105,7 +1112,8 @@ double Analyzer::Rising_Edge_CFD_Time(const double fraction, const std::pair<dou
     if(ifraction == this->pvoltage.size()-1) ifraction--;
 
     if( failure ) time_fraction = this->ptime.at(0);
-    else time_fraction = time_fraction + (this->ptime.at(ifraction+1) - this->ptime.at(ifraction))* (pmax*fraction/100.0 - this->pvoltage.at(ifraction)) /(this->pvoltage.at(ifraction+1) - this->pvoltage.at(ifraction));
+    else time_fraction = time_fraction + (this->ptime.at(ifraction+1) - this->ptime.at(ifraction))* 
+                        (pmax*fraction/100.0 - this->pvoltage.at(ifraction)) /(this->pvoltage.at(ifraction+1) - this->pvoltage.at(ifraction));
 
     return time_fraction;
 
@@ -1135,7 +1143,8 @@ double Analyzer::Rising_Edge_CFD_Time_with_GausFit(const double fraction, const 
     if(ifraction == this->pvoltage.size()-1) ifraction--;
 
     if( failure ) time_fraction = this->ptime.at(0);
-    else time_fraction = time_fraction + (this->ptime.at(ifraction+1) - this->ptime.at(ifraction))* (pmax*fraction/100.0 - this->pvoltage.at(ifraction)) /(this->pvoltage.at(ifraction+1) - this->pvoltage.at(ifraction));
+    else time_fraction = time_fraction + (this->ptime.at(ifraction+1) - this->ptime.at(ifraction))* 
+                         (pmax*fraction/100.0 - this->pvoltage.at(ifraction)) /(this->pvoltage.at(ifraction+1) - this->pvoltage.at(ifraction));
 
     //cout<< this->ptime.at(ifraction) << " " << this->pvoltage.at(ifraction) << endl;
     //cout<< this->ptime.at(ifraction+1) << " " << this->pvoltage.at(ifraction+1) << endl;
@@ -1170,7 +1179,8 @@ double Analyzer::Falling_Edge_CFD_Time_with_GausFit(const double fraction, const
     if(ifraction == 0) ifraction = 10;
 
     if( failure ) time_fraction = this->ptime.at(npoints-1);
-    else time_fraction = time_fraction + (this->ptime.at(ifraction-1) - this->ptime.at(ifraction))* (pmax*fraction/100.0 - this->pvoltage.at(ifraction)) /(this->pvoltage.at(ifraction-1) - this->pvoltage.at(ifraction));
+    else time_fraction = time_fraction + (this->ptime.at(ifraction-1) - this->ptime.at(ifraction))* 
+                         (pmax*fraction/100.0 - this->pvoltage.at(ifraction)) /(this->pvoltage.at(ifraction-1) - this->pvoltage.at(ifraction));
 
     return time_fraction;
 
@@ -1206,7 +1216,8 @@ double Analyzer::Find_Time_At_Threshold_with_GausFit(const double thresholdLevel
         }
       }
 
-      timeAtThreshold = xlinearInter( timeBelowThreshold, this->pvoltage.at(timeBelowThreshold_index), this->ptime.at(timeBelowThreshold_index+1), this->pvoltage.at(timeBelowThreshold_index+1), thr );
+      timeAtThreshold = xlinearInter( timeBelowThreshold, this->pvoltage.at(timeBelowThreshold_index), this->ptime.at(timeBelowThreshold_index+1), 
+                                      this->pvoltage.at(timeBelowThreshold_index+1), thr );
 
       return timeAtThreshold;
     }
@@ -1252,7 +1263,8 @@ double Analyzer::Find_Time_At_Threshold_Falling_Edge_with_GausFit(const double t
 
       }
 
-      timeAtThreshold = xlinearInter( timeBelowThreshold, this->pvoltage.at(timeBelowThreshold_index), this->ptime.at(timeBelowThreshold_index-1), this->pvoltage.at(timeBelowThreshold_index-1), thr );
+      timeAtThreshold = xlinearInter( timeBelowThreshold, this->pvoltage.at(timeBelowThreshold_index), this->ptime.at(timeBelowThreshold_index-1), 
+                                      this->pvoltage.at(timeBelowThreshold_index-1), thr );
 
       return timeAtThreshold;
     }
@@ -1294,7 +1306,8 @@ double Analyzer::Find_Time_Over_Threshold(const double first_thresholdLevel, con
         }
       }
 
-      timeAtThreshold1 = xlinearInter( timeBelowThreshold1, this->pvoltage.at(timeBelowThreshold1_index), this->ptime.at(timeBelowThreshold1_index+1), this->pvoltage.at(timeBelowThreshold1_index+1), thr1 );
+      timeAtThreshold1 = xlinearInter( timeBelowThreshold1, this->pvoltage.at(timeBelowThreshold1_index), this->ptime.at(timeBelowThreshold1_index+1), 
+                                       this->pvoltage.at(timeBelowThreshold1_index+1), thr1 );
 
       //finds time at first threshold
       for( int i = pmax_index; i < (int) npoints-1 ; i++)
@@ -1309,7 +1322,8 @@ double Analyzer::Find_Time_Over_Threshold(const double first_thresholdLevel, con
         }
       }
 
-      timeAtThreshold2 = xlinearInter( timeBelowThreshold2, this->pvoltage.at(timeBelowThreshold2_index), this->ptime.at(timeBelowThreshold2_index+1), this->pvoltage.at(timeBelowThreshold2_index+1), thr2 );
+      timeAtThreshold2 = xlinearInter( timeBelowThreshold2, this->pvoltage.at(timeBelowThreshold2_index), this->ptime.at(timeBelowThreshold2_index+1), 
+                                       this->pvoltage.at(timeBelowThreshold2_index+1), thr2 );
 
     }
   return TMath::Abs(timeAtThreshold1 - timeAtThreshold2);
@@ -1317,7 +1331,8 @@ double Analyzer::Find_Time_Over_Threshold(const double first_thresholdLevel, con
 
 
 // Similar to Find_Pulse_Area but start/end times of the pulse are defined analitically. Further checks are useful, there might be bugs. There inputs args not needed!
-double Analyzer::New_Pulse_Area( const std::pair<double,double> Pmax, unsigned int imax, std::string integration_option, double range[2], double start_window, double end_window){
+double Analyzer::New_Pulse_Area( const std::pair<double,double> Pmax, unsigned int imax, std::string integration_option, double range[2], 
+                                 double start_window, double end_window){
 
   if(Pmax.second > range[0] && Pmax.second < range[1]){
 
@@ -1462,7 +1477,8 @@ double Analyzer::New_Pulse_Area( const std::pair<double,double> Pmax, unsigned i
 
 
 // Similar to Find_Pulse_Area but start/end times of the pulse are defined analitically. Further checks are useful, there might be bugs. There are inputs args not needed!
-double Analyzer::New_Undershoot_Area( const std::pair<double,double> Pmax, const std::pair<double,double> Pmin, unsigned int imin, std::string integration_option, double range[2]){
+double Analyzer::New_Undershoot_Area( const std::pair<double,double> Pmax, const std::pair<double,double> Pmin, unsigned int imin, 
+                                      std::string integration_option, double range[2]){
 
   if(Pmax.second > range[0] && Pmax.second < range[1]){
 
