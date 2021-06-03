@@ -47,14 +47,14 @@ void analisi(){
   //double search_range[2] = {-0.215e-6,-0.2e-6};
   //double time_window[2] = {-0.22e-6,-0.19e-6};
 
+  //Config file definition
+  ConfigFile cf("beta_config.ini");
+
   //time window is the DAQ time window, that you can check on the oscilloscope. search range is the window where signals occur
   double search_range[2] = {0,0};
   double time_window[2] = {0,0}; 
 
-  double tot_levels[2] = {60,60};
-
-  //Config file definition
-  ConfigFile cf("beta_config.ini");
+  double tot_levels[2] = { cf.Value("HEADER","tot_rising"), cf.Value("HEADER","tot_falling") };
 
   //Input file
   std::string Filename = cf.Value("HEADER","input_filename");
@@ -72,7 +72,6 @@ void analisi(){
   // Variable declaration and Analyzer object 
   const double time_const = cf.Value("HEADER","time_scalar");  
   const double voltage_const = cf.Value("HEADER","voltage_scalar");
-  const double conversion_factor = cf.Value("HEADER","conversion_factor_area_charge"); 
   unsigned int maxIndex = cf.Value("HEADER","sampling_points"); //number of sampling points, default is 1002, assuming a 50ns time window with 20 GS
   int ch_number = cf.Value("HEADER","active_channels");
 
@@ -194,17 +193,16 @@ void analisi(){
       int invert_channel_1 = cf.Value("INVERT_SIGNAL", Form("ch%i", ch_counter) );
 
 
- 	    if( j_counter==0 ){
-
- 	      bool act_ch = false;
+ 	    if( j_counter == 0 ){
 
  		    if( enable_channel_1 == 1 ){
 
  			    time_window[0] = timeReader1.at(ch_counter-1).At(0);
  			    time_window[1] = timeReader1.at(ch_counter-1).At(timeReader1.at(ch_counter-1).GetSize()-1);
- 			    search_range[0] = (time_window[0]+time_window[1])/2. - 100*(timeReader1.at(ch_counter-1).At(1)-timeReader1.at(ch_counter-1).At(0)) ;
- 			    search_range[1] = (time_window[0]+time_window[1])/2. + 100*(timeReader1.at(ch_counter-1).At(1)-timeReader1.at(ch_counter-1).At(0)) ;
- 			    act_ch = true;
+ 			    //search_range[0] = (time_window[0]+time_window[1])/2. - 100*(timeReader1.at(ch_counter-1).At(1)-timeReader1.at(ch_counter-1).At(0)) ;
+ 			    //search_range[1] = (time_window[0]+time_window[1])/2. + 100*(timeReader1.at(ch_counter-1).At(1)-timeReader1.at(ch_counter-1).At(0)) ;
+          search_range[0] = cf.Value("HEADER", "pmax_search_range_min" ) ;
+          search_range[1] = cf.Value("HEADER", "pmax_search_range_max" ) ;
 
  			    cout<<"Time window: "<<time_window[0]<<"; "<<time_window[1]<<endl;
  			    cout<<"Search window: "<<search_range[0]<<"; "<<search_range[1]<<endl;
@@ -278,7 +276,7 @@ void analisi(){
 		    dVdt1Fit.push_back( a1->Find_Dvdt_with_GausFit(20,0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const) ) ;  //mV/ns
 		    dVdt1Fit_2080.push_back( a1->Find_Dvdt2080_with_GausFit(0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const) );  //mV/ns
 		    t_thr1.push_back( a1->Find_Time_At_Threshold_with_GausFit(tot_levels[0],tp_pair1_fit,tp_pair1.second)*time_const ); //ns  
-		    tot1.push_back( a1->Find_Time_Over_Threshold(tot_levels[0],tp_pair1,tot_levels[1])*time_const ) ;
+		    tot1.push_back( a1->Find_Time_Over_Threshold(tot_levels[0],tp_pair1,tot_levels[1])*time_const ) ; //ns
 		    rms1.push_back( a1->Find_Noise(100)*voltage_const ) ; //mV
 
 		    std::vector<double> cf_inner ;
