@@ -27,7 +27,7 @@ void Compilatore(){
   gSystem->CompileMacro("src/Analyzer.cpp","kg");
   gSystem->CompileMacro("analisi.C","kg");
   gSystem->CompileMacro("read_analysis.C","kg");
-  gSystem->CompileMacro("FAST.C","kg");
+  //gSystem->CompileMacro("FAST.C","kg");
 
   ConfigFile cf("beta_config.ini");
   int ch_number = cf.Value("HEADER","active_channels");

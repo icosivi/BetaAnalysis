@@ -29,18 +29,16 @@
 #include <TF1.h>
 #include <TGraph.h>
 #include <TString.h>
-#include <TThread.h>
 #include <TROOT.h>
 #include <TStyle.h>
 #include <TImage.h>
 #include <TCanvas.h>
 #include <TStyle.h>
-#include <TF1Convolution.h>
 #include <TProfile.h>
 
 //------Custom headers----------------//
-#include "include/general.hpp"
-#include "include/Chameleon.h"
+//#include "include/general.hpp"
+//#include "include/Chameleon.h"
 #include "include/ConfigFile.hpp"
 
 
@@ -52,6 +50,7 @@ void readAnalysis( int channel ){
   gStyle->SetOptStat(1111);
   //gStyle->SetPadTickX(1);  // To get tick marks on the opposite side of the frame
   //gStyle->SetPadTickY(1);
+
 
   int ch = channel - 1 ; //channel starts from 1 but arrays index from 0 
  
@@ -77,7 +76,7 @@ void readAnalysis( int channel ){
   double negpmax = cf.Value("ANALYSIS","negpmax") ; 
   double pmax_low = 10;
   double pmax_up = cf.Value("ANALYSIS","pmax_up") ; 
-  double area_low = 10;
+  double area_low = 5;
   double area_up = cf.Value("ANALYSIS","area_up") ;
 
 
@@ -129,7 +128,6 @@ void readAnalysis( int channel ){
   timeres->GetXaxis()->SetTitle("[ns]");
   
 
-
   double trigger_pmax_low = cf.Value("ANALYSIS","trigger_pmax_low") ;
   double trigger_pmax_up = cf.Value("ANALYSIS","trigger_pmax_up") ;
   double trigger_area_low = cf.Value("ANALYSIS","trigger_area_low") ;
@@ -152,7 +150,7 @@ void readAnalysis( int channel ){
   TF1 *area_landau_noCuts=new TF1( "area_landau_noCuts", "landau", area_low, area_up );
   area_hist->Fit("area_landau_noCuts","RQ");
   area_low = area_landau_noCuts->GetParameter(1) - area_landau_noCuts->GetParameter(2);
-  if(area_low<10) area_low = 10;
+  if(area_low<5) area_low = 5;
   cout<<"Area low cut: "<<area_low<<endl;
   cout<<" "<<endl;
   cout<<"//////////////////////////////////////////////// "<<endl;
@@ -206,18 +204,20 @@ void readAnalysis( int channel ){
   for(int cfd_index=0; cfd_index<7; cfd_index++){
   
     itree->Project("timeres", Form("cfd[%i][%i]-cfd[%i][1]", ch, cfd_index, trigger_ch ), 
-          Form("negpmax[%i]>%f && pmax[%i]>%f && pmax[%i]<%f && area[%i]>%f && area[%i]<%f && negpmax[%i]>-40 && pmax[%i]>%f && pmax[%i]<%f && area[%i]>%f && area[%i]<%f", 
+          Form("negpmax[%i]>%f && pmax[%i]>%f && pmax[%i]<%f && area[%i]>%f && area[%i]<%f && negpmax[%i]>-40 && pmax[%i]>%f && pmax[%i]<%f", 
           ch, negpmax, ch, pmax_low, ch, pmax_up, ch, area_low, ch, area_up,
-          trigger_ch, trigger_ch, trigger_pmax_low, trigger_ch, trigger_pmax_up, trigger_ch, trigger_area_low, trigger_ch, trigger_area_up) );
+          trigger_ch, trigger_ch, trigger_pmax_low, trigger_ch, trigger_pmax_up) );
   
     timeres->Fit("timeres_gaus","RQ");
     TimeRes[cfd_index] = timeres_gaus->GetParameter(2);
 
   }
 
-  double RESOLUTION = TimeRes[best_cfd_index] ;
-  cout<<Form("Time resolution ch %i: ", channel)<<RESOLUTION<<endl;
-
+  double RESOLUTION = std::sqrt( std::pow(TimeRes[best_cfd_index],2) - std::pow(0.02,2) ) ;  // 0.0165
+  //double RESOLUTION = TimeRes[best_cfd_index] ;
+  cout<<" "<<endl;
+  cout<<Form("TIME RESOLUTION ch %i: ", channel)<<RESOLUTION<<endl;
+  cout<<" "<<endl;
 
   TGraph *gr_time_res = new TGraph(7,x_cfd,TimeRes);
   gr_time_res->SetTitle( Form("Time resolution vs CFD - Channel%i", ch) );

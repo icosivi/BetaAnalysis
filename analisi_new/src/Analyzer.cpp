@@ -1190,7 +1190,7 @@ double Analyzer::Falling_Edge_CFD_Time_with_GausFit(const double fraction, const
 
 double Analyzer::Find_Time_At_Threshold_with_GausFit(const double thresholdLevel, const std::pair<double,double> Pmax, unsigned int imax){
 
-  double thr = thresholdLevel;
+  double thr = thresholdLevel/1000;
 
   double timeAtThreshold = 0.0, timeBelowThreshold = 0.0;
 
@@ -1227,7 +1227,7 @@ double Analyzer::Find_Time_At_Threshold_with_GausFit(const double thresholdLevel
 
 double Analyzer::Find_Time_At_Threshold_Falling_Edge_with_GausFit(const double thresholdLevel, const std::pair<double,double> Pmax, unsigned int imax){
 
-  double thr = thresholdLevel;
+  double thr = thresholdLevel/1000;
 
   double timeAtThreshold = 0.0, timeBelowThreshold = 0.0;
 
@@ -1275,8 +1275,8 @@ double Analyzer::Find_Time_At_Threshold_Falling_Edge_with_GausFit(const double t
 //Self explainatory
 double Analyzer::Find_Time_Over_Threshold(const double first_thresholdLevel, const std::pair<double,unsigned int> Pmax, const double second_thresholdLevel){
 
-  double thr1 = first_thresholdLevel;
-  double thr2 = second_thresholdLevel;
+  double thr1 = first_thresholdLevel/1000;
+  double thr2 = second_thresholdLevel/1000;
 
   double timeAtThreshold1 = 0.0, timeBelowThreshold1 = 0.0;
   double timeAtThreshold2 = 0.0, timeBelowThreshold2 = 0.0;

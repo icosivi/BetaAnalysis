@@ -29,22 +29,20 @@
 #include <TF1.h>
 #include <TGraph.h>
 #include <TString.h>
-#include <TThread.h>
 #include <TROOT.h>
 #include <TStyle.h>
 #include <TImage.h>
 #include <TCanvas.h>
 #include <TStyle.h>
-#include <TF1Convolution.h>
 #include <TProfile.h>
 
 //------Custom headers----------------//
-#include "include/general.hpp"
-#include "include/Chameleon.h"
+//#include "include/general.hpp"
+//#include "include/Chameleon.h"
 #include "include/ConfigFile.hpp"
 
 
-void readAnalysis( int channel ){
+void readAnalysis( std::string Filename, int channel ){
 
   gStyle->SetTitleOffset( 1.3, "x" );
   gStyle->SetTitleOffset( 1.3, "y" );
@@ -53,11 +51,12 @@ void readAnalysis( int channel ){
   //gStyle->SetPadTickX(1);  // To get tick marks on the opposite side of the frame
   //gStyle->SetPadTickY(1);
 
+
   int ch = channel - 1 ; //channel starts from 1 but arrays index from 0 
  
   ConfigFile cf("beta_config.ini");
 
-  std::string Filename = cf.Value("HEADER","output_filename");
+  //std::string Filename = cf.Value("HEADER","output_filename");
   const char *filename = Filename.c_str();
   TFile *file = TFile::Open(filename);
   TTree *itree = dynamic_cast<TTree*>(file->Get("Analysis"));
@@ -128,7 +127,6 @@ void readAnalysis( int channel ){
   TH1F *timeres = new TH1F("timeres",Form("ToA_{Ch%i} - ToA_{Trigger}", channel ), timeres_bin, timeres_search_range[0], timeres_search_range[1]);
   timeres->GetXaxis()->SetTitle("[ns]");
   
-
 
   double trigger_pmax_low = cf.Value("ANALYSIS","trigger_pmax_low") ;
   double trigger_pmax_up = cf.Value("ANALYSIS","trigger_pmax_up") ;

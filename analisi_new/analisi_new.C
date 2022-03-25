@@ -25,20 +25,22 @@
 #include <TFile.h>
 #include <TH1.h>
 #include <TF1.h>
+#include <TROOT.h>
 #include <TGraph.h>
 #include <TThread.h>
 #include <TROOT.h>
 #include <TStyle.h>
 #include <TImage.h>
 #include <TCanvas.h>
-
+#include <TSystemFile.h>
+#include <TSystemDirectory.h>
 
 //------Custom headers----------------//
 #include "src/Analyzer.hpp"
 #include "include/ConfigFile.hpp"
 
 
-void analisi( ){
+void analisi( std::string sfilename){
 
   //CAREFUL: select search_range for signal search and oscilloscope time_window
   //double search_range[2] = {-2e-9,2e-9};
@@ -57,19 +59,22 @@ void analisi( ){
 
   double tot_levels[2] = { cf.Value("HEADER","tot_rising"), cf.Value("HEADER","tot_falling") };
 
-  bool ADC_conversion = true;
-  double ADC_conversion_factor = 0.244;
-
   //Input file
-  std::string Filename = cf.Value("HEADER","input_filename");
-  const char *filename = Filename.c_str();
+  //std::string Filename = cf.Value("HEADER","input_filename");
+  //const char *filename = Filename.c_str();
+  const char *filename = sfilename.c_str();
   TFile *file = TFile::Open(filename);
   TTree *itree = dynamic_cast<TTree*>(file->Get("wfm"));
   TTreeReader myReader("wfm", file);
 
   // Output file & tree
-  std::string outFilename = cf.Value("HEADER","output_filename");
-  //std::string outFilename = Form("stats_%s", Filename);
+  std::string delimiter = "Sr";
+  std::string token_pre = sfilename.substr(0, sfilename.find(delimiter));
+  std::string token_post = sfilename.substr(sfilename.find(delimiter));
+  std::string outFilename = token_pre+"stats_"+token_post;
+
+
+  //std::string outFilename = cf.Value("HEADER","output_filename");
   const char *output_filename = outFilename.c_str();
   TFile *OutputFile = new TFile(output_filename,"recreate");
   TTree *OutTree = new TTree("Analysis","Analysis");
@@ -101,7 +106,6 @@ void analisi( ){
   std::vector<double> rms1;
   std::vector<std::vector<double>> w1;
   std::vector<std::vector<double>> t1;
-  double x_pos, y_pos ;
 
   Pmax1.reserve(20);
   Pmax1Fit.reserve(20);
@@ -149,30 +153,19 @@ void analisi( ){
   OutTree->Branch("t_thr", "std::vector<double>",&t_thr1);  // time at which a certain thr (in V) is passed
   OutTree->Branch("tot", "std::vector<double>",&tot1);
   OutTree->Branch("rms", "std::vector<double>",&rms1);
-  OutTree->Branch("x_pos", &x_pos);
-  OutTree->Branch("y_pos", &y_pos);
   
  
   int j_counter = 0;
 
-  std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
-  //std::vector<TTreeReaderArray<int>> timeReader1 ;
+  std::vector<TTreeReaderArray<double>> voltageReader1 ;
+  std::vector<TTreeReaderArray<double>> timeReader1 ;
 
-  //TTreeReaderValue<Double32_t> freqReader(myReader, "freq" );
-  TTreeReaderArray<Double32_t> posReader(myReader, "pos" );
-  //TTreeReaderValue<double> yReader(myReader, Form("pos->at(%i)", 1) );
+  for(int ch_counter=1; ch_counter<=ch_number; ch_counter++ ){
 
-  //for(int ch_counter=1; ch_counter<=ch_number; ch_counter++ ){
-  for(int ch_counter=0; ch_counter<ch_number; ch_counter++ ){
-
-    if(ch_counter != 8 && ch_counter != 16) voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, Form("w%i",ch_counter) ));  
-    else if(ch_counter == 8)  voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg0" )); 
-    else if(ch_counter == 17)  voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
-
-    //timeReader1.push_back(TTreeReaderArray<int>(myReader, "time"));
+    voltageReader1.push_back(TTreeReaderArray<double>(myReader, Form("w%i",ch_counter) ));  
+    timeReader1.push_back(TTreeReaderArray<double>(myReader, Form("t%i",ch_counter) ));
 
   }
-
 
   while(myReader.Next()){
 
@@ -198,11 +191,7 @@ void analisi( ){
     w1.clear();
     t1.clear();
 
-    x_pos = double(posReader[0]);
-    y_pos = double(posReader[1]);
-
-    //for( int ch_counter=1; ch_counter<=ch_number; ch_counter++ ){
-    for( int ch_counter=0; ch_counter<ch_number; ch_counter++ ){
+    for( int ch_counter=1; ch_counter<=ch_number; ch_counter++ ){
       
       std::vector<double> w1_inner;
       std::vector<double> t1_inner;
@@ -218,8 +207,8 @@ void analisi( ){
 
  		    if( enable_channel_1 == 1 ){
 
- 			    time_window[0] = 0; //double(timeReader1.at(ch_counter).At(0));
- 			    time_window[1] = 0; //double(timeReader1.at(ch_counter).At(timeReader1.at(ch_counter).GetSize()-1));
+ 			    time_window[0] = timeReader1.at(ch_counter-1).At(0);
+ 			    time_window[1] = timeReader1.at(ch_counter-1).At(timeReader1.at(ch_counter-1).GetSize()-1);
  			    //search_range[0] = (time_window[0]+time_window[1])/2. - 100*(timeReader1.at(ch_counter-1).At(1)-timeReader1.at(ch_counter-1).At(0)) ;
  			    //search_range[1] = (time_window[0]+time_window[1])/2. + 100*(timeReader1.at(ch_counter-1).At(1)-timeReader1.at(ch_counter-1).At(0)) ;
           search_range[0] = cf.Value("HEADER", "pmax_search_range_min" ) ;
@@ -235,23 +224,19 @@ void analisi( ){
 
  		    if( invert_channel_1 == 1 ){
 
-	 		    for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
+	 		    for(unsigned int i=0; i<voltageReader1.at(ch_counter-1).GetSize();i++){
 
-            if(ADC_conversion) w1_inner.push_back( double(-voltageReader1.at(ch_counter).At(i)) *ADC_conversion_factor );
-            else w1_inner.push_back( double(-voltageReader1.at(ch_counter).At(i)) );
-	 			    //t1_inner.push_back( double(i)*(1. / double(*freqReader) ) );
-            t1_inner.push_back( double(i)*0.2 );
+	 			    w1_inner.push_back(-voltageReader1.at(ch_counter-1).At(i));
+	 			    t1_inner.push_back(timeReader1.at(ch_counter-1).At(i));
 
  			    }
 
  		    }else{
 
-	 		    for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
+	 		    for(unsigned int i=0; i<voltageReader1.at(ch_counter-1).GetSize();i++){
 
-	 			    if(ADC_conversion) w1_inner.push_back( double(voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
-            else w1_inner.push_back( double(voltageReader1.at(ch_counter).At(i)) );
-	 			    //t1_inner.push_back( double(i)*(1. / double(*freqReader) ) );
-            t1_inner.push_back( double(i)*0.2 );
+	 			    w1_inner.push_back(voltageReader1.at(ch_counter-1).At(i));
+	 			    t1_inner.push_back(timeReader1.at(ch_counter-1).At(i));
 
  			    }
  		    }
@@ -342,7 +327,39 @@ void analisi( ){
 
 int main(){
 
-analisi();
+char const *dirname="/media/daq/UFSD-Disk1/BETA/EXFLU/Run1_EXFLU_FBKUFSD2W10/fromDAQ" ;
+char const *ext=".root" ;
+
+std::string spath(dirname);
+
+  TSystemDirectory dir(dirname, dirname); 
+  TList *files = dir.GetListOfFiles(); 
+
+    if (files) { 
+
+      TSystemFile *file; 
+      TString fname; 
+      TIter next(files); 
+
+      while ((file=(TSystemFile*)next())) { 
+    
+        fname = file->GetName(); 
+        cout<<"pippo"<<endl;
+
+        if (!file->IsDirectory() && fname.EndsWith(ext)) { 
+
+          std::string s( fname.Data() ) ;
+          std::string sinput = spath + s ;
+
+          std::string output = spath + "stats_" + s ;
+
+
+          analisi( sinput ) ; 
+          gROOT->ProcessLine( Form("readAnalysis('%s', %i)", output.c_str(), 1) );
+
+        }  
+      } 
+    }  
 
 return 0;
 
