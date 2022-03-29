@@ -20,24 +20,24 @@
 #include "include/ConfigFile.hpp"
 #include "src/Analyzer.hpp"
 
-void Compilatore(){
+void Compilatore_new(){
 
 
   gSystem->CompileMacro("src/general.cpp","kg");
   gSystem->CompileMacro("src/Chameleon.cpp","kg");
   gSystem->CompileMacro("src/ConfigFile.cpp","kg");
   gSystem->CompileMacro("src/Analyzer.cpp","kg");
-  gSystem->CompileMacro("analisi.C","kg");
-  gSystem->CompileMacro("read_analysis.C","kg");
-  gSystem->CompileMacro("FAST.C","kg");
+  gSystem->CompileMacro("analisi_new.C","kg");
+  //gSystem->CompileMacro("read_analysis_new.C","kg");
+  //gSystem->CompileMacro("FAST.C","kg");
 
   ConfigFile cf("beta_config.ini");
   int ch_number = cf.Value("HEADER","active_channels");
   int trigger_channel = cf.Value("HEADER","trigger_ch");
 
 
-  //gROOT->ProcessLine("analisi()");
-  gROOT->ProcessLine("main()");
+  gROOT->ProcessLine("analisi()");
+  //gROOT->ProcessLine("main()");
 
   /*for(int j=1; j<=ch_number; j++){
 
