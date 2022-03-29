@@ -72,14 +72,22 @@ void analisi(){
   // Output file & tree
   std::string directory_delimiter = "raw";
   std::string delimiter = "Sr";
+  std::string delimiter_bis = "fromDAQ";
 
   std::string token_directory_pre = sfilename.substr(0, sfilename.find(directory_delimiter));
   std::string token_pre = sfilename.substr(0, sfilename.find(delimiter));
   std::string token_post = sfilename.substr(sfilename.find(delimiter));
 
-  std::string outDir = token_directory_pre+"stats/";
+  std::string alt_token = sfilename.substr( sfilename.find(directory_delimiter)+3, sfilename.find(delimiter_bis)-(sfilename.find(directory_delimiter)+3) );
+
+  std::string outDir = token_directory_pre+"stats"+alt_token;
   const char *outdir = outDir.c_str();
-  std::string outFilename = token_directory_pre+"stats/stats_"+token_post;
+  std::string outFilename = token_directory_pre+"stats"+alt_token+"stats_"+token_post;
+
+  cout<<" "<<endl;
+  cout<<"The output file will be: "<<endl;
+  cout<<outFilename<<endl;
+  cout<<" "<<endl;
 
   int check;
 
@@ -90,10 +98,10 @@ void analisi(){
 
   }else{
 
-    cout<<"creating output directory..."<<endl;
+    //cout<<"creating output directory..."<<endl;
     check = mkdir(outdir, 0777);
     if(check==0) cout<<"directory succesfully created"<<endl;
-    else cout<<"something went wrong..."<<endl;
+    else cout<<"something went wrong in creating the output directory..."<<endl;
 
   }
 
@@ -238,7 +246,8 @@ void analisi(){
           search_range[0] = cf.Value("HEADER", "pmax_search_range_min" ) ;
           search_range[1] = cf.Value("HEADER", "pmax_search_range_max" ) ;
 
- 			    cout<<"Time window: "<<time_window[0]<<"; "<<time_window[1]<<endl;
+ 			    cout<<" "<<endl;
+          cout<<"Time window: "<<time_window[0]<<"; "<<time_window[1]<<endl;
  			    cout<<"Search window: "<<search_range[0]<<"; "<<search_range[1]<<endl;
 
  		    }
@@ -338,6 +347,7 @@ void analisi(){
     
     OutTree->Fill();
 
+    if(j_counter==0) cout<<" "<<endl;
     if(j_counter%10000 == 0) cout<<"processed events:"<<j_counter<<endl;
     j_counter++;
 
