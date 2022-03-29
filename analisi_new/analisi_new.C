@@ -8,6 +8,8 @@
 #include <vector>
 #include <numeric>
 #include <functional>
+#include <sys/stat.h>
+#include <dirent.h>
 //#include <glib-2.0/glib.h>
 //#include <glib-2.0/glib/gprintf.h>
 //#include <glib.h>
@@ -40,7 +42,7 @@
 #include "include/ConfigFile.hpp"
 
 
-void analisi( std::string sfilename){
+void analisi(){
 
   //CAREFUL: select search_range for signal search and oscilloscope time_window
   //double search_range[2] = {-2e-9,2e-9};
@@ -60,7 +62,7 @@ void analisi( std::string sfilename){
   double tot_levels[2] = { cf.Value("HEADER","tot_rising"), cf.Value("HEADER","tot_falling") };
 
   //Input file
-  //std::string Filename = cf.Value("HEADER","input_filename");
+  std::string sfilename = cf.Value("HEADER","input_filename");
   //const char *filename = Filename.c_str();
   const char *filename = sfilename.c_str();
   TFile *file = TFile::Open(filename);
@@ -68,10 +70,32 @@ void analisi( std::string sfilename){
   TTreeReader myReader("wfm", file);
 
   // Output file & tree
+  std::string directory_delimiter = "raw";
   std::string delimiter = "Sr";
+
+  std::string token_directory_pre = sfilename.substr(0, sfilename.find(directory_delimiter));
   std::string token_pre = sfilename.substr(0, sfilename.find(delimiter));
   std::string token_post = sfilename.substr(sfilename.find(delimiter));
-  std::string outFilename = token_pre+"stats_"+token_post;
+
+  std::string outDir = token_directory_pre+"stats/";
+  const char *outdir = outDir.c_str();
+  std::string outFilename = token_directory_pre+"stats/stats_"+token_post;
+
+  int check;
+
+  struct stat st;
+  if( stat( outdir, &st ) == 0){
+
+    cout<<"output directory already exists"<<endl;
+
+  }else{
+
+    cout<<"creating output directory..."<<endl;
+    check = mkdir(outdir, 0777);
+    if(check==0) cout<<"directory succesfully created"<<endl;
+    else cout<<"something went wrong..."<<endl;
+
+  }
 
 
   //std::string outFilename = cf.Value("HEADER","output_filename");
@@ -327,7 +351,9 @@ void analisi( std::string sfilename){
 
 int main(){
 
-char const *dirname="/media/daq/UFSD-Disk1/BETA/EXFLU/Run1_EXFLU_FBKUFSD2W10/fromDAQ" ;
+analisi();
+
+/*char const *dirname="/media/daq/UFSD-Disk1/BETA/EXFLU/Run1_EXFLU_FBKUFSD2W10/fromDAQ" ;
 char const *ext=".root" ;
 
 std::string spath(dirname);
@@ -359,7 +385,7 @@ std::string spath(dirname);
 
         }  
       } 
-    }  
+    }*/  
 
 return 0;
 
