@@ -20,7 +20,7 @@
 #include "include/ConfigFile.hpp"
 #include "src/Analyzer.hpp"
 
-void Compilatore_new(){
+void read_analysis_compiler(){
 
 
   gSystem->CompileMacro("src/general.cpp","kg");
@@ -30,7 +30,7 @@ void Compilatore_new(){
   gSystem->CompileMacro("analisi_new.C","kg");
   gSystem->CompileMacro("read_analysis_new.C","kg");
 
-  gROOT->ProcessLine("analisi()");
+  gROOT->ProcessLine("read_analysis_new()");
   
 }
 
