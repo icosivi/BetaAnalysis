@@ -61,6 +61,10 @@ void analisi(){
 
   double tot_levels[2] = { cf.Value("HEADER","tot_rising"), cf.Value("HEADER","tot_falling") };
 
+  bool ADC_conversion = true;
+  double ADC_conversion_factor = 0.244;
+  double temporal_bin_width = 0.0488; // 0.2
+
   //Input file
   std::string sfilename = cf.Value("HEADER","input_filename");
   //const char *filename = Filename.c_str();
@@ -71,18 +75,12 @@ void analisi(){
 
   // Output file & tree
   std::string directory_delimiter = "raw";
-  std::string delimiter = "Sr";
-  std::string delimiter_bis = "fromDAQ";
-
   std::string token_directory_pre = sfilename.substr(0, sfilename.find(directory_delimiter));
-  std::string token_pre = sfilename.substr(0, sfilename.find(delimiter));
-  std::string token_post = sfilename.substr(sfilename.find(delimiter));
+  std::string token_post = sfilename.substr(sfilename.find(directory_delimiter)+4);
 
-  std::string alt_token = sfilename.substr( sfilename.find(directory_delimiter)+3, sfilename.find(delimiter_bis)-(sfilename.find(directory_delimiter)+3) );
-
-  std::string outDir = token_directory_pre+"stats"+alt_token;
+  std::string outDir = token_directory_pre+"stats/";
   const char *outdir = outDir.c_str();
-  std::string outFilename = token_directory_pre+"stats"+alt_token+"stats_"+token_post;
+  std::string outFilename = token_directory_pre+"stats/stats_"+token_post;
 
   cout<<" "<<endl;
   cout<<"The output file will be: "<<endl;
@@ -138,6 +136,7 @@ void analisi(){
   std::vector<double> rms1;
   std::vector<std::vector<double>> w1;
   std::vector<std::vector<double>> t1;
+  double x_pos, y_pos ;
 
   Pmax1.reserve(20);
   Pmax1Fit.reserve(20);
@@ -185,11 +184,31 @@ void analisi(){
   OutTree->Branch("t_thr", "std::vector<double>",&t_thr1);  // time at which a certain thr (in V) is passed
   OutTree->Branch("tot", "std::vector<double>",&tot1);
   OutTree->Branch("rms", "std::vector<double>",&rms1);
+  OutTree->Branch("x_pos", &x_pos);
+  OutTree->Branch("y_pos", &y_pos);
   
  
   int j_counter = 0;
 
-  std::vector<TTreeReaderArray<double>> voltageReader1 ;
+  std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
+  //std::vector<TTreeReaderArray<int>> timeReader1 ;
+
+  //TTreeReaderValue<Double32_t> freqReader(myReader, "freq" );
+  TTreeReaderArray<Double32_t> posReader(myReader, "pos" );
+  //TTreeReaderValue<double> yReader(myReader, Form("pos->at(%i)", 1) );
+
+  //for(int ch_counter=1; ch_counter<=ch_number; ch_counter++ ){
+  for(int ch_counter=0; ch_counter<ch_number; ch_counter++ ){
+
+    if(ch_counter != 16 && ch_counter != 17) voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, Form("w%i",ch_counter) ));  
+    else if(ch_counter == 16)  voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg0" )); 
+    else if(ch_counter == 17)  voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
+
+    //timeReader1.push_back(TTreeReaderArray<int>(myReader, "time"));
+
+  }
+
+  /*std::vector<TTreeReaderArray<double>> voltageReader1 ;
   std::vector<TTreeReaderArray<double>> timeReader1 ;
 
   for(int ch_counter=1; ch_counter<=ch_number; ch_counter++ ){
@@ -197,7 +216,7 @@ void analisi(){
     voltageReader1.push_back(TTreeReaderArray<double>(myReader, Form("w%i",ch_counter) ));  
     timeReader1.push_back(TTreeReaderArray<double>(myReader, Form("t%i",ch_counter) ));
 
-  }
+  }*/
 
   while(myReader.Next()){
 
@@ -223,7 +242,11 @@ void analisi(){
     w1.clear();
     t1.clear();
 
-    for( int ch_counter=1; ch_counter<=ch_number; ch_counter++ ){
+    x_pos = double(posReader[0]);
+    y_pos = double(posReader[1]);
+
+    //for( int ch_counter=1; ch_counter<=ch_number; ch_counter++ ){
+    for( int ch_counter=0; ch_counter<ch_number; ch_counter++ ){
       
       std::vector<double> w1_inner;
       std::vector<double> t1_inner;
@@ -239,16 +262,15 @@ void analisi(){
 
  		    if( enable_channel_1 == 1 ){
 
- 			    time_window[0] = timeReader1.at(ch_counter-1).At(0);
- 			    time_window[1] = timeReader1.at(ch_counter-1).At(timeReader1.at(ch_counter-1).GetSize()-1);
- 			    //search_range[0] = (time_window[0]+time_window[1])/2. - 100*(timeReader1.at(ch_counter-1).At(1)-timeReader1.at(ch_counter-1).At(0)) ;
- 			    //search_range[1] = (time_window[0]+time_window[1])/2. + 100*(timeReader1.at(ch_counter-1).At(1)-timeReader1.at(ch_counter-1).At(0)) ;
+ 			    time_window[0] = 0; //double(timeReader1.at(ch_counter).At(0));
+          time_window[1] = 0; //double(timeReader1.at(ch_counter).At(timeReader1.at(ch_counter).GetSize()-1));
+          //search_range[0] = (time_window[0]+time_window[1])/2. - 100*(timeReader1.at(ch_counter-1).At(1)-timeReader1.at(ch_counter-1).At(0)) ;
+          //search_range[1] = (time_window[0]+time_window[1])/2. + 100*(timeReader1.at(ch_counter-1).At(1)-timeReader1.at(ch_counter-1).At(0)) ;
           search_range[0] = cf.Value("HEADER", "pmax_search_range_min" ) ;
           search_range[1] = cf.Value("HEADER", "pmax_search_range_max" ) ;
 
- 			    cout<<" "<<endl;
           cout<<"Time window: "<<time_window[0]<<"; "<<time_window[1]<<endl;
- 			    cout<<"Search window: "<<search_range[0]<<"; "<<search_range[1]<<endl;
+          cout<<"Search window: "<<search_range[0]<<"; "<<search_range[1]<<endl;
 
  		    }
  	    }
@@ -257,22 +279,26 @@ void analisi(){
 
  		    if( invert_channel_1 == 1 ){
 
-	 		    for(unsigned int i=0; i<voltageReader1.at(ch_counter-1).GetSize();i++){
+          for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
 
-	 			    w1_inner.push_back(-voltageReader1.at(ch_counter-1).At(i));
-	 			    t1_inner.push_back(timeReader1.at(ch_counter-1).At(i));
+            if(ADC_conversion) w1_inner.push_back( double(-voltageReader1.at(ch_counter).At(i)) *ADC_conversion_factor );
+            else w1_inner.push_back( double(-voltageReader1.at(ch_counter).At(i)) );
+            //t1_inner.push_back( double(i)*(1. / double(*freqReader) ) );
+            t1_inner.push_back( double(i)*temporal_bin_width ); 
 
- 			    }
+          }
 
- 		    }else{
+        }else{
 
-	 		    for(unsigned int i=0; i<voltageReader1.at(ch_counter-1).GetSize();i++){
+          for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
 
-	 			    w1_inner.push_back(voltageReader1.at(ch_counter-1).At(i));
-	 			    t1_inner.push_back(timeReader1.at(ch_counter-1).At(i));
+            if(ADC_conversion) w1_inner.push_back( double(voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
+            else w1_inner.push_back( double(voltageReader1.at(ch_counter).At(i)) );
+            //t1_inner.push_back( double(i)*(1. / double(*freqReader) ) );
+            t1_inner.push_back( double(i)*temporal_bin_width );
 
- 			    }
- 		    }
+          }
+        }
 
  		    w1.push_back( w1_inner );
  		    t1.push_back( t1_inner );
@@ -298,7 +324,7 @@ void analisi(){
 
 
 		    *a1=Analyzer( w1_inner, t1_inner );
-		    a1->Correct_Baseline(100);
+		    a1->Correct_Baseline(10);
 
 		    std::pair<double, unsigned int> tp_pair1 = a1->Find_Signal_Maximum(false,search_range); 
 		    std::pair<double, double> tp_pair1_fit = a1->Pmax_with_GausFit(tp_pair1,maxIndex);
@@ -362,40 +388,6 @@ void analisi(){
 int main(){
 
 analisi();
-
-/*char const *dirname="/media/daq/UFSD-Disk1/BETA/EXFLU/Run1_EXFLU_FBKUFSD2W10/fromDAQ" ;
-char const *ext=".root" ;
-
-std::string spath(dirname);
-
-  TSystemDirectory dir(dirname, dirname); 
-  TList *files = dir.GetListOfFiles(); 
-
-    if (files) { 
-
-      TSystemFile *file; 
-      TString fname; 
-      TIter next(files); 
-
-      while ((file=(TSystemFile*)next())) { 
-    
-        fname = file->GetName(); 
-        cout<<"pippo"<<endl;
-
-        if (!file->IsDirectory() && fname.EndsWith(ext)) { 
-
-          std::string s( fname.Data() ) ;
-          std::string sinput = spath + s ;
-
-          std::string output = spath + "stats_" + s ;
-
-
-          analisi( sinput ) ; 
-          gROOT->ProcessLine( Form("readAnalysis('%s', %i)", output.c_str(), 1) );
-
-        }  
-      } 
-    }*/  
 
 return 0;
 

@@ -28,7 +28,7 @@ void Compilatore_new(){
   gSystem->CompileMacro("src/ConfigFile.cpp","kg");
   gSystem->CompileMacro("src/Analyzer.cpp","kg");
   gSystem->CompileMacro("analisi_new.C","kg");
-  gSystem->CompileMacro("read_analysis_new.C","kg");
+  //gSystem->CompileMacro("read_analysis_new.C","kg");
 
   gROOT->ProcessLine("analisi()");
   
