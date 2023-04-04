@@ -1,0 +1,136 @@
+//-------c++----------------//
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <stdlib.h>
+#include <stdio.h>
+#include <vector>
+#include <numeric>
+#include <functional>
+//#include <glib-2.0/glib.h>
+//#include <glib-2.0/glib/gprintf.h>
+//#include <glib.h>
+//#include <glib/gprintf.h>
+//#include <gtk/gtk.h>
+//#include <unistd.h>
+//#include <dirent.h>
+
+//------ROOT----------------//
+#include <TROOT.h>
+#include <TMath.h>
+#include <TTree.h>
+#include <TTreeReader.h>
+#include "TTreeReaderValue.h"
+#include "TTreeReaderArray.h"
+#include <TBranch.h>
+#include <TFile.h>
+#include <TProfile2D.h>
+#include <TH1.h>
+#include <TH3.h>
+#include <TF1.h>
+#include <TGraph.h>
+#include <TString.h>
+#include <TThread.h>
+#include <TROOT.h>
+#include <TStyle.h>
+#include <TImage.h>
+#include <TCanvas.h>
+#include <TStyle.h>
+#include <TF1Convolution.h>
+#include <TProfile.h>
+#include <TChain.h>
+
+//------Custom headers----------------//
+#include "include/general.hpp"
+#include "include/Chameleon.h"
+#include "include/ConfigFile.hpp"
+
+
+void readAnalysis( ){
+
+  gStyle->SetTitleOffset( 1.3, "x" );
+  gStyle->SetTitleOffset( 1.3, "y" );
+  gStyle->SetHistLineWidth(2);
+  gStyle->SetOptStat(1111);
+  //gStyle->SetPadTickX(1);  // To get tick marks on the opposite side of the frame
+  //gStyle->SetPadTickY(1);
+ 
+  ConfigFile cf("beta_config.ini");
+
+  /*std::string Filename = cf.Value("HEADER","output_filename");
+  const char *filename = Filename.c_str();
+  TFile *file = TFile::Open(/media/daq/UFSD-Disk1/RSD2/stats_croci450RSD2-x_230_1700_10-y_230_1700_10.root);
+  TFile *file_1 = TFile::Open(/media/daq/UFSD-Disk1/RSD2/stats_croci450RSD2-x_230_1700_10-y_230_1700_10_1.root);
+  TFile *file_2 = TFile::Open(/media/daq/UFSD-Disk1/RSD2/stats_croci450RSD2-x_230_1700_10-y_230_1700_10_2.root);
+  
+  TTree *itree = dynamic_cast<TTree*>(file->Get("Analysis"));
+  TTree *itree_1 = dynamic_cast<TTree*>(file_1->Get("Analysis"));
+  TTree *itree_2 = dynamic_cast<TTree*>(file_2->Get("Analysis"));*/
+
+  TChain *itree = new TChain("Analysis","");
+  itree->Add("/media/daq/UFSD-Disk1/RSD2/stats_croci450RSD2-x_230_1700_10-y_230_1700_10.root");
+  itree->Add("/media/daq/UFSD-Disk1/RSD2/stats_croci450RSD2-x_230_1700_10-y_230_1700_10_1.root");
+  itree->Add("/media/daq/UFSD-Disk1/RSD2/stats_croci450RSD2-x_230_1700_10-y_230_1700_10_2.root");
+  
+  int trigger_channel = cf.Value("HEADER","trigger_ch");
+  int trigger_ch = trigger_channel - 1 ;
+
+  const double conversion_factor = cf.Value("HEADER","conversion_factor_area_charge") ;
+  const double time_const = cf.Value("HEADER","time_scalar");  
+  const double voltage_const = cf.Value("HEADER","voltage_scalar");
+
+  int save_plots = cf.Value("ANALYSIS","save_plots") ;
+  int best_cfd_index = cf.Value("ANALYSIS","cfd_index") ; 
+
+  double negpmax = cf.Value("ANALYSIS","negpmax") ; 
+  double pmax_low = 0;
+  double pmax_up = cf.Value("ANALYSIS","pmax_up") ; 
+  double area_low = 0;
+  double area_up = cf.Value("ANALYSIS","area_up") ;
+
+  TH3F *pmax_3d[16];
+  //TH2F *pmax_3d[16];
+  TProfile2D *pmax_2d[16];
+  TCanvas *c[16];
+
+
+  for(int k=0; k<16; k++){  
+  
+    pmax_3d[k] = new TH3F(Form("pmax_3d-map_ch%i", k), Form("Pmax 3d-map ch%i", k), 300,0,300,160,200,1800,160,200,1800);
+    //pmax_3d[k] = new TH2F(Form("pmax_3d-map_ch%i", k), Form("pmax_3d-map_ch%i", k), 160,200,1800,300,0,300);
+    itree->Project(Form("pmax_3d-map_ch%i", k), Form("x_pos:y_pos:pmax[%i]", k), 
+                   Form("pmax[%i]>%f && pmax[%i]<%f && area_new[%i]>%f", k, pmax_low, k, pmax_up, k, area_low) );
+    //itree->Project(Form("pmax_3d-map_ch%i", k), "pmax[0]:x_pos", "pmax[0]>0 && pmax[0]<300 && area_new[0]>0" );
+
+
+    pmax_2d[k] = pmax_3d[k]->Project3DProfile("yz");
+    pmax_2d[k]->GetZaxis()->SetTitle("Pmax  [mV]");
+    pmax_2d[k]->GetYaxis()->SetTitle("y  [um]");
+    pmax_2d[k]->GetXaxis()->SetTitle("x  [um]");
+    //c[k] = new TCanvas(Form("c%i",k),Form("c%i",k),1200,1200);
+    //c[k]->cd();
+    //pmax_2d[k]->Draw("colz");
+    //pmax_3d[k]->Draw("colz");
+
+  }
+
+  for(int j=0; j<16; j++){
+
+     c[j] = new TCanvas(Form("c%i",j),Form("c%i",j),1200,1200);
+     c[j]->cd();
+     pmax_2d[j]->Draw("colz");
+     //pmax_3d[j]->Draw();
+
+  }
+
+}
+
+
+/*int main(){
+
+readAnalysis();
+
+return 0;
+
+}*/

@@ -1,0 +1,79 @@
+import sys
+import ROOT
+import os
+import shutil
+from ROOT import TH2F, TFile, TTree, TCanvas, TH1D, TH2I, TString
+from array import array
+from progress.bar import ChargingBar
+
+ROOT.EnableThreadSafety()
+ROOT.EnableImplicitMT(8)
+
+
+#some variables 
+n_channels = 5
+pitch      = 1300
+
+filename = "/home/daq/hdd8TB/RSD2/stats/stats_croci1.3mm-RSD2_Run101_20kwaveforms_240V_W3.root"
+#this way we can use it in a bash file more easily
+if len(sys.argv) == 1:
+	filename = "/home/daq/hdd8TB/RSD2/stats/stats_croci1.3mm-RSD2_Run101_20kwaveforms_240V_W3.root"
+if len(sys.argv) == 2:
+	filename = sys.argv[1]
+if len(sys.argv) == 3:
+	filename = sys.argv[1]
+	n_channels = str(sys.argv[2])
+
+#variables
+pmax_hist = []
+fCanvas   = []
+for j in range(n_channels):
+	pmax_hist.append(TH1D(str(j),"p_max "+str(j),500,-50,150))
+rec_pos_x = []
+rec_pos_y = []
+rec_pos_hist = TH2I("reconstructed positions", "reconstructed positions", int(pitch / 13), -pitch/2, pitch/2, int(pitch / 13), -pitch/2, pitch/2)
+dc_area = TH1D("dc Area", "dc Area", 500,-50,150)
+
+#starts the analysis
+myFile = TFile.Open(filename, "OPEN")
+tree   = myFile.Get("Analysis")
+
+nEntries = tree.GetEntries()
+bar = ChargingBar('Processing', max=nEntries, suffix = '%(percent)d%% [%(elapsed_td)s]') #just for checking the progress of the analsis. !! Silences all print screen
+count  = 0
+for i in range(nEntries):
+	bar.next()
+	tree.GetEntry(i)
+	if tree.tot[0] > 3 and (tree.pmax[1]+tree.pmax[2]+tree.pmax[3]+tree.pmax[4] > 20):
+		for j in range(n_channels):
+			pmax_hist[j].Fill(tree.pmax[j])
+		rec_pos_x = pitch/2*(tree.pmax[2] + tree.pmax[3] - tree.pmax[1] - tree.pmax[4]) / (tree.pmax[1] + tree.pmax[2] + tree.pmax[3] + tree.pmax[4])
+		rec_pos_y = pitch/2*(tree.pmax[1] + tree.pmax[2] - tree.pmax[3] - tree.pmax[4]) / (tree.pmax[1] + tree.pmax[2] + tree.pmax[3] + tree.pmax[4])
+		#rec_pos_x = pitch/2*(tree.pmax[1] + tree.pmax[2] - tree.pmax[3] - tree.pmax[4]) / (tree.pmax[1] + tree.pmax[2] + tree.pmax[3] + tree.pmax[4])
+		#rec_pos_y = pitch/2*(tree.pmax[3] - tree.pmax[4] + tree.pmax[1] - tree.pmax[2]) / (tree.pmax[1] + tree.pmax[2] + tree.pmax[3] + tree.pmax[4])
+		rec_pos_hist.Fill(rec_pos_x,rec_pos_y)
+		dc_area.Fill(tree.area[0])
+	else:
+		continue
+bar.finish()
+
+for j in range(n_channels):
+	fCanvas.append(TCanvas(str("pmax %d"%j),str(j),600,600))
+	pmax_hist[j].Draw("colz")
+	fCanvas[j].Modified()
+	fCanvas[j].Update()
+	#fCanvas[j].SaveAs(str("c%d.pdf"%j))
+
+#reconstructed positions
+fCanvas.append(TCanvas("reconstructed positions","reconstructed positions", 600, 600))
+rec_pos_hist.Draw("colz")
+fCanvas[n_channels].Modified()
+fCanvas[n_channels].Update()
+
+#DC area
+fCanvas.append(TCanvas("DC Area","DC Area",600,600))
+dc_area.Draw("colz")
+fCanvas[n_channels].Modified()
+fCanvas[n_channels].Update()
+
+input("Press any key to close the histograms")

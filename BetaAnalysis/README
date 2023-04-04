@@ -1,0 +1,9 @@
+The analysis can be configured through beta_config.ini
+filename_path points to a directory where two folders ("raw" and "stats") must be created before starting the analysis
+input_filename should be "DUT_directory/file_name"  --> DUT_directory must be placed within the "raw" directory previosly created
+The analysis script will take care of creating the other directories
+voltage and time scalar are conversion factors to get amplitude and time in mV and ns, respectively. Change them according to your setup
+active_channels = number of channels active on the oscilloscope
+n_points_baseline: number of points used to calculate the baseline offset (the first n points of the acquisition window)
+search_range: if set to one, the Pmax of events will be caclulated only in the time window defined by pmax_search_range_min / pmax_search_range_max
+ps_channelx : if set to 1 means that the power supply recorded the current of channel x 
