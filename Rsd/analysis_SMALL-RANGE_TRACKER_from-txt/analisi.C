@@ -109,10 +109,8 @@ void analisi( ){
   double tot_levels[2] = { cf.Value("HEADER","tot_rising"), cf.Value("HEADER","tot_falling") };
 
   int n_points_baseline = cf.Value("HEADER","n_points_baseline");
+  int n_events = cf.Value("HEADER","n_events");
 
-  int ADC_conversion = cf.Value("HEADER","ADC_conversion");
-  double ADC_conversion_factor = cf.Value("HEADER","ADC_conversion_factor");
-  double temporal_bin_width = cf.Value("HEADER","temporal_bin_width"); //0.2; 0.0488;
 
   //Input file
   /*std::string path = cf.Value("HEADER","filename_path");
@@ -121,8 +119,11 @@ void analisi( ){
   std::cout << "Anaysis of file " << Filename << " started" << endl; 
   const char *filename = Filename.c_str();
   TFile *file = TFile::Open(filename);*/
+
+  std::string txt_path = cf.Value("HEADER","txt_path");
   
   // Output file & tree
+  std::string path = cf.Value("HEADER","filename_path");
   std::string outFilename;
   if( join_txt_tracker && small_range ) outFilename = path+"stats/stats_small-range_TRACKER_"+file_in+".root";
   else if( !join_txt_tracker && small_range ) outFilename = path+"stats/stats_small-range_"+file_in+".root";
@@ -242,22 +243,21 @@ void analisi( ){
   n = 0;
   int j_counter = 0;
   
-  std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
-  
-  TTreeReaderArray<Double32_t> posReader(myReader, "pos" );
+  /*std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
+  std::vector<TTreeReaderArray<double>> timeReader1 ;
       
   for(int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
   
     voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, Form("w%i",ch_counter) ));  
   
-  }
+  }*/
   
-  voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg0" )); 
-  voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
+  //voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg0" )); 
+  //voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
   
   
   
-  while(myReader.Next()){
+  while( j_counter<=n_events ){
     
     if(join_txt_tracker && (j_counter != nevent[n])){
     //if(join_txt_tracker && ((j_counter+1) != nevent[n]) ){
@@ -422,15 +422,19 @@ void analisi( ){
 
     std::string line_inner;
 
-    for( int ch_counter=0; ch_counter<(active_channels+2); ch_counter++ ){
+    //for( int ch_counter=0; ch_counter<(active_channels+2); ch_counter++ ){
+    for( int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
           
       std::vector<double> w1_inner;
       std::vector<double> t1_inner;
   
       w1_inner.reserve(221560);
       t1_inner.reserve(221560);
+
+      enable_channel_1 = cf.Value("ACTIVE_CHANNEL", Form("ch%i", ch_counter) );
+      invert_channel_1 = cf.Value("INVERT_SIGNAL", Form("ch%i", ch_counter) );
   
-      if(ch_counter < active_channels ){
+      /*if(ch_counter < active_channels ){
           
         enable_channel_1 = cf.Value("ACTIVE_CHANNEL", Form("ch%i", ch_counter) );
         invert_channel_1 = cf.Value("INVERT_SIGNAL", Form("ch%i", ch_counter) );
@@ -445,7 +449,7 @@ void analisi( ){
         enable_channel_1 = cf.Value("ACTIVE_CHANNEL", "trg1" );
         invert_channel_1 = cf.Value("INVERT_SIGNAL", "trg1" );
           
-      }
+      }*/
 
   
  	    if( enable_channel_1 == 1){
