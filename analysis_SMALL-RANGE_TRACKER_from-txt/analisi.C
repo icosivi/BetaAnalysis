@@ -44,7 +44,7 @@ void analisi( ){
   //Config file definition
   ConfigFile cf("beta_config.ini");
 
-  const bool join_txt_tracker;
+  bool join_txt_tracker = true;
 
   if( cf.Value("HEADER", "join_txt_tracker") == 0 ) join_txt_tracker = false;
   else join_txt_tracker = true;
@@ -125,6 +125,7 @@ void analisi( ){
   // Output file & tree
   std::string path = cf.Value("HEADER","filename_path");
   std::string outFilename;
+  std::string file_in = cf.Value("HEADER","input_filename");
   if( join_txt_tracker && small_range ) outFilename = path+"stats/stats_small-range_TRACKER_"+file_in+".root";
   else if( !join_txt_tracker && small_range ) outFilename = path+"stats/stats_small-range_"+file_in+".root";
   else if( join_txt_tracker && !small_range ) outFilename = path+"stats/stats_TRACKER_"+file_in+".root";
@@ -309,13 +310,8 @@ void analisi( ){
     int enable_channel_1 = 0;
     int invert_channel_1 = 0;
 
-    ifstream input_txt_file;
-    if( (j_counter+1)<10 ) input_txt_file.open(txt_path+Form("C%i-0000%i.txt",(ch_counter+1),(j_counter+1))) ;
-    if( (j_counter+1)>=10 && (j_counter+1)<100 ) input_txt_file.open(txt_path+Form("C%i-000%i.txt",(ch_counter+1),(j_counter+1))) ;
-    if( (j_counter+1)>=100 && (j_counter+1)<1000 ) input_txt_file.open(txt_path+Form("C%i-00%i.txt",(ch_counter+1),(j_counter+1))) ;
-    if( (j_counter+1)>=1000 && (j_counter+1)<10000 ) input_txt_file.open(txt_path+Form("C%i-0%i.txt",(ch_counter+1),(j_counter+1))) ;
-    if( (j_counter+1)>=10000 && (j_counter+1)<100000 ) input_txt_file.open(txt_path+Form("C%i-%i.txt",(ch_counter+1),(j_counter+1))) ;
-
+    //ifstream input_txt_file;
+    
     std::string line_check;
 
 
@@ -332,7 +328,14 @@ void analisi( ){
             
         std::vector<double> w1_check;
         std::vector<double> t1_check;
-      
+        
+        ifstream input_txt_file;
+        if( (j_counter+1)<10 ) input_txt_file.open(txt_path+Form("C%i-0000%i.txt",(ch_counter+1),(j_counter+1))) ;
+        if( (j_counter+1)>=10 && (j_counter+1)<100 ) input_txt_file.open(txt_path+Form("C%i-000%i.txt",(ch_counter+1),(j_counter+1))) ;
+        if( (j_counter+1)>=100 && (j_counter+1)<1000 ) input_txt_file.open(txt_path+Form("C%i-00%i.txt",(ch_counter+1),(j_counter+1))) ;
+        if( (j_counter+1)>=1000 && (j_counter+1)<10000 ) input_txt_file.open(txt_path+Form("C%i-0%i.txt",(ch_counter+1),(j_counter+1))) ;
+        if( (j_counter+1)>=10000 && (j_counter+1)<100000 ) input_txt_file.open(txt_path+Form("C%i-%i.txt",(ch_counter+1),(j_counter+1))) ;
+  
         w1_check.reserve(221560);
         t1_check.reserve(221560);
           
@@ -420,7 +423,7 @@ void analisi( ){
 
     ///////// END OF "SMALL-RANGE" PART /////////
 
-    std::string line_inner;
+    //std::string line_inner;
 
     //for( int ch_counter=0; ch_counter<(active_channels+2); ch_counter++ ){
     for( int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
@@ -433,7 +436,16 @@ void analisi( ){
 
       enable_channel_1 = cf.Value("ACTIVE_CHANNEL", Form("ch%i", ch_counter) );
       invert_channel_1 = cf.Value("INVERT_SIGNAL", Form("ch%i", ch_counter) );
-  
+
+      ifstream input_txt_file;
+      if( (j_counter+1)<10 ) input_txt_file.open(txt_path+Form("C%i-0000%i.txt",(ch_counter+1),(j_counter+1))) ;
+      if( (j_counter+1)>=10 && (j_counter+1)<100 ) input_txt_file.open(txt_path+Form("C%i-000%i.txt",(ch_counter+1),(j_counter+1))) ;
+      if( (j_counter+1)>=100 && (j_counter+1)<1000 ) input_txt_file.open(txt_path+Form("C%i-00%i.txt",(ch_counter+1),(j_counter+1))) ;
+      if( (j_counter+1)>=1000 && (j_counter+1)<10000 ) input_txt_file.open(txt_path+Form("C%i-0%i.txt",(ch_counter+1),(j_counter+1))) ;
+      if( (j_counter+1)>=10000 && (j_counter+1)<100000 ) input_txt_file.open(txt_path+Form("C%i-%i.txt",(ch_counter+1),(j_counter+1))) ;
+      //cout<<txt_path+Form("C%i-%i.txt",(ch_counter+1),(j_counter+1))<<endl;
+
+      std::string line_inner;
       /*if(ch_counter < active_channels ){
           
         enable_channel_1 = cf.Value("ACTIVE_CHANNEL", Form("ch%i", ch_counter) );
@@ -499,28 +511,6 @@ void analisi( ){
           }
 
  	      }
-    
-  
- 	      if(w1_inner.size()<maxIndex || t1_inner.size()<maxIndex){
-  
- 	    	  cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
- 	    	  continue;
- 	    	
-        }
-  
- 	    	if(w1_inner.size()==0 || t1_inner.size()==0){
-  
- 	    	  cout<<"Voltage or Time vector empty. Skipping whole event"<<endl;
- 	    	  continue;
- 	    	
-        }
-  
- 	    	if(w1_inner.size()!= t1_inner.size()){
-  
- 	    	  cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<endl;
- 	    		continue;
-
- 	    	}
 
 
         if(small_range){
