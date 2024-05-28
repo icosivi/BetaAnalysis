@@ -64,7 +64,7 @@ Analyzer::~Analyzer(){
 }
 
 
-double Analyzer::Correct_Baseline( int ptN ){
+void Analyzer::Correct_Baseline( int ptN ){
 
   double mean =0;
 
@@ -73,8 +73,6 @@ double Analyzer::Correct_Baseline( int ptN ){
   mean = mean/ptN;
 
   for(std::size_t j = 0, max = this->pvoltage.size(); j < max; j++){this->pvoltage.at(j) = this->pvoltage.at(j)- mean;}
-
-  return mean;
 
 }
 
@@ -109,7 +107,7 @@ std::pair<double, unsigned int> Analyzer::Find_Signal_Maximum(bool confineSearch
     {
       for( std::size_t j = 0; j < npoints; j++)
       {
-        if( this->ptime.at(j) >= searchRange[0] && this->ptime.at(j) <= searchRange[1] ) //zoom in to find the Pmax
+        if( searchRange[0] <= this->ptime.at(j) && this->ptime.at(j) <= searchRange[1] ) //zoom in to find the Pmax
         {
             if( firstPoint ){ pmaxIndex = j; firstPoint = false; }
             if( this->pvoltage.at(j) > pmax )
@@ -194,9 +192,7 @@ std::pair<double, double> Analyzer::Pmax_with_GausFit(const std::pair<double, un
 
   }
 
-
-  if( fabs(pmax-Pmax.first)<0.2*fabs(Pmax.first) ) return std::make_pair( pmax, tmax);
-  else return std::make_pair( Pmax.first, this->ptime.at(Pmax.second) );
+  return std::make_pair( pmax, tmax);
 
 }
 
@@ -212,7 +208,7 @@ std::pair<double, unsigned int> Analyzer::Find_Negative_Signal_Maximum( bool con
     {
       for( std::size_t j = 0; j < npoints; j++)
       {
-        if( this->ptime.at(j) >= searchRange[0] && this->ptime.at(j) <= searchRange[1] ) //zoom in to find the Pmax
+        if( searchRange[0] <= this->ptime.at(j) && this->ptime.at(j) <= searchRange[1] ) //zoom in to find the Pmax
         {
             if( firstPoint ){ pmaxIndex = j; firstPoint = false; }
             if( this->pvoltage.at(j) < pmax )
@@ -313,24 +309,6 @@ double Analyzer::Get_Negative_Tmax(const std::pair<double, unsigned int> NegPmax
   double tmax = this->ptime.at(NegPmax.second);
   return tmax;
 
-
-}
-
-
-double Analyzer::DC_Area(double baseline_correction){ //
-
-
-  double dc_area = 0;
-  double time_difference = this->ptime.at(1) - this->ptime.at(0);
-
-  for(int j=5; j<(this->pvoltage.size()-10); j++ ){ 
-
-    dc_area += (this->pvoltage.at(j))*time_difference ;  //-baseline_correction
-    //std::cout<<(this->pvoltage.at(j))*time_difference<<std::endl;
-
-  }
-
-  return dc_area ;
 
 }
 
@@ -1353,7 +1331,8 @@ double Analyzer::Find_Time_Over_Threshold(const double first_thresholdLevel, con
 
 
 // Similar to Find_Pulse_Area but start/end times of the pulse are defined analitically. Further checks are useful, there might be bugs. There inputs args not needed!
-double Analyzer::New_Pulse_Area( const std::pair<double,double> Pmax, unsigned int imax, std::string integration_option, double range[2] ){
+double Analyzer::New_Pulse_Area( const std::pair<double,double> Pmax, unsigned int imax, std::string integration_option, double range[2], 
+                                 double start_window, double end_window){
 
   if(Pmax.second > range[0] && Pmax.second < range[1]){
 
