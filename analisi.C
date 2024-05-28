@@ -44,6 +44,44 @@ void analisi( ){
   //Config file definition
   ConfigFile cf("beta_config.ini");
 
+  const bool join_txt_tracker = true;
+
+  //opens txt file and takes the data
+  std::string line;
+  std::string txtfilename=cf.Value("HEADER", "tracker_filename") ;
+  std::ifstream Filein;
+  std::vector<double> x_tracker_dirty, y_tracker_dirty; //have multiple tracks per event
+  std::vector<int> nevent_dirty;
+  std::vector<double> x_tracker, y_tracker; //all multiple tracks events are omitted
+  std::vector<int> nevent;
+  double x, y, z_position;
+  int is_fitted, n, n_old;
+
+
+  //saves tracker data on x_tracker and y_tracker
+  if(join_txt_tracker){
+    Filein.open(txtfilename, std::ios::in);
+    if(!Filein.is_open()) std::cout << "It failed" << std::endl;
+    else std::cout << "Opened file " << txtfilename << std::endl;
+    while(getline(Filein, line)){
+        Filein >> n >> x >> y >> z_position >> is_fitted; 
+        x_tracker_dirty.push_back(x);
+        y_tracker_dirty.push_back(y);
+        nevent_dirty.push_back(n);
+    }
+    //filters out multi tracks 
+    for(size_t i = 0; i < x_tracker_dirty.size(); i++){
+        if(nevent_dirty[i] != nevent_dirty[i+1] || i == x_tracker_dirty.size()){
+                if(nevent_dirty[i] != nevent_dirty[i-1] || i == 0){
+                x_tracker.push_back(x_tracker_dirty[i]);
+                y_tracker.push_back(y_tracker_dirty[i]);
+                nevent.push_back(nevent_dirty[i]);
+            }
+        }
+    }
+
+  }
+
   //time window is the DAQ time window, that you can check on the oscilloscope. search range is the window where signals occur
   bool pmax_search_range;
 
@@ -109,7 +147,7 @@ void analisi( ){
   std::vector<double> rms1;
   std::vector<std::vector<double>> w1;
   std::vector<std::vector<double>> t1;
-  double x_pos, y_pos ; //uncomment to have stage position (TCT only)
+  double x_pos, y_pos ;
   
   Pmax1.reserve(20);
   Pmax1Fit.reserve(20);
@@ -136,8 +174,10 @@ void analisi( ){
   Analyzer *a1=new Analyzer();
   
   int event;
+  //int evt_delta = 0; //for tracker sync
   
   OutTree->Branch("event",&event);
+  //OutTree->Branch("evt_delta",&evt_delta); //for tracker sync
   OutTree->Branch("w", "std::vector<std::vector<double>>", &w1);
   OutTree->Branch("t", "std::vector<std::vector<double>>" ,&t1);
   OutTree->Branch("pmax", "std::vector<double>",&Pmax1Fit);
@@ -155,16 +195,19 @@ void analisi( ){
   OutTree->Branch("dvdt_2080", "std::vector<double>",&dVdt1Fit_2080);
   OutTree->Branch("cfd", "std::vector<std::vector<double>>",&CFD1Fit);
   OutTree->Branch("width", "std::vector<std::vector<double>>",&WIDTH1);
-  OutTree->Branch("t_thr", "std::vector<double>",&t_thr1);
+  OutTree->Branch("t_thr", "std::vector<double>",&t_thr1);  // time at which a certain thr (in V) is passed
   OutTree->Branch("tot", "std::vector<double>",&tot1);
   OutTree->Branch("rms", "std::vector<double>",&rms1);
-  OutTree->Branch("x_pos", &x_pos); //uncomment to have stage position (TCT only)
+  OutTree->Branch("x_pos", &x_pos);
   OutTree->Branch("y_pos", &y_pos);
-   
+      
+  n = 0;
   int j_counter = 0;
   
   std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
   
+  TTreeReaderArray<Double32_t> posReader(myReader, "pos" );
+      
   for(int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
   
     voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, Form("w%i",ch_counter) ));  
@@ -173,11 +216,19 @@ void analisi( ){
   
   voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg0" )); 
   voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
-
-  TTreeReaderArray<Double32_t> posReader(myReader, "pos" );  //uncomment to have stage position (TCT only)
+  
+  
   
   while(myReader.Next()){
     
+    if(join_txt_tracker && (j_counter != nevent[n])){
+    //if(join_txt_tracker && ((j_counter+1) != nevent[n]) ){
+      
+      j_counter++;
+      continue;
+
+    }
+
     Pmax1.clear();
     Pmax1Fit.clear();
     negPmax1Fit.clear();
@@ -200,9 +251,22 @@ void analisi( ){
     WIDTH1.clear();
     w1.clear();
     t1.clear();
+  
+    
+    if(join_txt_tracker){
 
-    x_pos = double(posReader[0]); //uncomment to have stage position (TCT only)
-    y_pos = double(posReader[1]);
+      x_pos = x_tracker[n];
+      y_pos = y_tracker[n];
+
+      n++;
+      
+    }else{
+
+      x_pos = 0;
+      y_pos = 0;
+
+    }
+    
   
     int enable_channel_1 = 0;
     int invert_channel_1 = 0;
@@ -279,7 +343,7 @@ void analisi( ){
  	    	}
   
 	    	*a1=Analyzer( w1_inner, t1_inner );
-	    	double baseline_correction = a1->Correct_Baseline(n_points_baseline);
+	    	double baseline_correction = a1->Correct_Baseline(n_points_baseline); // we do not want signals in the first 5 ns, otherwise baseline correction is biased
 
         for(int i=0; i<w1_inner.size(); i++) w1_inner.at(i) = w1_inner.at(i) - baseline_correction ;
 
