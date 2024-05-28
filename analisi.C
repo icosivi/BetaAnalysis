@@ -70,45 +70,25 @@ void analisi(){
   int n_points_baseline = cf.Value("HEADER","n_points_baseline");
 
   //Input file
-  std::string path = cf.Value("HEADER","filename_path");
-  std::string file_in = cf.Value("HEADER","input_filename");
-  std::string Filename = path+"raw/"+file_in;
+  //std::string path = cf.Value("HEADER","filename_path");
+  //std::string file_in = cf.Value("HEADER","input_filename");
+  //std::string Filename = path+"raw/"+file_in;
+  std::string Filename = cf.Value("HEADER","input_filename");
   std::cout << "Anaysis of file " << Filename << " started" << endl;
   const char *filename = Filename.c_str();
   TFile *file = TFile::Open(filename);
   TTree *itree = dynamic_cast<TTree*>(file->Get("wfm"));
   TTreeReader myReader("wfm", file);
 
-  // Output file & tree
-  std::string delimiter = "Sr";
-  std::string token_pre = file_in.substr(0, file_in.find(delimiter));
-  std::string token_post = file_in.substr(file_in.find(delimiter));
-  std::string outDir = path+"stats/"+token_pre;
-  const char *outdir = outDir.c_str();
-  std::string outFilename = path+"stats/"+token_pre+"stats_"+token_post;
 
+
+  std::string outFilename = cf.Value("HEADER","output_filename");
+  
   cout<<" "<<endl;
   cout<<"The output file will be: "<<endl;
   cout<<outFilename<<endl;
   cout<<" "<<endl;
 
-  int check;
-
-  struct stat st;
-  if( stat( outdir, &st ) == 0){
-
-    cout<<"output directory already exists"<<endl;
-
-  }else{
-
-    check = mkdir(outdir, 0777);
-    if(check==0) cout<<"directory succesfully created"<<endl;
-    else cout<<"something went wrong in creating the output directory..."<<endl;
-
-  }
-
-
-  //std::string outFilename = cf.Value("HEADER","output_filename");
   const char *output_filename = outFilename.c_str();
   TFile *OutputFile = new TFile(output_filename,"recreate");
   TTree *OutTree = new TTree("Analysis","Analysis");
@@ -143,6 +123,7 @@ void analisi(){
   std::vector<std::vector<double>> t1;
 
   std::vector<double> i_current;
+  std::vector<double> v_bias;
   
 
   Pmax1.reserve(20);
@@ -170,10 +151,13 @@ void analisi(){
   Analyzer *a1=new Analyzer();
 
   i_current.reserve(20);
+  v_bias.reserve(20);
 
   int event;
+  double timestamp;
 
   OutTree->Branch("event",&event);
+  OutTree->Branch("time",&timestamp);
   OutTree->Branch("w", "std::vector<std::vector<double>>", &w1);
   OutTree->Branch("t", "std::vector<std::vector<double>>" ,&t1);
   OutTree->Branch("pmax", "std::vector<double>",&Pmax1Fit);
@@ -195,15 +179,16 @@ void analisi(){
   OutTree->Branch("tot", "std::vector<double>",&tot1);
   OutTree->Branch("rms", "std::vector<double>",&rms1);
   
-  OutTree->Branch("i_current", "std::vector<double>", &i_current);
+  OutTree->Branch("I", "std::vector<double>", &i_current);
+  OutTree->Branch("V", "std::vector<double>", &v_bias);
   
  
   int j_counter = 0;
 
   std::vector<TTreeReaderArray<double>> voltageReader1 ;
   std::vector<TTreeReaderArray<double>> timeReader1 ;
-  //TTreeReaderArray<double> currentReader1 ;
   std::vector<TTreeReaderValue<double>> currentReader1 ;
+  std::vector<TTreeReaderValue<double>> biasReader1 ;
 
   for(int ch_counter=1; ch_counter<=ch_number; ch_counter++ ){
 
@@ -212,7 +197,7 @@ void analisi(){
 
   }
 
-
+  TTreeReaderValue<double> tstampReader1(myReader,"i_timestamp") ;
   
   int ps_total = 0 ;
   
@@ -220,7 +205,8 @@ void analisi(){
 
     if(ps_channel[ps_counter] == 1){ 
 
-      currentReader1.push_back( TTreeReaderValue<double>(myReader, Form("i_current%i",ps_counter) ) );
+      currentReader1.push_back( TTreeReaderValue<double>(myReader, Form("I%i",ps_counter) ) );
+      biasReader1.push_back( TTreeReaderValue<double>(myReader, Form("V%i",ps_counter) ) );
       ps_total++ ;
 
     }
@@ -231,11 +217,14 @@ void analisi(){
 
   while(myReader.Next()){
 
+    timestamp = *tstampReader1;
     i_current.clear();
+    v_bias.clear();
     
     for( int ps_counter=0; ps_counter<ps_total; ps_counter++ ){
 
       i_current.push_back( *currentReader1.at(ps_counter) ) ;
+      v_bias.push_back( *biasReader1.at(ps_counter) ) ;
 
     }
 
