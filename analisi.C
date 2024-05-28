@@ -44,7 +44,15 @@ void analisi( ){
   //Config file definition
   ConfigFile cf("beta_config.ini");
 
-  const bool join_txt_tracker = true;
+  const bool join_txt_tracker;
+
+  if( cf.Value("HEADER", "join_txt_tracker") == 0 ) join_txt_tracker = false;
+  else join_txt_tracker = true;
+
+  bool small_range;
+
+  if( cf.Value("HEADER", "small_range") == 0 ) small_range = false;
+  else small_range = true;
 
   //opens txt file and takes the data
   std::string line;
@@ -88,9 +96,15 @@ void analisi( ){
   if( cf.Value("HEADER", "search_range") == 0 ) pmax_search_range = false;
   else pmax_search_range = true;
 
-  double search_range[2];
-  search_range[0] = cf.Value("HEADER", "pmax_search_range_min" ) ;
-  search_range[1] = cf.Value("HEADER", "pmax_search_range_max" ) ;
+  double search_range[2] = {0,0};
+  double search_range_global[2] = {0,0};
+  double search_range_plane1[2] = {0,0};
+  //double search_range_plane2[2] = {0,0};
+
+  search_range_global[0] = cf.Value("HEADER", "pmax_search_range_min" ) ;
+  search_range_global[1] = cf.Value("HEADER", "pmax_search_range_max" ) ;
+
+  double search_around_pmax = cf.Value("HEADER", "search_around_pmax" ) ;
 
   double tot_levels[2] = { cf.Value("HEADER","tot_rising"), cf.Value("HEADER","tot_falling") };
 
@@ -100,7 +114,10 @@ void analisi( ){
   double ADC_conversion_factor = cf.Value("HEADER","ADC_conversion_factor");
   double temporal_bin_width = cf.Value("HEADER","temporal_bin_width"); //0.2; 0.0488;
 
-  std::string Filename = cf.Value("HEADER","input_filename");
+  //Input file
+  std::string path = cf.Value("HEADER","filename_path");
+  std::string file_in = cf.Value("HEADER","input_filename");
+  std::string Filename = path+"raw/"+file_in;
   std::cout << "Anaysis of file " << Filename << " started" << endl; 
   const char *filename = Filename.c_str();
   TFile *file = TFile::Open(filename);
@@ -109,7 +126,10 @@ void analisi( ){
   
   // Output file & tree
   std::string outFilename;
-  outFilename = cf.Value("HEADER","output_filename");
+  if( join_txt_tracker && small_range ) outFilename = path+"stats/stats_small-range_TRACKER_"+file_in;
+  else if( !join_txt_tracker && small_range ) outFilename = path+"stats/stats_small-range_"+file_in;
+  else if( join_txt_tracker && !small_range ) outFilename = path+"stats/stats_TRACKER_"+file_in;
+  else if( !join_txt_tracker && !small_range ) outFilename = path+"stats/stats_"+file_in;
   const char *output_filename = outFilename.c_str();
   TFile *OutputFile = new TFile(output_filename,"recreate");
   TTree *OutTree = new TTree("Analysis","Analysis");
@@ -148,6 +168,9 @@ void analisi( ){
   std::vector<std::vector<double>> w1;
   std::vector<std::vector<double>> t1;
   double x_pos, y_pos ;
+  //double x_rsd_a, y_rsd_a, x_rsd_b, y_rsd_b ;
+  //double x_rsd_c, y_rsd_c, x_rsd_d, y_rsd_d, x_rsd_e, y_rsd_e, x_rsd_f, y_rsd_f, x_rsd_g, y_rsd_g  ;
+  //double x_centroide, y_centroide ;
   
   Pmax1.reserve(20);
   Pmax1Fit.reserve(20);
@@ -172,6 +195,7 @@ void analisi( ){
   w1.reserve(20);
   t1.reserve(20);
   Analyzer *a1=new Analyzer();
+  Analyzer *a_check=new Analyzer();
   
   int event;
   //int evt_delta = 0; //for tracker sync
@@ -195,11 +219,27 @@ void analisi( ){
   OutTree->Branch("dvdt_2080", "std::vector<double>",&dVdt1Fit_2080);
   OutTree->Branch("cfd", "std::vector<std::vector<double>>",&CFD1Fit);
   OutTree->Branch("width", "std::vector<std::vector<double>>",&WIDTH1);
-  OutTree->Branch("t_thr", "std::vector<double>",&t_thr1);  // time at which a certain thr (in V) is passed
+  OutTree->Branch("t_thr", "std::vector<double>",&t_thr1);
   OutTree->Branch("tot", "std::vector<double>",&tot1);
   OutTree->Branch("rms", "std::vector<double>",&rms1);
   OutTree->Branch("x_pos", &x_pos);
   OutTree->Branch("y_pos", &y_pos);
+  //OutTree->Branch("x_rsd_a", &x_rsd_a);
+  //OutTree->Branch("y_rsd_a", &y_rsd_a);
+  //OutTree->Branch("x_rsd_b", &x_rsd_b);
+  //OutTree->Branch("y_rsd_b", &y_rsd_b);
+  /*OutTree->Branch("x_rsd_c", &x_rsd_c);
+  OutTree->Branch("y_rsd_c", &y_rsd_c);
+  OutTree->Branch("x_rsd_d", &x_rsd_d);
+  OutTree->Branch("y_rsd_d", &y_rsd_d);
+  OutTree->Branch("x_rsd_e", &x_rsd_e);
+  OutTree->Branch("y_rsd_e", &y_rsd_e);
+  OutTree->Branch("x_rsd_f", &x_rsd_f);
+  OutTree->Branch("y_rsd_f", &y_rsd_f);
+  OutTree->Branch("x_rsd_g", &x_rsd_g);
+  OutTree->Branch("y_rsd_g", &y_rsd_g);*/
+  //OutTree->Branch("x_centroide", &x_centroide);
+  //OutTree->Branch("y_centroide", &y_centroide);
       
   n = 0;
   int j_counter = 0;
@@ -270,6 +310,84 @@ void analisi( ){
   
     int enable_channel_1 = 0;
     int invert_channel_1 = 0;
+
+
+    ///////// BEGINNING OF "SMALL-RANGE" PART /////////
+
+    if(small_range){
+    
+      double max_p_check_plane1 = 0;
+      double max_t_check_plane1 = 0;
+  
+      //for( int ch_counter=1; ch_counter<=4; ch_counter++ ){  // to be used for croci1.3 mm
+      //for( int ch_counter=1; ch_counter<=12; ch_counter++ ){  // to be used for boxes
+      for( int ch_counter=1; ch_counter<=15; ch_counter++ ){  // to be used for croci450um
+            
+        std::vector<double> w1_check;
+        std::vector<double> t1_check;
+      
+        w1_check.reserve(221560);
+        t1_check.reserve(221560);
+          
+        enable_channel_1 = cf.Value("ACTIVE_CHANNEL", Form("ch%i", ch_counter) );
+        invert_channel_1 = cf.Value("INVERT_SIGNAL", Form("ch%i", ch_counter) );
+      
+          
+        if( enable_channel_1 == 1){
+      
+          if( invert_channel_1 == 1 ){
+        
+            for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
+      
+              if(ADC_conversion==1) w1_check.push_back( double(-voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
+              else w1_check.push_back( double(-voltageReader1.at(ch_counter).At(i)) );
+              t1_check.push_back( double(i)*temporal_bin_width ); 
+      
+            }
+      
+          }else{
+      
+            for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
+      
+              if(ADC_conversion==1) w1_check.push_back( double(voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
+              else w1_check.push_back( double(voltageReader1.at(ch_counter).At(i)) );
+              t1_check.push_back( double(i)*temporal_bin_width );
+      
+            }
+          }
+      
+          *a_check=Analyzer( w1_check, t1_check );
+          double baseline_correction = a_check->Correct_Baseline(n_points_baseline); 
+      
+          std::pair<double, unsigned int> tp_pair1 = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
+          std::pair<double, double> tp_pair1_fit = a_check->Pmax_with_GausFit(tp_pair1,maxIndex);   
+    
+          if( tp_pair1_fit.first*voltage_const > max_p_check_plane1){
+    
+            max_p_check_plane1 = tp_pair1_fit.first*voltage_const;
+            max_t_check_plane1 = tp_pair1_fit.second*time_const; 
+  
+          }  
+        } 
+      }
+  
+      if(max_t_check_plane1>5 && max_t_check_plane1<195){
+      
+        search_range_plane1[0] = max_t_check_plane1 - search_around_pmax ;
+        search_range_plane1[1] = max_t_check_plane1 + search_around_pmax ;
+  
+      }else{
+  
+        search_range_plane1[0] = search_range_global[0] ;
+        search_range_plane1[1] = search_range_global[1] ;
+  
+      }
+  
+    }
+
+
+    ///////// END OF "SMALL-RANGE" PART /////////
+
   
     for( int ch_counter=0; ch_counter<(active_channels+2); ch_counter++ ){
           
@@ -341,6 +459,53 @@ void analisi( ){
  	    		continue;
 
  	    	}
+
+
+        if(small_range){
+
+          /*if(ch_counter==0 || ch_counter>4 ){  // cross 1.3mm
+  
+            search_range[0] = search_range_global[0];
+            search_range[1] = search_range_global[1];
+  
+          }else if(ch_counter>0 && ch_counter<=4){
+  
+            search_range[0] = search_range_plane1[0];
+            search_range[1] = search_range_plane1[1];
+  
+          }
+  
+          if(ch_counter==0 || ch_counter>12 ){ // boxes
+  
+            search_range[0] = search_range_global[0];
+            search_range[1] = search_range_global[1];
+  
+          }else if(ch_counter>0 && ch_counter<=12){
+  
+            search_range[0] = search_range_plane1[0];
+            search_range[1] = search_range_plane1[1];
+  
+          }*/
+  
+          if(ch_counter==0 || ch_counter>15 ){ // croci 450um
+  
+            search_range[0] = search_range_global[0];
+            search_range[1] = search_range_global[1];
+  
+          }else if(ch_counter>0 && ch_counter<=15){
+  
+            search_range[0] = search_range_plane1[0];
+            search_range[1] = search_range_plane1[1];
+  
+          }
+
+        }else{
+
+          search_range[0] = search_range_global[0];
+          search_range[1] = search_range_global[1];
+
+        }
+
   
 	    	*a1=Analyzer( w1_inner, t1_inner );
 	    	double baseline_correction = a1->Correct_Baseline(n_points_baseline); // we do not want signals in the first 5 ns, otherwise baseline correction is biased
@@ -416,3 +581,121 @@ analisi();
 return 0;
 
 }
+
+
+
+/*
+
+/// TRACKER SYNC ///
+      if( j_counter<15000 ){
+
+        x_pos = x_tracker[n-1];
+        y_pos = y_tracker[n-1];
+
+      }else if( j_counter>=15000 && j_counter<28000 ){
+
+        x_pos = x_tracker[n+1];
+        y_pos = y_tracker[n+1];
+
+      }else if( (j_counter>=28000 && j_counter<55000) ){
+
+        x_pos = x_tracker[n+2];
+        y_pos = y_tracker[n+2];
+
+      }else if( j_counter>=55000 && j_counter<65000 ){
+
+        x_pos = x_tracker[n+3];
+        y_pos = y_tracker[n+3];
+
+      }else if( j_counter>=65000 && j_counter<110000 ){
+
+        x_pos = x_tracker[n+4];
+        y_pos = y_tracker[n+4];
+
+      }else if( j_counter>=110000 ){
+
+        x_pos = x_tracker[n+5];
+        y_pos = y_tracker[n+5];
+
+      }
+
+
+
+
+    x_rsd_a = 345./2*(Pmax1Fit.at(2) + Pmax1Fit.at(4) - Pmax1Fit.at(5) - Pmax1Fit.at(6)) / (Pmax1Fit.at(2) + Pmax1Fit.at(4) + Pmax1Fit.at(5) + Pmax1Fit.at(6)) ;
+    y_rsd_a = 200./2*(Pmax1Fit.at(2) + Pmax1Fit.at(6) - Pmax1Fit.at(4) - Pmax1Fit.at(5)) / (Pmax1Fit.at(2) + Pmax1Fit.at(4) + Pmax1Fit.at(5) + Pmax1Fit.at(6)) ;
+
+    x_rsd_b = 345./2*(Pmax1Fit.at(2) + Pmax1Fit.at(12) - Pmax1Fit.at(6) - Pmax1Fit.at(9)) / (Pmax1Fit.at(2) + Pmax1Fit.at(6) + Pmax1Fit.at(9) + Pmax1Fit.at(12)) ;
+    y_rsd_b = 200./2*(Pmax1Fit.at(9) + Pmax1Fit.at(12) - Pmax1Fit.at(2) - Pmax1Fit.at(6)) / (Pmax1Fit.at(2) + Pmax1Fit.at(6) + Pmax1Fit.at(9) + Pmax1Fit.at(12)) ;
+
+    /*x_rsd_c = 450/2*(Pmax1Fit.at(14) + Pmax1Fit.at(13) - Pmax1Fit.at(11) - Pmax1Fit.at(12)) / (Pmax1Fit.at(14) + Pmax1Fit.at(11) + Pmax1Fit.at(12) + Pmax1Fit.at(13)) ;
+    y_rsd_c = 450/2*(Pmax1Fit.at(13) + Pmax1Fit.at(12) - Pmax1Fit.at(14) - Pmax1Fit.at(11)) / (Pmax1Fit.at(14) + Pmax1Fit.at(11) + Pmax1Fit.at(12) + Pmax1Fit.at(13)) ;
+
+    x_rsd_d = 450/2*(Pmax1Fit.at(3) + Pmax1Fit.at(14) - Pmax1Fit.at(6) - Pmax1Fit.at(11)) / (Pmax1Fit.at(3) + Pmax1Fit.at(14) + Pmax1Fit.at(6) + Pmax1Fit.at(11)) ;
+    y_rsd_d = 450/2*(Pmax1Fit.at(11) + Pmax1Fit.at(14) - Pmax1Fit.at(6) - Pmax1Fit.at(3)) / (Pmax1Fit.at(3) + Pmax1Fit.at(14) + Pmax1Fit.at(6) + Pmax1Fit.at(11)) ;
+
+    x_rsd_e = 450/2*(Pmax1Fit.at(3) + Pmax1Fit.at(4) - Pmax1Fit.at(6) - Pmax1Fit.at(5)) / (Pmax1Fit.at(3) + Pmax1Fit.at(4) + Pmax1Fit.at(6) + Pmax1Fit.at(5)) ;
+    y_rsd_e = 450/2*(Pmax1Fit.at(3) + Pmax1Fit.at(6) - Pmax1Fit.at(5) - Pmax1Fit.at(4)) / (Pmax1Fit.at(3) + Pmax1Fit.at(4) + Pmax1Fit.at(6) + Pmax1Fit.at(5)) ;
+
+    x_rsd_f = 450/2*(Pmax1Fit.at(1) + Pmax1Fit.at(2) - Pmax1Fit.at(3) - Pmax1Fit.at(4)) / (Pmax1Fit.at(1) + Pmax1Fit.at(2) + Pmax1Fit.at(3) + Pmax1Fit.at(4)) ;
+    y_rsd_f = 450/2*(Pmax1Fit.at(1) + Pmax1Fit.at(3) - Pmax1Fit.at(2) - Pmax1Fit.at(4)) / (Pmax1Fit.at(1) + Pmax1Fit.at(2) + Pmax1Fit.at(3) + Pmax1Fit.at(4)) ;
+
+    x_rsd_g = 450/2*(Pmax1Fit.at(11) + Pmax1Fit.at(12) - Pmax1Fit.at(9) - Pmax1Fit.at(10)) / (Pmax1Fit.at(9) + Pmax1Fit.at(10) + Pmax1Fit.at(11) + Pmax1Fit.at(12)) ;
+    y_rsd_g = 450/2*(Pmax1Fit.at(10) + Pmax1Fit.at(12) - Pmax1Fit.at(9) - Pmax1Fit.at(11)) / (Pmax1Fit.at(9) + Pmax1Fit.at(10) + Pmax1Fit.at(11) + Pmax1Fit.at(12)) ;
+    
+    
+    //double pad_x_pos[15] = {675,675,225,225,-225,-225,-675,-675,-675,-675,-225,-225,225,225,675}; //croci 450
+    //double pad_y_pos[15] = {-225,-675,-225,-675,-675,-225,-675,-225,225,675,225,675,675,225,675};
+    double pad_x_pos[6] = {172.5,172.5,-172.5,-172.5,-172.5,172.5}; //boxes
+    double pad_y_pos[6] = {100,-100,-100,100,300,300};
+    double den = 0;
+    double num_x = 0;
+    double num_y = 0;
+
+
+    for(int i=2; i<=12; i++){
+
+        
+      if(i!=3 || i!=7 || i!=8 || i!=10 || i!=11){
+        
+        den += Pmax1Fit.at(i);
+        num_x += Pmax1Fit.at(i)*pad_x_pos[i];
+        num_y += Pmax1Fit.at(i)*pad_y_pos[i];
+
+      }
+    }
+
+
+    x_centroide = num_x/den - 1900. ; //boxes
+    y_centroide = num_y/den + 0.  ;
+
+
+    double x_diff[21];
+    double minv = 100000;
+    int min_counter = -100;
+    
+    float x_highlim_tracker = -1.6, x_lowlim_tracker = -2.1, y_lowlim_tracker = -0.4, y_highlim_tracker = 0.2; //boxes
+
+    if(n>10){
+
+      for(int i=0; i<21;i++){
+
+        //if( x_tracker[n-10+i]> x_lowlim_tracker && x_tracker[n-10+i]< x_highlim_tracker && y_tracker[n-10+i]> y_lowlim_tracker && y_tracker[n-10+i]< y_highlim_tracker ) x_diff[i] = fabs(x_centroide - x_tracker[n-10+i]*1000) + fabs(y_centroide - y_tracker[n-10+i]*1000);
+        if( x_tracker[n-10+i]> x_lowlim_tracker && x_tracker[n-10+i]< x_highlim_tracker && y_tracker[n-10+i]> y_lowlim_tracker && y_tracker[n-10+i]< y_highlim_tracker ) x_diff[i] = fabs(x_rsd_a-1900 - x_tracker[n-10+i]*1000) + fabs(y_rsd_a-300 - y_tracker[n-10+i]*1000);
+        else x_diff[i] = 100000;
+
+        if(x_diff[i]<minv){ 
+
+          minv = x_diff[i];
+          min_counter = i;
+        }
+      }
+
+      evt_delta = min_counter-10;
+
+     }
+
+
+
+
+    */
