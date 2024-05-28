@@ -1,6 +1,6 @@
 [HEADER]
-filename_path=/home/federico/Scrivania/
-input_filename=fiocchi14-RSD2_Run7_x_5_805_y_5_805_10waveforms_300V_test.root
+filename_path=/home/daq/hdd8TB_bis/RSD2/TB_Desy/
+input_filename=TB_Run7_croci1.3mm_3xW13_275V_thr30465_trigDC10_5GeV_130kWfm.root
 ADC_conversion=1
 ADC_conversion_factor=0.25
 temporal_bin_width=0.2
@@ -10,7 +10,7 @@ active_channels=16
 sampling_points=1020
 n_points_baseline=20
 search_range=1
-pmax_search_range_min=5
+pmax_search_range_min=10
 pmax_search_range_max=195
 tot_rising=5
 tot_falling=5
@@ -52,8 +52,8 @@ ch12=1
 ch13=1
 ch14=1
 ch15=1
-trg0=1
-trg1=1
+trg0=0
+trg1=0
 
 [ANALYSIS]
 negpmax=-500.

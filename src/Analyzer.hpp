@@ -28,7 +28,7 @@ class Analyzer : public TObject
 
   
   // Baseline Correction
-void Correct_Baseline( int ptN );
+double Correct_Baseline( int ptN );
 //void Correct_Baseline2( std::vector<double> &voltageVec, double fractional_pts );
 //void Correct_Baseline3( std::vector<double> &voltageVec, std::vector<double> timeVec, double tRange[2] ); //special treatment of ill-signal baseline.
 
@@ -45,6 +45,7 @@ double Get_Negative_Tmax(const std::pair<double, unsigned int> NegPmax);
 
 //==========================================================================
 // Pulse Area
+double DC_Area(double baseline_correction);
 double Find_Pulse_Area(const std::pair<double,unsigned int> Pmax);
 double Find_Undershoot_Area(const std::pair<double, unsigned int> Pmax);
 
@@ -56,7 +57,7 @@ double Pulse_Area_With_Linear_Interpolate_Edge(const std::pair<double,unsigned i
 
 double Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(const std::pair<double,double> Pmax, unsigned int imax, std::string integration_option, bool relativeTimeWindow, double stopTime);
 
-double New_Pulse_Area(const std::pair<double,double> Pmax, unsigned int imax, std::string integration_option, double range[2], double start_window, double end_window);
+double New_Pulse_Area(const std::pair<double,double> Pmax, unsigned int imax, std::string integration_option, double range[2]);
 
 double New_Undershoot_Area(const std::pair<double,double> Pmax, const std::pair<double,double> Pmin, unsigned int imin, std::string integration_option, double range[2]);
 
