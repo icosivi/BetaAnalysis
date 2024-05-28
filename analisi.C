@@ -44,7 +44,7 @@ void analisi( ){
   //Config file definition
   ConfigFile cf("beta_config.ini");
 
-  const bool join_txt_tracker;
+  bool join_txt_tracker = true;
 
   if( cf.Value("HEADER", "join_txt_tracker") == 0 ) join_txt_tracker = false;
   else join_txt_tracker = true;
@@ -109,27 +109,27 @@ void analisi( ){
   double tot_levels[2] = { cf.Value("HEADER","tot_rising"), cf.Value("HEADER","tot_falling") };
 
   int n_points_baseline = cf.Value("HEADER","n_points_baseline");
+  int n_events = cf.Value("HEADER","n_events");
 
-  int ADC_conversion = cf.Value("HEADER","ADC_conversion");
-  double ADC_conversion_factor = cf.Value("HEADER","ADC_conversion_factor");
-  double temporal_bin_width = cf.Value("HEADER","temporal_bin_width"); //0.2; 0.0488;
 
   //Input file
-  std::string path = cf.Value("HEADER","filename_path");
+  /*std::string path = cf.Value("HEADER","filename_path");
   std::string file_in = cf.Value("HEADER","input_filename");
-  std::string Filename = path+"raw/"+file_in;
+  std::string Filename = path+"raw/"+file_in+".txt";
   std::cout << "Anaysis of file " << Filename << " started" << endl; 
   const char *filename = Filename.c_str();
-  TFile *file = TFile::Open(filename);
-  TTree *itree = dynamic_cast<TTree*>(file->Get("wfm"));
-  TTreeReader myReader("wfm", file);
+  TFile *file = TFile::Open(filename);*/
+
+  std::string txt_path = cf.Value("HEADER","txt_path");
   
   // Output file & tree
+  std::string path = cf.Value("HEADER","filename_path");
   std::string outFilename;
-  if( join_txt_tracker && small_range ) outFilename = path+"stats/stats_small-range_TRACKER_"+file_in;
-  else if( !join_txt_tracker && small_range ) outFilename = path+"stats/stats_small-range_"+file_in;
-  else if( join_txt_tracker && !small_range ) outFilename = path+"stats/stats_TRACKER_"+file_in;
-  else if( !join_txt_tracker && !small_range ) outFilename = path+"stats/stats_"+file_in;
+  std::string file_in = cf.Value("HEADER","input_filename");
+  if( join_txt_tracker && small_range ) outFilename = path+"stats/stats_small-range_TRACKER_"+file_in+".root";
+  else if( !join_txt_tracker && small_range ) outFilename = path+"stats/stats_small-range_"+file_in+".root";
+  else if( join_txt_tracker && !small_range ) outFilename = path+"stats/stats_TRACKER_"+file_in+".root";
+  else if( !join_txt_tracker && !small_range ) outFilename = path+"stats/stats_"+file_in+".root";
   const char *output_filename = outFilename.c_str();
   TFile *OutputFile = new TFile(output_filename,"recreate");
   TTree *OutTree = new TTree("Analysis","Analysis");
@@ -244,22 +244,21 @@ void analisi( ){
   n = 0;
   int j_counter = 0;
   
-  std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
-  
-  TTreeReaderArray<Double32_t> posReader(myReader, "pos" );
+  /*std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
+  std::vector<TTreeReaderArray<double>> timeReader1 ;
       
   for(int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
   
     voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, Form("w%i",ch_counter) ));  
   
-  }
+  }*/
   
-  voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg0" )); 
-  voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
+  //voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg0" )); 
+  //voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
   
   
   
-  while(myReader.Next()){
+  while( j_counter<=n_events ){
     
     if(join_txt_tracker && (j_counter != nevent[n])){
     //if(join_txt_tracker && ((j_counter+1) != nevent[n]) ){
@@ -311,6 +310,10 @@ void analisi( ){
     int enable_channel_1 = 0;
     int invert_channel_1 = 0;
 
+    //ifstream input_txt_file;
+    
+    std::string line_check;
+
 
     ///////// BEGINNING OF "SMALL-RANGE" PART /////////
 
@@ -325,7 +328,14 @@ void analisi( ){
             
         std::vector<double> w1_check;
         std::vector<double> t1_check;
-      
+        
+        ifstream input_txt_file;
+        if( (j_counter+1)<10 ) input_txt_file.open(txt_path+Form("C%i-0000%i.txt",(ch_counter+1),(j_counter+1))) ;
+        if( (j_counter+1)>=10 && (j_counter+1)<100 ) input_txt_file.open(txt_path+Form("C%i-000%i.txt",(ch_counter+1),(j_counter+1))) ;
+        if( (j_counter+1)>=100 && (j_counter+1)<1000 ) input_txt_file.open(txt_path+Form("C%i-00%i.txt",(ch_counter+1),(j_counter+1))) ;
+        if( (j_counter+1)>=1000 && (j_counter+1)<10000 ) input_txt_file.open(txt_path+Form("C%i-0%i.txt",(ch_counter+1),(j_counter+1))) ;
+        if( (j_counter+1)>=10000 && (j_counter+1)<100000 ) input_txt_file.open(txt_path+Form("C%i-%i.txt",(ch_counter+1),(j_counter+1))) ;
+  
         w1_check.reserve(221560);
         t1_check.reserve(221560);
           
@@ -337,23 +347,48 @@ void analisi( ){
       
           if( invert_channel_1 == 1 ){
         
-            for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
-      
-              if(ADC_conversion==1) w1_check.push_back( double(-voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
-              else w1_check.push_back( double(-voltageReader1.at(ch_counter).At(i)) );
-              t1_check.push_back( double(i)*temporal_bin_width ); 
-      
+            int k=0;
+    
+            while (getline(input_txt_file, line_check, ',')){
+            
+              if( k>1 && k<(maxIndex) ){
+            
+                std::istringstream iss(line_check);
+                double txt_amp = 0 ;
+                double txt_time = 0 ;
+                iss >> txt_amp >> txt_time ;
+  
+                w1_check.push_back( (-1)*double(txt_amp)*voltage_const );
+                t1_check.push_back( double(txt_time)*time_const );
+
+              } 
+
+              k++;
+  
             }
       
           }else{
       
-            for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
-      
-              if(ADC_conversion==1) w1_check.push_back( double(voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
-              else w1_check.push_back( double(voltageReader1.at(ch_counter).At(i)) );
-              t1_check.push_back( double(i)*temporal_bin_width );
-      
+            int k=0;
+  
+            while (getline(input_txt_file, line_check)){
+  
+              if( k>1 && k<(maxIndex) ){
+            
+                std::istringstream iss(line_check);
+                double txt_amp = 0 ;
+                double txt_time = 0 ;
+                iss >> txt_time >> txt_amp ;
+  
+                w1_check.push_back( double(txt_amp)*voltage_const );
+                t1_check.push_back( double(txt_time)*time_const );
+
+              } 
+
+              k++; 
+  
             }
+
           }
       
           *a_check=Analyzer( w1_check, t1_check );
@@ -388,16 +423,30 @@ void analisi( ){
 
     ///////// END OF "SMALL-RANGE" PART /////////
 
-  
-    for( int ch_counter=0; ch_counter<(active_channels+2); ch_counter++ ){
+    //std::string line_inner;
+
+    //for( int ch_counter=0; ch_counter<(active_channels+2); ch_counter++ ){
+    for( int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
           
       std::vector<double> w1_inner;
       std::vector<double> t1_inner;
   
       w1_inner.reserve(221560);
       t1_inner.reserve(221560);
-  
-      if(ch_counter < active_channels ){
+
+      enable_channel_1 = cf.Value("ACTIVE_CHANNEL", Form("ch%i", ch_counter) );
+      invert_channel_1 = cf.Value("INVERT_SIGNAL", Form("ch%i", ch_counter) );
+
+      ifstream input_txt_file;
+      if( (j_counter+1)<10 ) input_txt_file.open(txt_path+Form("C%i-0000%i.txt",(ch_counter+1),(j_counter+1))) ;
+      if( (j_counter+1)>=10 && (j_counter+1)<100 ) input_txt_file.open(txt_path+Form("C%i-000%i.txt",(ch_counter+1),(j_counter+1))) ;
+      if( (j_counter+1)>=100 && (j_counter+1)<1000 ) input_txt_file.open(txt_path+Form("C%i-00%i.txt",(ch_counter+1),(j_counter+1))) ;
+      if( (j_counter+1)>=1000 && (j_counter+1)<10000 ) input_txt_file.open(txt_path+Form("C%i-0%i.txt",(ch_counter+1),(j_counter+1))) ;
+      if( (j_counter+1)>=10000 && (j_counter+1)<100000 ) input_txt_file.open(txt_path+Form("C%i-%i.txt",(ch_counter+1),(j_counter+1))) ;
+      //cout<<txt_path+Form("C%i-%i.txt",(ch_counter+1),(j_counter+1))<<endl;
+
+      std::string line_inner;
+      /*if(ch_counter < active_channels ){
           
         enable_channel_1 = cf.Value("ACTIVE_CHANNEL", Form("ch%i", ch_counter) );
         invert_channel_1 = cf.Value("INVERT_SIGNAL", Form("ch%i", ch_counter) );
@@ -412,53 +461,56 @@ void analisi( ){
         enable_channel_1 = cf.Value("ACTIVE_CHANNEL", "trg1" );
         invert_channel_1 = cf.Value("INVERT_SIGNAL", "trg1" );
           
-      }
+      }*/
 
   
  	    if( enable_channel_1 == 1){
   
  	      if( invert_channel_1 == 1 ){
     
-	        for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
+	        int k=0;
+    
+          while (getline(input_txt_file, line_inner, ',')){
+            
+            if( k>1 && k<(maxIndex) ){
+            
+              std::istringstream iss(line_inner);
+              double txt_amp = 0 ;
+              double txt_time = 0 ;
+              iss >> txt_amp >> txt_time ;
   
-            if(ADC_conversion==1) w1_inner.push_back( double(-voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
-            else w1_inner.push_back( double(-voltageReader1.at(ch_counter).At(i)) );
-            t1_inner.push_back( double(i)*temporal_bin_width ); 
+              w1_inner.push_back( (-1)*double(txt_amp)*voltage_const );
+              t1_inner.push_back( double(txt_time)*time_const );
+
+            } 
+
+            k++;
   
- 	        }
+          }
   
  	      }else{
   
-	        for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
+	        int k=0;
   
-	    	    if(ADC_conversion==1) w1_inner.push_back( double(voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
-            else w1_inner.push_back( double(voltageReader1.at(ch_counter).At(i)) );
-            t1_inner.push_back( double(i)*temporal_bin_width );
+          while (getline(input_txt_file, line_inner)){
   
- 	        }
- 	      }
-    
+            if( k>1 && k<(maxIndex) ){
+            
+              std::istringstream iss(line_inner);
+              double txt_amp = 0 ;
+              double txt_time = 0 ;
+              iss >> txt_time >> txt_amp ;
   
- 	      if(w1_inner.size()<maxIndex || t1_inner.size()<maxIndex){
-  
- 	    	  cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
- 	    	  continue;
- 	    	
-        }
-  
- 	    	if(w1_inner.size()==0 || t1_inner.size()==0){
-  
- 	    	  cout<<"Voltage or Time vector empty. Skipping whole event"<<endl;
- 	    	  continue;
- 	    	
-        }
-  
- 	    	if(w1_inner.size()!= t1_inner.size()){
-  
- 	    	  cout<<"Different number of entries in Voltage and Time vectors. Skipping whole event"<<endl;
- 	    		continue;
+              w1_inner.push_back( double(txt_amp)*voltage_const );
+              t1_inner.push_back( double(txt_time)*time_const );
 
- 	    	}
+            } 
+
+            k++; 
+  
+          }
+
+ 	      }
 
 
         if(small_range){
