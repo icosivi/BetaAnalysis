@@ -108,8 +108,7 @@ void analisi( ){
   TTreeReader myReader("wfm", file);
   
   // Output file & tree
-  std::string outFilename;
-  outFilename = cf.Value("HEADER","output_filename");
+  std::string outFilename = cf.Value("HEADER","output_filename");
   const char *output_filename = outFilename.c_str();
   TFile *OutputFile = new TFile(output_filename,"recreate");
   TTree *OutTree = new TTree("Analysis","Analysis");
@@ -118,6 +117,52 @@ void analisi( ){
   cout<<"The output file will be: "<<endl;
   cout<<outFilename<<endl;
   cout<<" "<<endl;
+
+
+
+  /*  old way of saving files
+  std::string path = cf.Value("HEADER","filename_path");
+  std::string file_in = cf.Value("HEADER","input_filename");
+  std::string Filename = path+"raw/"+file_in;
+  std::cout << "Anaysis of file " << Filename << " started" << endl;
+  const char *filename = Filename.c_str();
+  TFile *file = TFile::Open(filename);
+  TTree *itree = dynamic_cast<TTree*>(file->Get("wfm"));
+  TTreeReader myReader("wfm", file);
+
+  // Output file & tree
+  std::string delimiter = "Sr";
+  std::string token_pre = file_in.substr(0, file_in.find(delimiter));
+  std::string token_post = file_in.substr(file_in.find(delimiter));
+  std::string outDir = path+"stats/"+token_pre;
+  const char *outdir = outDir.c_str();
+  std::string outFilename = path+"stats/"+token_pre+"stats_"+token_post;
+
+  cout<<" "<<endl;
+  cout<<"The output file will be: "<<endl;
+  cout<<outFilename<<endl;
+  cout<<" "<<endl;
+
+  int check;
+
+  struct stat st;
+  if( stat( outdir, &st ) == 0){
+
+    cout<<"output directory already exists"<<endl;
+
+  }else{
+
+    check = mkdir(outdir, 0777);
+    if(check==0) cout<<"directory succesfully created"<<endl;
+    else cout<<"something went wrong in creating the output directory..."<<endl;
+
+  }
+
+  const char *output_filename = outFilename.c_str();
+  TFile *OutputFile = new TFile(output_filename,"recreate");
+  TTree *OutTree = new TTree("Analysis","Analysis");*/
+
+
    
   // Variable declaration and Analyzer object 
   const double time_const = cf.Value("HEADER","time_scalar");  
