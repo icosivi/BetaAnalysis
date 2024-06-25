@@ -56,6 +56,26 @@ void analisi(){
   if( cf.Value("HEADER", "search_range") == 0 ) pmax_search_range = false;
   else pmax_search_range = true;
 
+  int active_channel[8] = {0,0,0,0,0,0,0,0};
+  active_channel[0] = cf.Value("ACTIVE_CHANNEL", "ch1" );
+  active_channel[1] = cf.Value("ACTIVE_CHANNEL", "ch2" );
+  active_channel[2] = cf.Value("ACTIVE_CHANNEL", "ch3" );
+  active_channel[3] = cf.Value("ACTIVE_CHANNEL", "ch4" );
+  active_channel[4] = cf.Value("ACTIVE_CHANNEL", "ch5" );
+  active_channel[5] = cf.Value("ACTIVE_CHANNEL", "ch6" );
+  active_channel[6] = cf.Value("ACTIVE_CHANNEL", "ch7" );
+  active_channel[7] = cf.Value("ACTIVE_CHANNEL", "ch8" );
+
+  int invert_channel[8] = {0,0,0,0,0,0,0,0};
+  invert_channel[0] = cf.Value("INVERT_SIGNAL", "ch1" );
+  invert_channel[1] = cf.Value("INVERT_SIGNAL", "ch2" );
+  invert_channel[2] = cf.Value("INVERT_SIGNAL", "ch3" );
+  invert_channel[3] = cf.Value("INVERT_SIGNAL", "ch4" );
+  invert_channel[4] = cf.Value("INVERT_SIGNAL", "ch5" );
+  invert_channel[5] = cf.Value("INVERT_SIGNAL", "ch6" );
+  invert_channel[6] = cf.Value("INVERT_SIGNAL", "ch7" );
+  invert_channel[7] = cf.Value("INVERT_SIGNAL", "ch8" );
+
   int ps_channel[4] = {0,0,0,0};
   ps_channel[0] = cf.Value("HEADER", "ps_channel0" ) ;
   ps_channel[1] = cf.Value("HEADER", "ps_channel1" ) ;
@@ -226,26 +246,31 @@ void analisi(){
 
   std::vector<TTreeReaderArray<double>> voltageReader1 ;
   std::vector<TTreeReaderArray<double>> timeReader1 ;
-  std::vector<TTreeReaderValue<double>> currentReader1 ;
-  std::vector<TTreeReaderValue<double>> biasReader1 ;
+  TTreeReaderArray<double> currentReader1(myReader,"i_current") ;
+  TTreeReaderArray<double> biasReader1(myReader,"v_bias") ;
 
-  for(int ch_counter=1; ch_counter<=ch_number; ch_counter++ ){
+  //int enable_channel = 0;
+  //for(int ch_counter=1; ch_counter<=ch_number; ch_counter++ ){
+  for(int ch_counter=1; ch_counter<=8; ch_counter++ ){
 
-    voltageReader1.push_back(TTreeReaderArray<double>(myReader, Form("w%i",ch_counter) ));  
-    timeReader1.push_back(TTreeReaderArray<double>(myReader, Form("t%i",ch_counter) ));
+    if(active_channel[ch_counter-1]==1){
 
+      voltageReader1.push_back(TTreeReaderArray<double>(myReader, Form("w%i",ch_counter) ));  
+      timeReader1.push_back(TTreeReaderArray<double>(myReader, Form("t%i",ch_counter) ));
+
+    }    
   }
 
   TTreeReaderValue<double> tstampReader1(myReader,"i_timestamp") ;
-  
+
   int ps_total = 0 ;
   
   for(int ps_counter=0; ps_counter<4; ps_counter++){
 
     if(ps_channel[ps_counter] == 1){ 
 
-      currentReader1.push_back( TTreeReaderValue<double>(myReader, Form("I%i",ps_counter) ) );
-      biasReader1.push_back( TTreeReaderValue<double>(myReader, Form("V%i",ps_counter) ) );
+      //currentReader1.push_back( TTreeReaderValue<double>(myReader, Form("I%i",ps_counter) ) );
+      //biasReader1.push_back( TTreeReaderValue<double>(myReader, Form("V%i",ps_counter) ) );
       ps_total++ ;
 
     }
@@ -262,8 +287,12 @@ void analisi(){
     
     for( int ps_counter=0; ps_counter<ps_total; ps_counter++ ){
 
-      i_current.push_back( *currentReader1.at(ps_counter) ) ;
-      v_bias.push_back( *biasReader1.at(ps_counter) ) ;
+      //i_current.push_back( *currentReader1.at(ps_counter) ) ;
+      //v_bias.push_back( *biasReader1.at(ps_counter) ) ;
+      i_current.push_back( currentReader1[ps_counter] ) ;
+      v_bias.push_back( biasReader1[ps_counter] ) ;
+      //i_current.push_back( 0 ) ;
+      //v_bias.push_back( 0 ) ;
 
     }
 
@@ -291,8 +320,8 @@ void analisi(){
     w1.clear();
     t1.clear();
     
-
-    for( int ch_counter=1; ch_counter<=ch_number; ch_counter++ ){
+    int active_ch_counter = 0;
+    for( int ch_counter=1; ch_counter<=8; ch_counter++ ){
       
 
       std::vector<double> w1_inner;
@@ -301,40 +330,37 @@ void analisi(){
       w1_inner.reserve(221560);
       t1_inner.reserve(221560);
 
-      int enable_channel_1 = cf.Value("ACTIVE_CHANNEL", Form("ch%i", ch_counter) );
-      int invert_channel_1 = cf.Value("INVERT_SIGNAL", Form("ch%i", ch_counter) );
+      //int enable_channel_1 = cf.Value("ACTIVE_CHANNEL", Form("ch%i", ch_counter) );
+      //int invert_channel_1 = cf.Value("INVERT_SIGNAL", Form("ch%i", ch_counter) );
+ 	    
 
+ 	    if( active_channel[ch_counter-1]==1){
 
- 	    if( j_counter == 0 ){
+        if( j_counter == 0 ){
 
- 		    if( enable_channel_1 == 1 ){
-
- 			    time_window[0] = timeReader1.at(ch_counter-1).At(0);
- 			    time_window[1] = timeReader1.at(ch_counter-1).At(timeReader1.at(ch_counter-1).GetSize()-1);
+          time_window[0] = timeReader1.at(active_ch_counter).At(0);
+          time_window[1] = timeReader1.at(active_ch_counter).At(timeReader1.at(active_ch_counter).GetSize()-1);
           
- 			    cout<<" "<<endl;
+          cout<<" "<<endl;
           cout<<"Time window: "<<time_window[0]<<"; "<<time_window[1]<<endl;
+        
+        }
 
- 		    }
- 	    }
+ 		    if( invert_channel[ch_counter-1]==1 ){
 
- 	    if( enable_channel_1 == 1){
+	 		    for(unsigned int i=0; i<voltageReader1.at(active_ch_counter).GetSize();i++){
 
- 		    if( invert_channel_1 == 1 ){
-
-	 		    for(unsigned int i=0; i<voltageReader1.at(ch_counter-1).GetSize();i++){
-
-	 			    w1_inner.push_back(-voltageReader1.at(ch_counter-1).At(i));
-	 			    t1_inner.push_back(timeReader1.at(ch_counter-1).At(i));
+	 			    w1_inner.push_back(-voltageReader1.at(active_ch_counter).At(i));
+	 			    t1_inner.push_back(timeReader1.at(active_ch_counter).At(i));
 
  			    }
 
  		    }else{
 
-	 		    for(unsigned int i=0; i<voltageReader1.at(ch_counter-1).GetSize();i++){
+	 		    for(unsigned int i=0; i<voltageReader1.at(active_ch_counter).GetSize();i++){
 
-	 			    w1_inner.push_back(voltageReader1.at(ch_counter-1).At(i));
-	 			    t1_inner.push_back(timeReader1.at(ch_counter-1).At(i));
+	 			    w1_inner.push_back(voltageReader1.at(active_ch_counter).At(i));
+	 			    t1_inner.push_back(timeReader1.at(active_ch_counter).At(i));
 
  			    }
  		    }
@@ -404,6 +430,8 @@ void analisi(){
 
 		    CFD1Fit.push_back( cf_inner ) ;
 		    WIDTH1.push_back( width_inner ) ;
+
+        active_ch_counter++;
 
 	    }	
     }
