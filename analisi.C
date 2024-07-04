@@ -47,6 +47,40 @@ void analisi(){
   //Config file definition
   ConfigFile cf("beta_config.ini");
 
+   //opens txt file and takes the data
+  std::string line;
+  std::string txtfilename="/media/daq/Elements_EXFlu/TB_SPS_June_CMS_sensors/TB_June24_run11_bis.txt" ;
+  std::ifstream Filein;
+  std::vector<double> x_tracker_dirty, y_tracker_dirty; //have multiple tracks per event
+  std::vector<int> nevent_dirty;
+  std::vector<double> x_tracker, y_tracker; //all multiple tracks events are omitted
+  std::vector<int> nevent;
+  double x, y, z_position;
+  int is_fitted, n, n_old;
+
+
+  //saves tracker data on x_tracker and y_tracker
+    Filein.open(txtfilename, std::ios::in);
+    if(!Filein.is_open()) std::cout << "It failed" << std::endl;
+    else std::cout << "Opened file " << txtfilename << std::endl;
+    while(getline(Filein, line)){
+        Filein >> n >> x >> y >> z_position >> is_fitted; 
+        x_tracker_dirty.push_back(x);
+        y_tracker_dirty.push_back(y);
+        nevent_dirty.push_back(n);
+    }
+    //filters out multi tracks 
+    for(size_t i = 0; i < x_tracker_dirty.size(); i++){
+        if(nevent_dirty[i] != nevent_dirty[i+1] || i == x_tracker_dirty.size()){
+                if(nevent_dirty[i] != nevent_dirty[i-1] || i == 0){
+                x_tracker.push_back(x_tracker_dirty[i]);
+                y_tracker.push_back(y_tracker_dirty[i]);
+                nevent.push_back(nevent_dirty[i]);
+            }
+        }
+    }
+
+
   //time window is the DAQ time window, that you can check on the oscilloscope. search range is the window where signals occur
   double search_range[2] = {0,0};
   double time_window[2] = {0,0}; 
@@ -180,6 +214,7 @@ void analisi(){
   std::vector<double> rms1;
   std::vector<std::vector<double>> w1;
   std::vector<std::vector<double>> t1;
+  double x_pos, y_pos ;
 
   std::vector<double> i_current;
   std::vector<double> v_bias;
@@ -237,12 +272,15 @@ void analisi(){
   OutTree->Branch("t_thr", "std::vector<double>",&t_thr1);  // time at which a certain thr (in V) is passed
   OutTree->Branch("tot", "std::vector<double>",&tot1);
   OutTree->Branch("rms", "std::vector<double>",&rms1);
+  OutTree->Branch("x_pos", &x_pos);
+  OutTree->Branch("y_pos", &y_pos);
   
   OutTree->Branch("I", "std::vector<double>", &i_current);
   OutTree->Branch("V", "std::vector<double>", &v_bias);
   
  
   int j_counter = 0;
+  n = 0;
 
   std::vector<TTreeReaderArray<double>> voltageReader1 ;
   std::vector<TTreeReaderArray<double>> timeReader1 ;
@@ -280,7 +318,14 @@ void analisi(){
 
 
   while(myReader.Next()){
+    
+    if(j_counter != nevent[n]){
+      
+      j_counter++;
+      continue;
 
+    }
+    cout<<"pippo"<<endl;
     timestamp = *tstampReader1;
     i_current.clear();
     v_bias.clear();
@@ -319,6 +364,20 @@ void analisi(){
     WIDTH1.clear();
     w1.clear();
     t1.clear();
+
+    if(n>0){
+
+      x_pos = x_tracker[n-1];
+      y_pos = y_tracker[n-1];
+      n++;
+      
+    }else{
+
+      x_pos = 0;
+      y_pos = 0;
+      n++;
+
+    }
     
     int active_ch_counter = 0;
     for( int ch_counter=1; ch_counter<=8; ch_counter++ ){
