@@ -8,90 +8,99 @@ import cppyy
 from array import array
 import re
 import sys
+import argparse
 
-df = pd.DataFrame()
-path = "/media/gp19133/EXTERNAL_USB/fastdaqtest/"
+#path = "/media/gp19133/EXTERNAL_USB/fastdaqtest/"
 #path = "./binary_files/"
-pattern = r'(\d{5})'
 
-CVAL = "C2"
+def main():
+  df = pd.DataFrame()
 
-index = 0
-total = int(len(os.listdir(path))/2)
-total_minus_false_files = total - 3
+  parser = argparse.ArgumentParser(description='[L0 pre-proc]: merge ROOT files across channel into a single ROOT file.')
+  parser.add_argument('-i', '--input', required=True, help='Path to output directory (do not need to state the files, just the path)')
+  parser.add_argument('-o', '--output', required=True, help='Path of output directory (will create it if it doesn\'t exist)')
+  parser.add_argument('-ch', '--channel', type=int, required=True, help='Channel number for the event files for that channel to be merged from L0')
 
-for file in os.listdir(path):
+  args = parser.parse_args()
+
+  CVAL = "C"+str(args.channel)
+
+  index = 0
+  pattern = r'(\d{5})'
+
+  total = int(len(os.listdir(args.input))/2)
+  total_minus_false_files = total - 3
+
+  for file in os.listdir(args.input):
     if CVAL+"--Trace--" in file:
-        #C1--Trace--00000.trc
-        match = re.search(pattern, file)
-        if match:
-            event_number = match.group(1).zfill(5)
-        else:
-            print("No 5-digit number found in the filename")
-        if event_number == "00000" or event_number == "00001" or event_number == "00015":
-            continue
+      #C1--Trace--00000.trc
+      match = re.search(pattern, file)
+      if match:
+        event_number = match.group(1).zfill(5)
+      else:
+        print("[L0 pre-proc]: No 5-digit number found in the filename")
+      if event_number == "00000" or event_number == "00001" or event_number == "00015":
+        continue
 
-        lecroy_data = lecroyparser.ScopeData(path+file)
-        #print(dir(lecroy_data)) # get attributes of the ScopeData class
-        xy_data = pd.DataFrame({'event': 0, 't': lecroy_data.x, 'w': lecroy_data.y})
+      if not os.path.exists(args.output):
+        print(f"[L0 pre-proc]: Output directory '{args.output}' does not exist. Creating it.")
+        os.makedirs(args.output)
 
-        df = pd.concat([df, xy_data], ignore_index=True)
-        #time_diff = df['t'].diff()
-        #myXPoints = df['t'].iloc[[10002,20004,30006,40008,50010,60012,70014,80016,90018,100020]]
+      lecroy_data = lecroyparser.ScopeData(args.input+"/"+file)
+      #print(dir(lecroy_data)) # get attributes of the ScopeData class
+      xy_data = pd.DataFrame({'event': 0, 't': lecroy_data.x, 'w': lecroy_data.y})
 
-        index += 1
-        print(f"{index} files processed of {total}")
-        #plt.figure(figsize=(25, 6))
-        #plt.plot(df['t'].iloc[0:100020],df['w'].iloc[0:100020])
-        #for point in myXPoints:
-        #    plt.axvline(x = point, linewidth=2, color='k')
-        #plt.show()
+      df = pd.concat([df, xy_data], ignore_index=True)
 
-        df['event'] = np.repeat(np.arange(1000),10002)
+      index += 1
+      print(f"[L0 pre-proc]: {index} files processed of {total}")
 
-        grouped_df = df.groupby('event').agg({
-            't': lambda x: x.tolist(),
-            'w': lambda x: x.tolist()
-        }).reset_index()
+      df['event'] = np.repeat(np.arange(1000),10002)
+      grouped_df = df.groupby('event').agg({
+        't': lambda x: x.tolist(),
+        'w': lambda x: x.tolist()
+      }).reset_index()
 
-        data = df.groupby('event').agg({'t': list, 'w': list}).reset_index()
-        data['event'] = data['event']+int(event_number)*1000
-        print(file)
-        print(data)
+      data = df.groupby('event').agg({'t': list, 'w': list}).reset_index()
+      data['event'] = data['event']+int(event_number)*1000
+      print(file)
+      print(data)
 
-        for idx, row in data.iterrows():
-            t_vector = cppyy.gbl.std.vector['double']()
-            w_vector = cppyy.gbl.std.vector['double']()
+      for idx, row in data.iterrows():
+        t_vector = cppyy.gbl.std.vector['double']()
+        w_vector = cppyy.gbl.std.vector['double']()
     
-            for value in row['t']:
-                t_vector.push_back(value)
-            for value in row['w']:
-                w_vector.push_back(value)
+        for value in row['t']:
+          t_vector.push_back(value)
+        for value in row['w']:
+          w_vector.push_back(value)
 
-            data.at[idx, 't'] = t_vector
-            data.at[idx, 'w'] = w_vector
+        data.at[idx, 't'] = t_vector
+        data.at[idx, 'w'] = w_vector
     
-        root_file = ROOT.TFile(f"SPS_TestBeam_ROOT_files_fastdaqtest_eventfix/SPS_TestBeam-2024_{CVAL}_{event_number}.root", "RECREATE")
-        tree = ROOT.TTree("wfm", "Skimmed tree containing waveform information")
+      root_file = ROOT.TFile(f"{args.output}/SPS_TestBeam-2024_{CVAL}_{event_number}.root", "RECREATE")
+      tree = ROOT.TTree("wfm", "Skimmed tree containing waveform information")
 
-        event = array('i', [0])
-        t_vector = ROOT.std.vector('double')()
-        w_vector = ROOT.std.vector('double')()
+      event = array('i', [0])
+      t_vector = ROOT.std.vector('double')()
+      w_vector = ROOT.std.vector('double')()
 
-        tree.Branch("event", event, "event/I")
-        tree.Branch("t", t_vector)
-        tree.Branch("w", w_vector)
+      tree.Branch("event", event, "event/I")
+      tree.Branch("t", t_vector)
+      tree.Branch("w", w_vector)
 
-        for idx, row in data.iterrows():
-            event[0] = int(row['event'])
-            t_vector.clear()
-            w_vector.clear()
-            for value in row['t']:
-                t_vector.push_back(value)
-            for value in row['w']:
-                w_vector.push_back(value)
-            tree.Fill()
+      for idx, row in data.iterrows():
+        event[0] = int(row['event'])
+        t_vector.clear()
+        w_vector.clear()
+        for value in row['t']:
+          t_vector.push_back(value)
+        for value in row['w']:
+          w_vector.push_back(value)
+        tree.Fill()
 
-        tree.Write()
-        root_file.Close()
-        df = pd.DataFrame()
+      tree.Write()
+      root_file.Close()
+
+if __name__ == "__main__":
+  main()
