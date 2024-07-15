@@ -17,7 +17,7 @@ def main():
   df = pd.DataFrame()
 
   parser = argparse.ArgumentParser(description='[L0 pre-proc]: merge ROOT files across channel into a single ROOT file.')
-  parser.add_argument('-i', '--input', required=True, help='Path to output directory (do not need to state the files, just the path)')
+  parser.add_argument('-i', '--input', required=True, help='Path to input directory (do not need to state the files, just the path)')
   parser.add_argument('-o', '--output', required=True, help='Path of output directory (will create it if it doesn\'t exist)')
   parser.add_argument('-ch', '--channel', type=int, required=True, help='Channel number for the event files for that channel to be merged from L0')
 
