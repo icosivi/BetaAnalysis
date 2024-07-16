@@ -349,6 +349,8 @@ def timeRes(files,trees,ch,total_number_channels):
       cut_cond = "pmax["+str(ch_it)+"] > 30 && pmax["+str(ch_it)+"] < 300"
       vars.append(var)
       cut_conds.append(cut_cond)
+    vars.append("cfd[0][1]-cfd["+str(total_number_channels)+"][1]")
+    cut_conds.append("pmax["+str(total_number_channels)+"] > 30 && pmax["+str(total_number_channels)+"] < 300")
   else:
     var = "cfd["+str(ch)+"][1]-cfd["+str(ch+1)+"][1]"
     cut_cond = "pmax["+str(ch)+"] > 30 && pmax["+str(ch)+"] < 300"
