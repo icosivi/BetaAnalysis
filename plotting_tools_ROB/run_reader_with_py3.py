@@ -10,6 +10,8 @@ import pandas as pd
 import argparse
 import glob
 import re
+import os
+import csv
 
 #dir_name = "../TB_SPS_June_CMS_sensors/Run0_TB_SPS_LFoundry-K1/"
 
@@ -24,7 +26,7 @@ t1-t2 Cividec
 t3-t4 Minicircuit
 '''
 
-def get_fit_results(arr_of_results_to_fit,arr_of_biases,decomp_sigma=False):
+def get_fit_results(arr_of_results_to_fit,arr_of_biases,decomp_sigma=False,simplified=False):
   arr_of_mean = []
   arr_of_sigma = []
   arr_of_ampl = []
@@ -66,7 +68,14 @@ def get_fit_results(arr_of_results_to_fit,arr_of_biases,decomp_sigma=False):
     df_of_results['Sigma_cpt'] = ["sigma_1","sigma_2","sigma_3"]
     df_of_results['Sigma_value'] = [sig1,sig2,sig3]
 
-  return df_of_results
+  if simplified:
+    if decomp_sigma:
+      return df_of_results[["Bias","Sigma_cpt","Sigma_value"]]
+    else:
+      return df_of_results[["Bias","Mean","Sigma"]]
+
+  else:
+    return df_of_results
 
 def getBias(filename):
   pattern = r"_(\d{2,3}V)."
@@ -497,6 +506,99 @@ def waveform(files,trees,ch,total_number_channels):
   plt.tight_layout()
   plt.savefig("waveform_comparison.png",facecolor='w')
 
+def makeCSV(files,trees,total_number_channels):
+  print("CSV of information produced for plotting charge, RMS noise, and time resolution against bias")
+  print("Charge collection")
+  nBins = 200
+  xLower = 0
+  xUpper = 60
+  arr_of_hists = []
+  arr_of_biases = []
+  for i in range(len(trees)):
+    for j in range(total_number_channels):
+      bias = getBias(files[i])
+      cut_cond = "event>100 && negpmax["+str(j)+"] > -30 && pmax["+str(j)+"] > 50 && pmax["+str(j)+"] < 350"
+      thisHist = hist_tree_file_basics(trees[i],files[i],"charge",j,nBins,xLower,xUpper,bias,cut_cond,j,0)
+      arr_of_hists.append(thisHist)
+      arr_of_biases.append(bias)
+  arr_of_fits = []
+  arr_of_divided_hists = []
+  for i, hist in enumerate(arr_of_hists):
+    hist_divided = hist.Clone(f"hist_divided_{i}")
+    for bin in range(1, hist_divided.GetNbinsX() + 1):
+      bin_content = hist_divided.GetBinContent(bin)
+      hist_divided.SetBinContent(bin, bin_content / 4.7)
+    arr_of_divided_hists.append(hist_divided)
+    thisFit = plot_fit_curves(xLower, xUpper, "landau", hist_divided, i, arr_of_biases[i])
+    arr_of_fits.append(thisFit)
+  charge_col = get_fit_results(arr_of_fits,arr_of_biases,simplified=True)
+
+  print("RMS noise")
+  nBins = 200
+  xLower = 0
+  xUpper = 5
+  arr_of_hists = []
+  arr_of_biases = []
+  for i in range(len(trees)):
+    for j in range(total_number_channels):
+      bias = getBias(files[i])
+      cut_cond = "event>100 && negpmax["+str(j)+"] > -30 && pmax[" + str(j) + "] > 50 && pmax[" + str(j) + "] < 350"
+      thisHist = hist_tree_file_basics(trees[i],files[i],"rms",j,nBins,xLower,xUpper,bias,cut_cond,j,0)
+      arr_of_hists.append(thisHist)
+      arr_of_biases.append(bias)
+  arr_of_fits = []
+  for i in range(len(arr_of_hists)):
+    thisFit = plot_fit_curves(xLower,xUpper,"gaus",arr_of_hists[i],i,arr_of_biases[i])
+    arr_of_fits.append(thisFit)
+  rms_noise = get_fit_results(arr_of_fits,arr_of_biases,simplified=True)
+
+  print("Time resolution")
+  vars = []
+  cut_conds = []
+  toaThreshold = 1
+  for ch_it in range(total_number_channels-1):
+    var = "cfd["+str(ch_it)+"]["+str(toaThreshold)+"]-cfd["+str(ch_it+1)+"]["+str(toaThreshold)+"]"
+    cut_cond = "event>100 && negpmax["+str(ch_it)+"] > -30 && negpmax["+str(ch_it)+"] < 5 && pmax["+str(ch_it)+"] > 50 && pmax["+str(ch_it)+"] < 350 && negpmax["+str(ch_it+1)+"] > -30 && negpmax["+str(ch_it+1)+"] < 5 && pmax["+str(ch_it+1)+"] > 50 && pmax["+str(ch_it+1)+"] < 350 && cfd[0]["+str(toaThreshold)+"]>-2.2 && cfd[1]["+str(toaThreshold)+"]>-2.5 && cfd[2]["+str(toaThreshold)+"]>-2.0"
+    vars.append(var)
+    cut_conds.append(cut_cond)
+  vars.append("cfd[0]["+str(toaThreshold)+"]-cfd["+str(total_number_channels-1)+"]["+str(toaThreshold)+"]")
+  cut_conds.append("event>100 && negpmax["+str(total_number_channels-1)+"] > -30 && negpmax["+str(total_number_channels-1)+"] < 5 && pmax["+str(total_number_channels-1)+"] > 50 && pmax["+str(total_number_channels-1)+"] < 350 && negpmax[0] > -30 && negpmax[0] < 5 && pmax[0] > 50 && pmax[0] < 350 && cfd[0]["+str(toaThreshold)+"]>-2.2 && cfd[1]["+str(toaThreshold)+"]>-2.5 && cfd[2]["+str(toaThreshold)+"]>-2.0")
+  nBins = 200
+  xLower = -2
+  xUpper = 2
+  arr_of_hists = []
+  arr_of_biases = []
+  for i in range(len(trees)):
+    for j in range(len(vars)):
+      bias = getBias(files[i])
+      thisHist = hist_tree_file_basics(trees[i],files[i],vars[j],j,nBins,xLower,xUpper,bias,cut_conds[j],j,toaThreshold)
+      arr_of_hists.append(thisHist)
+      arr_of_biases.append(bias)
+  arr_of_fits = []
+  for i in range(len(arr_of_hists)):
+    thisFit = plot_fit_curves(xLower,xUpper,"gaus",arr_of_hists[i],i,arr_of_biases[i])
+    arr_of_fits.append(thisFit)
+  time_res = get_fit_results(arr_of_fits,arr_of_biases,decomp_sigma=True,simplified=True)
+
+  merged_CC_RMS = pd.merge(charge_col.reset_index(), rms_noise.reset_index(), on=['index', 'Bias'], how='inner')
+  merged_df = pd.merge(merged_CC_RMS, time_res.reset_index(), on=['index', 'Bias'], how='inner')
+  merged_df.rename(columns={'Mean_x': 'Charge', 'Sigma_x': 'err_Q', 'Mean_y': 'RMS', 'Sigma_y': 'err_rms'}, inplace=True)
+  outcsvfile = 'fit_bias_data.csv'
+  if os.path.exists(outcsvfile):
+    existing_df = pd.read_csv(outcsvfile)
+    existing_df_reset = existing_df.reset_index(drop=True)
+    new_df_reset = merged_df.reset_index(drop=True)
+    common_rows = new_df_reset.merge(existing_df_reset, on=['Bias'], how='inner')
+    if len(common_rows) != 0:
+      print("This bias point already exists in file '{outcsvfile}', check that there are no duplicate data points in the output file.")
+    combined_df = pd.concat([existing_df, merged_df], ignore_index=True)
+    combined_df.to_csv(outcsvfile, index=False)
+    print(f"File '{outcsvfile}' exists, read and saved new data to it for use in bias plotter.")
+  else:
+    merged_df.to_csv(outcsvfile, index=False)
+    print(f"File '{outcsvfile}' created for use in bias plotter.")
+
+
 def main():
   parser = argparse.ArgumentParser(description='Read .root files into an array.')
   parser.add_argument('files', metavar='F', type=str, nargs='+',
@@ -511,6 +613,7 @@ def main():
   parser.add_argument('--doRMSNoise', action='store_true', help='Enable the doRMSNoise option')
   parser.add_argument('--doTimeRes', action='store_true', help='Enable the doTimeRes option')
   parser.add_argument('--doWaveform', action='store_true', help='Enable the doWaveform option')
+  parser.add_argument('--csvOut', action='store_true', help='Output important data for plots against bias')
   args = parser.parse_args()
 
   file_array = []
@@ -556,6 +659,7 @@ def main():
   if args.doRMSNoise: rmsNoise(file_array,tree_array,args.ch-1,total_number_channels)
   if args.doTimeRes: timeRes(file_array,tree_array,args.ch-1,total_number_channels)
   if args.doWaveform: waveform(file_array,tree_array,args.ch-1,total_number_channels)
+  if args.csvOut: makeCSV(file_array,tree_array,total_number_channels)
 
 if __name__ == "__main__":
     main()
