@@ -44,7 +44,7 @@ void analisi( ){
   //Config file definition
   ConfigFile cf("beta_config.ini");
 
-  const bool join_txt_tracker = true;
+  const bool join_txt_tracker = false;
 
   //opens txt file and takes the data
   std::string line;
