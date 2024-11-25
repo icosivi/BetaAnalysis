@@ -44,7 +44,7 @@ void analisi( ){
   //Config file definition
   ConfigFile cf("beta_config.ini");
 
-  const bool join_txt_tracker = false;
+  const bool join_txt_tracker = true;
 
   //opens txt file and takes the data
   std::string line;
@@ -54,19 +54,19 @@ void analisi( ){
   std::vector<int> nevent_dirty;
   std::vector<double> x_tracker, y_tracker; //all multiple tracks events are omitted
   std::vector<int> nevent;
-  double x, y, z_position;
+  double x, y, z_position, chi2;
   int is_fitted, n, n_old;
 
 
   //saves tracker data on x_tracker and y_tracker
-  if(join_txt_tracker){
+  /*if(join_txt_tracker){
     Filein.open(txtfilename, std::ios::in);
     if(!Filein.is_open()) std::cout << "It failed" << std::endl;
     else std::cout << "Opened file " << txtfilename << std::endl;
     while(getline(Filein, line)){
         Filein >> n >> x >> y >> z_position >> is_fitted; 
-        if(x>1.4 && x<4 && y>2.2 && y<4){
-        //if(true){
+        //if(x>1.4 && x<4 && y>2.2 && y<4){
+        if(true){
           x_tracker_dirty.push_back(x);
           y_tracker_dirty.push_back(y);
           nevent_dirty.push_back(n);
@@ -83,6 +83,21 @@ void analisi( ){
         }
     }
 
+  }*/
+
+  //saves tracker data on x_tracker and y_tracker
+  if(join_txt_tracker){
+    Filein.open(txtfilename, std::ios::in);
+    if(!Filein.is_open()) std::cout << "It failed" << std::endl;
+    else std::cout << "Opened file " << txtfilename << std::endl;
+    while(getline(Filein, line)){
+        Filein >> x >> y >> chi2; 
+        //cout<<x<<" "<<y<<" "<<endl;
+        //if(x>1.4 && x<4 && y>2.2 && y<4){
+        x_tracker.push_back(x);
+        y_tracker.push_back(y);
+        //nevent.push_back(n);
+        }
   }
 
   //time window is the DAQ time window, that you can check on the oscilloscope. search range is the window where signals occur
@@ -273,7 +288,7 @@ void analisi( ){
   
   
   
-  while(myReader.Next() && j_counter<533000){
+  while(myReader.Next()){
     
     /*if(j_counter==0){
       
@@ -283,13 +298,12 @@ void analisi( ){
 
     }*/
 
-    //if(join_txt_tracker && (j_counter != nevent[n])){
-    if(join_txt_tracker && ((j_counter) != nevent[n]) ){
+    /*if(join_txt_tracker && ((j_counter) != nevent[n]) ){
       
       j_counter++;
       continue;
 
-    }
+    }*/
 
     //if(j_counter>150000){
     Pmax1.clear();
