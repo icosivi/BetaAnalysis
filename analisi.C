@@ -45,6 +45,8 @@ void analisi( ){
   ConfigFile cf("beta_config.ini");
 
   const bool join_txt_tracker = false;
+  int ttracker = cf.Value("HEADER", "use_tracker") ;
+  if(ttracker==1) join_txt_tracker = true;
 
   //opens txt file and takes the data
   std::string line;
