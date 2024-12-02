@@ -44,7 +44,7 @@ void analisi( ){
   //Config file definition
   ConfigFile cf("beta_config.ini");
 
-  const bool join_txt_tracker = false;
+  bool join_txt_tracker = false;
   int ttracker = cf.Value("HEADER", "use_tracker") ;
   if(ttracker==1) join_txt_tracker = true;
 
