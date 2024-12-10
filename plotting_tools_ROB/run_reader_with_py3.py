@@ -6,16 +6,18 @@ import ROOT as root
 from ROOT import TF1
 from scipy.special import gammaln
 import math
+from math import exp, sqrt, pi
 import pandas as pd
 import argparse
 import glob
 import re
 import os
 import csv
+import math
 
 #dir_name = "../TB_SPS_June_CMS_sensors/Run0_TB_SPS_LFoundry-K1/"
 
-var_dict = {"tmax":"t_{max} / ns" , "pmax":"p_max / mV" , "negpmax":"-p_max / mV", "charge":"Q / fC", "area_new":"Area / pWb" , "rms":"RMS / mV"}
+var_dict = {"tmax":"t_{max} / 10 ns" , "pmax":"p_max / mV" , "negpmax":"-p_max / mV", "charge":"Q / fC", "area_new":"Area / pWb" , "rms":"RMS / mV"}
 
 '''
 time res v bias
@@ -26,40 +28,92 @@ t1-t2 Cividec
 t3-t4 Minicircuit
 '''
 
-def get_fit_results(arr_of_results_to_fit,arr_of_biases,decomp_sigma=False,simplified=False):
+def langauss(x, par):
+  mpv = par[1]
+  landau_sigma = par[2]
+  gauss_sigma = par[3]
+  amplitude = par[0]
+
+  step = 0.1 * gauss_sigma
+  total = 0.0
+  for i in range(-5, 5):
+    x_shifted = x[0] - (mpv + i * step)
+    landau_val = root.TMath.Landau(x_shifted, mpv, landau_sigma, True)
+    gauss_val = exp(-0.5 * (i * step / gauss_sigma)**2) / (gauss_sigma * sqrt(2 * pi))
+    total += landau_val * gauss_val * step
+
+  return amplitude * total
+
+def round_to_sig_figs(x, sig):
+  if x == 0:
+    return 0
+  else:
+    return round(x, sig - int(math.floor(math.log10(abs(x)))) - 1)
+
+def get_fit_results(arr_of_results_to_fit,arr_of_biases,decomp_sigma=False,simplified=False,add_threshold_frac=None):
   arr_of_mean = []
   arr_of_sigma = []
   arr_of_ampl = []
+  arr_more_sig = []
   #arr_of_chi2 = []
   #arr_of_ndf = []
   arr_of_red_chi2 = []
   #arr_of_prob = []
 
   for fit_func in arr_of_results_to_fit:
+    if fit_func.GetNpar() > 3:
+      gaus_sig = fit_func.GetParameter(3)
+    else:
+      gaus_sig = 0
     mean = fit_func.GetParameter(1)  # Mean of the gauss distribution
     sigma = fit_func.GetParameter(2) # Sigma of the gauss distribution
     amplitude = fit_func.GetParameter(0)  # Amplitude of the gauss distribution
     chi2 = fit_func.GetChisquare()  # Chi-squared value of the fit
     ndf = fit_func.GetNDF()  # Number of degrees of freedom
     #prob = fit_func.GetProb()  # Probability of the fit result
-    arr_of_mean.append(round(mean,2))
-    arr_of_sigma.append(round(sigma,2))
-    arr_of_ampl.append(round(amplitude,2))
+    arr_of_mean.append(round_to_sig_figs(mean,4))
+    arr_of_sigma.append(round_to_sig_figs(sigma,4))
+    arr_of_ampl.append(round_to_sig_figs(amplitude,3))
+    arr_more_sig.append(round_to_sig_figs(gaus_sig,4))
     #arr_of_chi2.append(chi2)
     #arr_of_ndf.append(ndf)
-    arr_of_red_chi2.append(round((chi2/ndf),2))
+    if ndf == 0:
+      ndf = 1
+    arr_of_red_chi2.append(round_to_sig_figs((chi2/ndf),3))
     #arr_of_prob.append(prob)
 
-  df_of_results = pd.DataFrame({
-    "Bias": arr_of_biases,
-    "Mean": arr_of_mean,
-    "Sigma": arr_of_sigma,
-    "Amplitude": arr_of_ampl,
-    #"Chi2": arr_of_chi2,
-    #"NDF": arr_of_ndf,
-    "RChi2": arr_of_red_chi2
-    #"Prob": arr_of_prob
-  })
+  if arr_more_sig[0] == 0:
+    if add_threshold_frac is not None:
+      print(add_threshold_frac)
+      df_of_results = pd.DataFrame({
+        "Bias": arr_of_biases[0],
+        "Mean": arr_of_mean,
+        "Landau width": arr_of_sigma,
+        "Gaussian sigma": arr_more_sig,
+        "Frac above 1p5": add_threshold_frac,
+        "Amplitude": arr_of_ampl,
+        "RChi2": arr_of_red_chi2
+      })
+    else:
+      df_of_results = pd.DataFrame({
+        "Bias": arr_of_biases[0],
+        "Mean": arr_of_mean,
+        "Sigma": arr_of_sigma,
+        "Amplitude": arr_of_ampl,
+        #"Chi2": arr_of_chi2,
+        #"NDF": arr_of_ndf,
+        "RChi2": arr_of_red_chi2
+        #"Prob": arr_of_prob
+      })
+  else:
+    df_of_results = pd.DataFrame({
+      "Bias": arr_of_biases[0],
+      "Mean": arr_of_mean,
+      "Landau width": arr_of_sigma,
+      "Gaussian sigma": arr_more_sig,
+      "Amplitude": arr_of_ampl,
+      "RChi2": arr_of_red_chi2
+    })
 
   if decomp_sigma:
     if len(arr_of_sigma) < 3:
@@ -102,7 +156,10 @@ def hist_tree_file_basics(tree,file,var,index,nBins,xLower,xUpper,biasVal,cut_co
     tree.Draw(var+">>hist"+biasVal,cut_cond)
   elif var == "charge":
     thisHist = root.TH1F("hist"+biasVal, "area_new;"+var_dict[var]+";Events", nBins, xLower, xUpper)
-    tree.Draw("area_new["+str(ch)+"]/4.7>>hist"+biasVal,cut_cond)
+    if ch == 0:
+      tree.Draw("area_new[0]/4.7>>hist"+biasVal,cut_cond)
+    else:
+      tree.Draw("area_new["+str(ch)+"]>>hist"+biasVal,cut_cond)
   else:
     thisHist = root.TH1F("hist"+biasVal, var+";"+var_dict[var]+";Events", nBins, xLower, xUpper)
     tree.Draw(var+"["+str(ch)+"]>>hist"+biasVal,cut_cond)
@@ -113,6 +170,15 @@ def hist_tree_file_basics(tree,file,var,index,nBins,xLower,xUpper,biasVal,cut_co
 def plot_fit_curves(xLower,xUpper,fit_type,hist_to_fit,index,biasVal):
   thisFit = TF1(fit_type+"_hist"+biasVal, fit_type, xLower, xUpper)
   hist_to_fit.Fit(thisFit, "Q")
+  thisFit.SetLineWidth(3)
+  thisFit.SetLineColor(index+1)
+  #thisFit.SetLineStyle(2)
+  return thisFit
+
+def plot_langauss_fits(xLower,xUpper,hist_to_fit,index,biasVal):
+  thisFit = TF1("langaus_hist"+biasVal, langauss, xLower, xUpper, 4)
+  thisFit.SetParameters(9000, 12, 2, 1)
+  hist_to_fit.Fit(thisFit, "R")
   thisFit.SetLineWidth(3)
   thisFit.SetLineColor(index+1)
   #thisFit.SetLineStyle(2)
@@ -165,13 +231,13 @@ def tMaxTest(files,trees,ch,total_number_channels):
 def pMaxTest(files,trees,ch,total_number_channels):
   print("pmax test run")
   var = "pmax"
-  nBins = 200
+  nBins = 220
   arr_of_hists = []
   arr_of_biases = []
-  cut_cond = "event>-1"
+  cut_cond = "event>-1 && negpmax[0] > -15 && negpmax[0] < 5 && pmax[1] > 0 && pmax[1] < 120 && negpmax[1] > -15"
 
   xLower = 0
-  xUpper = 400
+  xUpper = 220
 
   if total_number_channels == 1:
     for i in range(len(trees)):
@@ -203,7 +269,16 @@ def pMaxTest(files,trees,ch,total_number_channels):
 
   legend.Draw()
 
+  #arr_of_fits = []
+  #for i in range(len(arr_of_hists)):
+  #  thisFit = plot_fit_curves(xLower,xUpper,"landau",arr_of_hists[i],i,arr_of_biases[i])
+  #  arr_of_fits.append(thisFit)
+  #  thisFit.Draw("SAME")
+
   c1.SaveAs("pmax_test.png")
+
+  #pmax_landau = get_fit_results(arr_of_fits,arr_of_biases)
+  #print(pmax_landau)
 
 def negPMax(files,trees,ch,total_number_channels):
   print("negpmax test run")
@@ -213,8 +288,8 @@ def negPMax(files,trees,ch,total_number_channels):
   arr_of_biases = []
   cut_cond = "event>-1"
 
-  xLower = -40
-  xUpper = 20
+  xLower = -50
+  xUpper = 10
 
   if total_number_channels == 1:
     for i in range(len(trees)):
@@ -232,8 +307,9 @@ def negPMax(files,trees,ch,total_number_channels):
 
 
   c1 = root.TCanvas("c1", "Comparison of negpmax distribution", 800, 600)
+  c1.SetLogy()
   max_y = max(hist.GetMaximum() for hist in arr_of_hists) * 1.05
-  arr_of_hists[0].GetYaxis().SetRangeUser(0, max_y)
+  arr_of_hists[0].GetYaxis().SetRangeUser(1, max_y)
   arr_of_hists[0].SetTitle("Comparison of negpmax distribution")
   arr_of_hists[0].Draw()
   for hist_to_draw in arr_of_hists:
@@ -250,7 +326,7 @@ def negPMax(files,trees,ch,total_number_channels):
 def landauToArea(files,trees,ch,total_number_channels):
   print("Fitting Landau curve to area distribution")
   var = "area_new"
-  nBins = 200
+  nBins = 50
   xLower = 0
   xUpper = 300
 
@@ -260,7 +336,7 @@ def landauToArea(files,trees,ch,total_number_channels):
   if total_number_channels == 1:
     for i in range(len(trees)):
       bias = getBias(files[i])
-      cut_cond = "event>-1 && negpmax["+str(ch)+"] > -30 && negpmax["+str(ch)+"] < 5 && pmax["+str(ch)+"] > 20 && pmax["+str(ch)+"] < 200"
+      cut_cond = "event>-1 && negpmax["+str(ch)+"] > -15 && negpmax["+str(ch)+"] < 5 && pmax["+str(ch)+"] > 6.0 && pmax["+str(ch)+"] < 120"
       thisHist = hist_tree_file_basics(trees[i],files[i],var,i,nBins,xLower,xUpper,bias,cut_cond,ch,0)
       arr_of_hists.append(thisHist)
       arr_of_biases.append(bias)
@@ -268,24 +344,46 @@ def landauToArea(files,trees,ch,total_number_channels):
     for i in range(len(trees)):
       for j in range(total_number_channels):
         bias = getBias(files[i])
-        cut_cond = "event>-1 && negpmax["+str(j)+"] > -30 && pmax["+str(j)+"] > 20 && pmax["+str(j)+"] < 200"
+        cut_cond = "event>-1 && negpmax["+str(j)+"] > -15 && pmax["+str(j)+"] > 6.0 && pmax["+str(j)+"] < 120"
         thisHist = hist_tree_file_basics(trees[i],files[i],var,j,nBins,xLower,xUpper,bias,cut_cond,j,0)
         arr_of_hists.append(thisHist)
         arr_of_biases.append(bias)
 
-  c1 = root.TCanvas("c1", "Comparison of area_new distribution", 800, 600)
-  max_y = max(hist.GetMaximum() for hist in arr_of_hists) * 1.05
-  arr_of_hists[0].GetYaxis().SetRangeUser(0, max_y)
-  arr_of_hists[0].SetTitle("Comparison of area_new distribution")
+  c1 = root.TCanvas("c1", "Comparison of RMS distribution", 800, 600)
+  #c1.SetLogy()
+  #max_y = max(hist.GetMaximum() for hist in arr_of_hists) * 1.05
+  arr_of_hists[0].GetYaxis().SetRangeUser(1, 10000)
+  arr_of_hists[0].SetTitle("Comparison of RMS distribution")
   arr_of_hists[0].Draw()
+
   for hist_to_draw in arr_of_hists[1:]:
     hist_to_draw.Draw("SAME")
 
   arr_of_fits = []
   for i in range(len(arr_of_hists)):
-    thisFit = plot_fit_curves(xLower,xUpper,"landau",arr_of_hists[i],i,arr_of_biases[i])
+    print(arr_of_hists[i].GetMaximum())
+    thisFit = plot_fit_curves(xLower, xUpper, "landau", arr_of_hists[i], i, arr_of_biases[i])
+    #thisFit = plot_langauss_fits(xLower, xUpper, arr_of_hists[i], i, arr_of_biases[i])
     arr_of_fits.append(thisFit)
+    MPV = thisFit.GetParameter(1)
     thisFit.Draw("SAME")
+    break
+
+  total_events_above_threshold1p5 = 0
+  total_events_above_threshold1p0 = 0
+  for bin in range(1, arr_of_hists[0].GetNbinsX() + 1):
+    bin_centre = arr_of_hists[0].GetBinCenter(bin)
+    bin_content = arr_of_hists[0].GetBinContent(bin)
+    if bin_centre > MPV:
+      total_events_above_threshold1p0 += bin_content
+    if bin_centre > 1.5*MPV:
+      total_events_above_threshold1p5 += bin_content
+
+  print(thisFit.GetMaximum(xLower,xUpper))
+  #print(arr_of_hists[0].GetBinWidth(1))
+  #print(thisFit.GetParameter(0) / arr_of_hists[0].GetBinWidth(1))
+
+  arr_of_fits[0].Draw("SAME")
 
   legend = root.TLegend(0.7, 0.7, 0.9, 0.9)
   for i in range(len(arr_of_hists)):
@@ -294,7 +392,9 @@ def landauToArea(files,trees,ch,total_number_channels):
   legend.Draw()
   c1.SaveAs("Landau_analysis.png")
 
-  landau_results = get_fit_results(arr_of_fits,arr_of_biases)
+  frac_thres = total_events_above_threshold1p5 / total_events_above_threshold1p0
+  print(frac_thres)
+  landau_results = get_fit_results(arr_of_fits,arr_of_biases,add_threshold_frac=frac_thres)
   print(landau_results)
 
 def landauToCharge(files, trees, ch, total_number_channels):
@@ -302,7 +402,7 @@ def landauToCharge(files, trees, ch, total_number_channels):
   var = "charge"
   nBins = 200
   xLower = 0
-  xUpper = 60
+  xUpper = 30
 
   arr_of_hists = []
   arr_of_biases = []
@@ -310,7 +410,7 @@ def landauToCharge(files, trees, ch, total_number_channels):
   if total_number_channels == 1:
     for i in range(len(trees)):
       bias = getBias(files[i])
-      cut_cond = "event>-1 && negpmax["+str(ch)+"] > -30 && negpmax["+str(ch)+"] < 5 && pmax[" + str(ch) + "] > 20 && pmax[" + str(ch) + "] < 200"
+      cut_cond = "event>-1 && negpmax["+str(ch)+"] > -15 && negpmax["+str(ch)+"] < 5 && pmax[" + str(ch) + "] > 6.0 && pmax[" + str(ch) + "] < 120"
       thisHist = hist_tree_file_basics(trees[i],files[i],var,i,nBins,xLower,xUpper,bias,cut_cond,ch,0)
       arr_of_hists.append(thisHist)
       arr_of_biases.append(bias)
@@ -318,53 +418,69 @@ def landauToCharge(files, trees, ch, total_number_channels):
     for i in range(len(trees)):
       for j in range(total_number_channels):
         bias = getBias(files[i])
-        cut_cond = "event>-1 && negpmax["+str(j)+"] > -30 && pmax["+str(j)+"] > 20 && pmax["+str(j)+"] < 200"
+        cut_cond = "event>-1 && negpmax["+str(j)+"] > -15 && pmax["+str(j)+"] > 6.0 && pmax["+str(j)+"] < 200 && pmax[1] > 0 && pmax[1] < 120 && negpmax[1] > -18"
         thisHist = hist_tree_file_basics(trees[i],files[i],var,j,nBins,xLower,xUpper,bias,cut_cond,j,0)
         arr_of_hists.append(thisHist)
         arr_of_biases.append(bias)
 
   c1 = root.TCanvas("c1", "Comparison of charge distributions", 800, 600)
+  c1.SetLogy()
 
   arr_of_fits = []
   arr_of_divided_hists = []
   for i, hist in enumerate(arr_of_hists):
-    hist_divided = hist.Clone(f"hist_divided_{i}")
-    for bin in range(1, hist_divided.GetNbinsX() + 1):
-      bin_content = hist_divided.GetBinContent(bin)
-      hist_divided.SetBinContent(bin, bin_content / 4.7)
+    if i == 0:
+      hist_divided = hist.Clone(f"hist_divided_{i}")
+      for bin in range(1, hist_divided.GetNbinsX() + 1):
+        bin_content = hist_divided.GetBinContent(bin)
+        #hist_divided.SetBinContent(bin, bin_content / 5.0) # Mignone + 40 dB
+        hist_divided.SetBinContent(bin, bin_content / 4.7) # SC + 20 dB
+      arr_of_divided_hists.append(hist_divided)
+      thisFit = plot_fit_curves(xLower,xUpper,"landau",hist_divided, i, arr_of_biases[i])
+      #thisFit = plot_langauss_fits(xLower, xUpper, hist_divided, i, arr_of_biases[i])
+      arr_of_fits.append(thisFit)
+      MPV = thisFit.GetParameter(1)
+      #thisFit.Draw("SAME")
+    else:
+      arr_of_divided_hists.append(hist)
 
-    arr_of_divided_hists.append(hist_divided)
-    thisFit = plot_fit_curves(xLower, xUpper, "landau", hist_divided, i, arr_of_biases[i])
-    arr_of_fits.append(thisFit)
-    thisFit.Draw("SAME")
+  total_events_above_threshold1p5 = 0
+  total_events_above_threshold1p0 = 0
+  for bin in range(1, arr_of_hists[0].GetNbinsX() + 1):
+    bin_centre = arr_of_hists[0].GetBinCenter(bin)
+    bin_content = arr_of_hists[0].GetBinContent(bin)
+    if bin_centre > MPV:
+      total_events_above_threshold1p0 += bin_content
+    if bin_centre > 1.5*MPV:
+      total_events_above_threshold1p5 += bin_content
 
   max_y = max(hist.GetMaximum() for hist in arr_of_divided_hists) * 1.05
-  arr_of_divided_hists[0].GetYaxis().SetRangeUser(0, max_y)
+  arr_of_divided_hists[0].GetYaxis().SetRangeUser(1, max_y)
   arr_of_divided_hists[0].SetTitle("Comparison of charge distribution")
   arr_of_divided_hists[0].Draw()
-  for hist_to_draw in arr_of_divided_hists[1:]:
+  for hist_to_draw in arr_of_hists[1:]:
     hist_to_draw.Draw("SAME")
 
-  for hist_to_draw in arr_of_fits:
-    hist_to_draw.Draw("SAME")
+  arr_of_fits[0].Draw("SAME")
 
   legend = root.TLegend(0.7, 0.7, 0.9, 0.9)
   for i in range(len(arr_of_hists)):
     legend.AddEntry(arr_of_hists[i], arr_of_biases[i] + " CH " + str(i), "l")
 
   legend.Draw()
-  c1.SaveAs("Landau_charge_analysis.png")
+  c1.SaveAs("charge_analysis.png")
 
-  landau_results = get_fit_results(arr_of_fits,arr_of_biases)
+  frac_thres = total_events_above_threshold1p5 / total_events_above_threshold1p0
+  landau_results = get_fit_results(arr_of_fits,arr_of_biases,add_threshold_frac=frac_thres)
   print(landau_results)
 
 def rmsNoise(files,trees,ch,total_number_channels):
 
   print("Fitting Gaussian curve to RMS distribution")
   var = "rms"
-  nBins = 200
+  nBins = 40
   xLower = 0
-  xUpper = 5
+  xUpper = 4
 
   arr_of_hists = []
   arr_of_biases = []
@@ -372,7 +488,7 @@ def rmsNoise(files,trees,ch,total_number_channels):
   if total_number_channels == 1:
     for i in range(len(trees)):
       bias = getBias(files[i])
-      cut_cond = "event>-1 && negpmax["+str(ch)+"] > -30 && negpmax["+str(ch)+"] < 5 && pmax[" + str(ch) + "] > 20 && pmax[" + str(ch) + "] < 200"
+      cut_cond = "event>-1 && negpmax["+str(ch)+"] > -15 && negpmax["+str(ch)+"] < 5 && pmax[" + str(ch) + "] > 6.0 && pmax[" + str(ch) + "] < 120 && pmax[1] > 0 && pmax[1] < 120"
       thisHist = hist_tree_file_basics(trees[i],files[i],var,i,nBins,xLower,xUpper,bias,cut_cond,ch,0)
       arr_of_hists.append(thisHist)
       arr_of_biases.append(bias)
@@ -380,14 +496,15 @@ def rmsNoise(files,trees,ch,total_number_channels):
     for i in range(len(trees)):
       for j in range(total_number_channels):
         bias = getBias(files[i])
-        cut_cond = "event>-1 && negpmax["+str(j)+"] > -30 && pmax[" + str(j) + "] > 20 && pmax[" + str(j) + "] < 200"
+        cut_cond = "event>-1 && negpmax["+str(j)+"] > -15 && pmax[" + str(j) + "] > 6.0 && pmax[" + str(j) + "] < 120 && pmax[1] > 0 && pmax[1] < 120 && negpmax[1] > -15"
         thisHist = hist_tree_file_basics(trees[i],files[i],var,j,nBins,xLower,xUpper,bias,cut_cond,j,0)
         arr_of_hists.append(thisHist)
         arr_of_biases.append(bias)
 
   c1 = root.TCanvas("c1", "Comparison of RMS distribution", 800, 600)
+  c1.SetLogy()
   max_y = max(hist.GetMaximum() for hist in arr_of_hists) * 1.05
-  arr_of_hists[0].GetYaxis().SetRangeUser(0, max_y)
+  arr_of_hists[0].GetYaxis().SetRangeUser(1, max_y)
   arr_of_hists[0].SetTitle("Comparison of RMS distribution")
   arr_of_hists[0].Draw()
   
@@ -399,6 +516,7 @@ def rmsNoise(files,trees,ch,total_number_channels):
     thisFit = plot_fit_curves(xLower,xUpper,"gaus",arr_of_hists[i],i,arr_of_biases[i])
     arr_of_fits.append(thisFit)
     thisFit.Draw("SAME")
+    break
 
   legend = root.TLegend(0.7, 0.7, 0.9, 0.9)
   for i in range(len(arr_of_hists)):
@@ -414,30 +532,31 @@ def timeRes(files,trees,ch,total_number_channels):
   print("Time resolution analysis")
   vars = []
   cut_conds = []
-  toaThreshold = 1
+  toaThreshold = 4
+  # 1 = 20%, 4 = 50%
   if total_number_channels == 2:
     var = "cfd[0]["+str(toaThreshold)+"]-cfd[1]["+str(toaThreshold)+"]"
-    cut_cond = "event>-1 && negpmax[0] > -30 && negpmax[0] < 5 && pmax[0] > 20 && pmax[0] < 200 && negpmax[1] > -30 && negpmax[1] < 5 && pmax[1] > 20 && pmax[1]< 200 && cfd[0]["+str(toaThreshold)+"]>-2.5 && cfd[1]["+str(toaThreshold)+"]>-0.2 && cfd[1]["+str(toaThreshold)+"]<0.2"
+    cut_cond = "negpmax[0] > -15 && negpmax[0] < 5 && pmax[0] > 6.0 && pmax[0] < 120 && pmax[1] > 20 && pmax[1] < 120 && negpmax[1] > -15 && cfd[1]["+str(toaThreshold)+"]<2 && cfd[1]["+str(toaThreshold)+"]>-2 && cfd[0]["+str(toaThreshold)+"]>10"
     vars.append(var)
     cut_conds.append(cut_cond)
   else:
     if ch == -1:
       for ch_it in range(total_number_channels-1):
         var = "cfd["+str(ch_it)+"]["+str(toaThreshold)+"]-cfd["+str(ch_it+1)+"]["+str(toaThreshold)+"]"
-        cut_cond = "event>-1 && negpmax["+str(ch_it)+"] > -30 && negpmax["+str(ch_it)+"] < 5 && pmax["+str(ch_it)+"] > 20 && pmax["+str(ch_it)+"] < 200 && negpmax["+str(ch_it+1)+"] > -30 && negpmax["+str(ch_it+1)+"] < 5 && pmax["+str(ch_it+1)+"] > 20 && pmax["+str(ch_it+1)+"] < 200 && cfd[0]["+str(toaThreshold)+"]>-2.2 && cfd[1]["+str(toaThreshold)+"]>-2.5 && cfd[2]["+str(toaThreshold)+"]>-2.0"
+        cut_cond = "event>-1 && negpmax["+str(ch_it)+"] > -15 && negpmax["+str(ch_it)+"] < 5 && pmax["+str(ch_it)+"] > 6.0 && pmax["+str(ch_it)+"] < 120 && negpmax["+str(ch_it+1)+"] > -15 && negpmax["+str(ch_it+1)+"] < 5 && pmax["+str(ch_it+1)+"] > 6.0 && pmax["+str(ch_it+1)+"] < 120 && cfd[0]["+str(toaThreshold)+"]>-2.2 && cfd[1]["+str(toaThreshold)+"]>-2.5 && cfd[2]["+str(toaThreshold)+"]>-2.0"
         vars.append(var)
         cut_conds.append(cut_cond)
       vars.append("cfd[0]["+str(toaThreshold)+"]-cfd["+str(total_number_channels-1)+"]["+str(toaThreshold)+"]")
-      cut_conds.append("event>-1 && negpmax["+str(total_number_channels-1)+"] > -30 && negpmax["+str(total_number_channels-1)+"] < 5 && pmax["+str(total_number_channels-1)+"] > 20 && pmax["+str(total_number_channels-1)+"] < 200 && negpmax[0] > -30 && negpmax[0] < 5 && pmax[0] > 20 && pmax[0] < 200 && cfd[0]["+str(toaThreshold)+"]>-2.2 && cfd[1]["+str(toaThreshold)+"]>-2.5 && cfd[2]["+str(toaThreshold)+"]>-2.0")
+      cut_conds.append("event>-1 && negpmax["+str(total_number_channels-1)+"] > -15 && negpmax["+str(total_number_channels-1)+"] < 5 && pmax["+str(total_number_channels-1)+"] > 6.0 && pmax["+str(total_number_channels-1)+"] < 120 && negpmax[0] > -15 && negpmax[0] < 5 && pmax[0] > 6.0 && pmax[0] < 120 && cfd[0]["+str(toaThreshold)+"]>-2.2 && cfd[1]["+str(toaThreshold)+"]>-2.5 && cfd[2]["+str(toaThreshold)+"]>-2.0")
     else:
       var = "cfd["+str(ch)+"]["+str(toaThreshold)+"]-cfd["+str(ch+1)+"]["+str(toaThreshold)+"]"
-      cut_cond = "event>-1 && negpmax["+str(ch)+"] > -30 && negpmax["+str(ch)+"] < 5 && pmax["+str(ch)+"] > 20 && pmax["+str(ch)+"] < 200 && negpmax["+str(ch+1)+"] > -30 && negpmax["+str(ch+1)+"] < 5 && pmax["+str(ch+1)+"] > 20 && pmax["+str(ch+1)+"] < 200 && cfd[0]["+str(toaThreshold)+"]>-2.2 && cfd[1]["+str(toaThreshold)+"]>-2.5 && cfd[2]["+str(toaThreshold)+"]>-2.0"
+      cut_cond = "event>-1 && negpmax["+str(ch)+"] > -15 && negpmax["+str(ch)+"] < 5 && pmax["+str(ch)+"] > 6.0 && pmax["+str(ch)+"] < 120 && negpmax["+str(ch+1)+"] > -15 && negpmax["+str(ch+1)+"] < 5 && pmax["+str(ch+1)+"] > 6.0 && pmax["+str(ch+1)+"] < 120 && cfd[0]["+str(toaThreshold)+"]>-2.2 && cfd[1]["+str(toaThreshold)+"]>-2.5 && cfd[2]["+str(toaThreshold)+"]>-2.0"
       vars.append(var)
       cut_conds.append(cut_cond)
 
-  nBins = 200
-  xLower = 9
-  xUpper = 12
+  nBins = 100
+  xLower = 6.0
+  xUpper = 12.0
 
   arr_of_hists = []
   arr_of_biases = []
@@ -450,8 +569,9 @@ def timeRes(files,trees,ch,total_number_channels):
       arr_of_biases.append(bias)
 
   c1 = root.TCanvas("c1", "Comparison of time resolution (CFD@"+str(toaThreshold+1)+"0%) distribution", 800, 600)
+  c1.SetLogy()
   max_y = max(hist.GetMaximum() for hist in arr_of_hists) * 1.05
-  arr_of_hists[0].GetYaxis().SetRangeUser(0, max_y)
+  arr_of_hists[0].GetYaxis().SetRangeUser(1, max_y)
   arr_of_hists[0].SetTitle("Comparison of time resolution (CFD@"+str(toaThreshold+1)+"0%) distribution")
   arr_of_hists[0].Draw("")
   for hist_to_draw in arr_of_hists[1:]:
@@ -478,28 +598,31 @@ def waveform(files,trees,ch,total_number_channels):
   t_data = [[] for _ in range(total_number_channels)]
   w_data = [[] for _ in range(total_number_channels)]
   event_limit = 10000
+  event_start = 0
   for i in range(len(trees)):
     tree = trees[i]
     if ch != -1:
       event_cycle = 0
-      for entry in tree:
+      for entry_index in range(event_start, event_limit+event_start):
+        tree.GetEntry(entry_index)
         if (event_cycle > event_limit): continue
         event_cycle += 1
-        t = entry.t
-        w = entry.w
-        pmax = entry.pmax
+        t = tree.t
+        w = tree.w
+        pmax = tree.pmax
         if 0 < pmax[ch] < 200:
           t_data[0].extend(t[ch])
           w_data[0].extend(w[ch])
     else:
       for ch_it in range(total_number_channels):
         event_cycle = 0
-        for entry in tree:
+        for entry_index in range(event_start, event_limit+event_start):
+          tree.GetEntry(entry_index)
           if (event_cycle > event_limit): continue
           event_cycle += 1
-          t = entry.t
-          w = entry.w
-          pmax = entry.pmax
+          t = tree.t
+          w = tree.w
+          pmax = tree.pmax
           if 0 < pmax[ch_it] < 200:
             t_data[ch_it].extend(t[ch_it])
             w_data[ch_it].extend(w[ch_it])
@@ -516,7 +639,7 @@ def waveform(files,trees,ch,total_number_channels):
 
   #ax.set_xlim(-1e-8,1e-8)
   ax.set_ylim(min(min(inner_array) for inner_array in w_data),max(max(inner_array) for inner_array in w_data))
-  ax.set_xlabel('t / ns', fontsize=14)
+  ax.set_xlabel('t / 10 ns', fontsize=14)
   ax.set_ylabel('Amplitude / V', fontsize=14)
   ax.set_title(f'Waveform comparison, first {event_limit} events per channel', fontsize=16)
   ax.legend(loc = "upper right")
@@ -535,7 +658,7 @@ def makeCSV(files,trees,total_number_channels):
   for i in range(len(trees)):
     for j in range(total_number_channels):
       bias = getBias(files[i])
-      cut_cond = "event>-1 && negpmax["+str(j)+"] > -30 && pmax["+str(j)+"] > 20 && pmax["+str(j)+"] < 200"
+      cut_cond = "event>-1 && negpmax["+str(j)+"] > -15 && pmax["+str(j)+"] > 6.0 && pmax["+str(j)+"] < 200"
       thisHist = hist_tree_file_basics(trees[i],files[i],"charge",j,nBins,xLower,xUpper,bias,cut_cond,j,0)
       arr_of_hists.append(thisHist)
       arr_of_biases.append(bias)
@@ -543,9 +666,10 @@ def makeCSV(files,trees,total_number_channels):
   arr_of_divided_hists = []
   for i, hist in enumerate(arr_of_hists):
     hist_divided = hist.Clone(f"hist_divided_{i}")
-    for bin in range(1, hist_divided.GetNbinsX() + 1):
-      bin_content = hist_divided.GetBinContent(bin)
-      hist_divided.SetBinContent(bin, bin_content / 4.7)
+    if i == 0:
+      for bin in range(1, hist_divided.GetNbinsX() + 1):
+        bin_content = hist_divided.GetBinContent(bin)
+        hist_divided.SetBinContent(bin, bin_content / 4.7)
     arr_of_divided_hists.append(hist_divided)
     thisFit = plot_fit_curves(xLower, xUpper, "landau", hist_divided, i, arr_of_biases[i])
     arr_of_fits.append(thisFit)
@@ -560,7 +684,7 @@ def makeCSV(files,trees,total_number_channels):
   for i in range(len(trees)):
     for j in range(total_number_channels):
       bias = getBias(files[i])
-      cut_cond = "event>-1 && negpmax["+str(j)+"] > -30 && pmax[" + str(j) + "] > 20 && pmax[" + str(j) + "] < 200"
+      cut_cond = "event>-1 && negpmax["+str(j)+"] > -15 && pmax[" + str(j) + "] > 6.0 && pmax[" + str(j) + "] < 200"
       thisHist = hist_tree_file_basics(trees[i],files[i],"rms",j,nBins,xLower,xUpper,bias,cut_cond,j,0)
       arr_of_hists.append(thisHist)
       arr_of_biases.append(bias)
@@ -576,11 +700,11 @@ def makeCSV(files,trees,total_number_channels):
   toaThreshold = 1
   for ch_it in range(total_number_channels-1):
     var = "cfd["+str(ch_it)+"]["+str(toaThreshold)+"]-cfd["+str(ch_it+1)+"]["+str(toaThreshold)+"]"
-    cut_cond = "event>-1 && negpmax["+str(ch_it)+"] > -30 && negpmax["+str(ch_it)+"] < 5 && pmax["+str(ch_it)+"] > 20 && pmax["+str(ch_it)+"] < 200 && negpmax["+str(ch_it+1)+"] > -30 && negpmax["+str(ch_it+1)+"] < 5 && pmax["+str(ch_it+1)+"] > 20 && pmax["+str(ch_it+1)+"] < 200 && cfd[0]["+str(toaThreshold)+"]>-2.2 && cfd[1]["+str(toaThreshold)+"]>-2.5 && cfd[2]["+str(toaThreshold)+"]>-2.0"
+    cut_cond = "event>-1 && negpmax["+str(ch_it)+"] > -15 && negpmax["+str(ch_it)+"] < 5 && pmax["+str(ch_it)+"] > 6.0 && pmax["+str(ch_it)+"] < 120 && negpmax["+str(ch_it+1)+"] > -15 && negpmax["+str(ch_it+1)+"] < 5 && pmax["+str(ch_it+1)+"] > 6.0 && pmax["+str(ch_it+1)+"] < 120 && cfd[0]["+str(toaThreshold)+"]>-2.2 && cfd[1]["+str(toaThreshold)+"]>-2.5 && cfd[2]["+str(toaThreshold)+"]>-2.0"
     vars.append(var)
     cut_conds.append(cut_cond)
   vars.append("cfd[0]["+str(toaThreshold)+"]-cfd["+str(total_number_channels-1)+"]["+str(toaThreshold)+"]")
-  cut_conds.append("event>-1 && negpmax["+str(total_number_channels-1)+"] > -30 && negpmax["+str(total_number_channels-1)+"] < 5 && pmax["+str(total_number_channels-1)+"] > 20 && pmax["+str(total_number_channels-1)+"] < 200 && negpmax[0] > -30 && negpmax[0] < 5 && pmax[0] > 20 && pmax[0] < 200 && cfd[0]["+str(toaThreshold)+"]>-2.2 && cfd[1]["+str(toaThreshold)+"]>-2.5 && cfd[2]["+str(toaThreshold)+"]>-2.0")
+  cut_conds.append("event>-1 && negpmax["+str(total_number_channels-1)+"] > -15 && negpmax["+str(total_number_channels-1)+"] < 5 && pmax["+str(total_number_channels-1)+"] > 6.0 && pmax["+str(total_number_channels-1)+"] < 120 && negpmax[0] > -15 && negpmax[0] < 5 && pmax[0] > 6.0 && pmax[0] < 120 && cfd[0]["+str(toaThreshold)+"]>-2.2 && cfd[1]["+str(toaThreshold)+"]>-2.5 && cfd[2]["+str(toaThreshold)+"]>-2.0")
   nBins = 200
   xLower = -2
   xUpper = 2
