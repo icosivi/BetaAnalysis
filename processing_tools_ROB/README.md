@@ -40,5 +40,5 @@ The output will be N ROOT files, one for each of the N channels. This also sorts
 The L2 script is run on the output of the L1 script, and merges the N files into a single file. The files are merged on the 'event' column, and the 'w' and 't' branches from the respective channels are matched by event into 'wn' and 'tn' branches, where n is the channel number. This is the final preprocessing step before analysis in Fede's scripts.
 
 ```
-python L1_combine_channels.py -i BTR_Transcend_220_l1/ -o BTR_Transcend_220_l2
+python L2_combine_channels.py -i BTR_Transcend_220_l1/ -o BTR_Transcend_220_l2
 ```
