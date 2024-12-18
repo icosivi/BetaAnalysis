@@ -41,12 +41,15 @@
 
 void analisi( ){
 
+  //ROOT::EnableImplicitMT(6);
+  //ROOT::EnableThreadSafety();
+
   //Config file definition
   ConfigFile cf("beta_config.ini");
 
-  bool join_txt_tracker = false;
-  int ttracker = cf.Value("HEADER", "use_tracker") ;
-  if(ttracker==1) join_txt_tracker = true;
+  bool join_txt_tracker = true;
+  //int ttracker = cf.Value("HEADER", "use_tracker") ;
+  //if(ttracker==1) join_txt_tracker = true;
 
   //opens txt file and takes the data
   std::string line;
@@ -61,6 +64,7 @@ void analisi( ){
 
 
   //saves tracker data on x_tracker and y_tracker
+  /*
   if(join_txt_tracker){
     Filein.open(txtfilename, std::ios::in);
     if(!Filein.is_open()) std::cout << "It failed" << std::endl;
@@ -82,7 +86,7 @@ void analisi( ){
         }
     }
 
-  }
+  }*/
 
   //time window is the DAQ time window, that you can check on the oscilloscope. search range is the window where signals occur
   bool pmax_search_range;
@@ -192,9 +196,9 @@ void analisi( ){
   std::vector<double> t_thr1;
   std::vector<double> tot1;
   std::vector<double> rms1;
-  std::vector<std::vector<double>> w1;
-  std::vector<std::vector<double>> t1;
-  double x_pos, y_pos ;
+  //std::vector<std::vector<double>> w1 ; //to be commented for skipping the waveform;
+  //std::vector<std::vector<double>> t1 ; //to be commented for skipping the waveform;
+  double x_pos1, y_pos1,x_pos2, y_pos2, chi2_trk ;
   
   Pmax1.reserve(20);
   Pmax1Fit.reserve(20);
@@ -216,8 +220,8 @@ void analisi( ){
   rms1.reserve(20);
   CFD1Fit.reserve(20);
   WIDTH1.reserve(20);
-  w1.reserve(20);
-  t1.reserve(20);
+  //w1.reserve(20);//to be commented for skipping the waveform;
+  //t1.reserve(20);//to be commented for skipping the waveform;
   Analyzer *a1=new Analyzer();
   
   int event;
@@ -225,8 +229,8 @@ void analisi( ){
   
   OutTree->Branch("event",&event);
   //OutTree->Branch("evt_delta",&evt_delta); //for tracker sync
-  OutTree->Branch("w", "std::vector<std::vector<double>>", &w1);
-  OutTree->Branch("t", "std::vector<std::vector<double>>" ,&t1);
+  //OutTree->Branch("w", "std::vector<std::vector<double>>", &w1);
+  //OutTree->Branch("t", "std::vector<std::vector<double>>" ,&t1);
   OutTree->Branch("pmax", "std::vector<double>",&Pmax1Fit);
   OutTree->Branch("negpmax", "std::vector<double>",&negPmax1Fit);
   OutTree->Branch("tmax", "std::vector<double>",&Tmax1Fit);
@@ -245,15 +249,22 @@ void analisi( ){
   OutTree->Branch("t_thr", "std::vector<double>",&t_thr1);  // time at which a certain thr (in V) is passed
   OutTree->Branch("tot", "std::vector<double>",&tot1);
   OutTree->Branch("rms", "std::vector<double>",&rms1);
-  OutTree->Branch("x_pos", &x_pos);
-  OutTree->Branch("y_pos", &y_pos);
+  OutTree->Branch("x_pos1", &x_pos1);
+  OutTree->Branch("y_pos1", &y_pos1);
+  OutTree->Branch("x_pos2", &x_pos2);
+  OutTree->Branch("y_pos2", &y_pos2);
+  OutTree->Branch("chi2_trk", &chi2_trk);
       
   n = 0;
   int j_counter = 0;
   
   std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
   
-  TTreeReaderArray<Double32_t> posReader(myReader, "pos" );
+  TTreeReaderValue<float> x1Reader(myReader, "xtrk1" );
+  TTreeReaderValue<float> y1Reader(myReader, "ytrk1" );
+  TTreeReaderValue<float> x2Reader(myReader, "xtrk2" );
+  TTreeReaderValue<float> y2Reader(myReader, "ytrk2" );
+  TTreeReaderValue<float> chi2Reader(myReader, "chi2trk" );
       
   for(int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
   
@@ -265,16 +276,7 @@ void analisi( ){
   voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
   
   
-  
-  while(myReader.Next()){
-    
-    if(join_txt_tracker && (j_counter != nevent[n])){
-    //if(join_txt_tracker && ((j_counter+1) != nevent[n]) ){
-      
-      j_counter++;
-      continue;
-
-    }
+  while(myReader.Next() ){ //&& j_counter<340000
 
     Pmax1.clear();
     Pmax1Fit.clear();
@@ -296,22 +298,27 @@ void analisi( ){
     rms1.clear();
     CFD1Fit.clear();
     WIDTH1.clear();
-    w1.clear();
-    t1.clear();
+   // w1.clear();//to be commented for skipping the waveform;
+    //t1.clear();//to be commented for skipping the waveform;
   
     
     if(join_txt_tracker){
 
-      x_pos = x_tracker[n];
-      y_pos = y_tracker[n];
+      x_pos1 = *x1Reader;
+      y_pos1 = *y1Reader;
+      x_pos2 = *x2Reader;
+      y_pos2 = *y2Reader;
+      chi2_trk = *chi2Reader;
 
       n++;
       
     }else{
 
-      x_pos = 0;
-      y_pos = 0;
-
+      x_pos1 = 0;
+      y_pos1 = 0;
+      x_pos2 = 0;
+      y_pos2 = 0;
+      chi2_trk = 0;
     }
     
   
@@ -394,8 +401,8 @@ void analisi( ){
 
         for(int i=0; i<w1_inner.size(); i++) w1_inner.at(i) = w1_inner.at(i) - baseline_correction ;
 
-        w1.push_back( w1_inner );
-        t1.push_back( t1_inner );
+        //w1.push_back( w1_inner );//to be commented for skipping the waveform;
+        //t1.push_back( t1_inner );//to be commented for skipping the waveform;
   
 	    	std::pair<double, unsigned int> tp_pair1 = a1->Find_Signal_Maximum(pmax_search_range,search_range); 
 	    	std::pair<double, double> tp_pair1_fit = a1->Pmax_with_GausFit(tp_pair1,maxIndex);
@@ -441,8 +448,14 @@ void analisi( ){
     }
   
     event=j_counter;
-        
-    OutTree->Fill();
+    
+
+    if(x_pos1>-800){
+      
+      OutTree->Fill();
+      if(j_counter%10000 == 0) cout<<x_pos1<<" "<<y_pos1<<endl;
+
+    } 
   
     if(j_counter%10000 == 0) cout<<"processed events:"<<j_counter<<endl;
     j_counter++;
