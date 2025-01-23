@@ -307,8 +307,8 @@ void analisi( ){
       
     }else{
 
-      x_pos = 0;
-      y_pos = 0;
+      x_pos = posReader[0];
+      y_pos = posReader[1];
 
     }
     
