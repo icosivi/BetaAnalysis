@@ -1,4 +1,4 @@
-void TrkMerge_wfm(TString originalFileName = "/home/daq/Desktop/TB7/W3_A16_DC2FNAL_2005.root", TString treeName= "wfm",TString  newFileName= "/media/daq/EXTERNAL_USB/DESY_TB7_DCRSD/raw/small_W3_A16_DC2FNAL_2005.root", TString  TrkFile= "/media/daq/EXTERNAL_USB/DESY_TB7_DCRSD/telescope_txt/tracks_2005.csv") {
+void TrkMerge_wfm(TString originalFileName = "/Volumes/TOSHIBA1/Fede_DESY_TB7/W3_A1_DC5FNAL_1961.root", TString treeName= "wfm",TString  newFileName= "/Volumes/Elements/TB7_run_1961/small_1961.root", TString  TrkFile= "/Users/icosivi/Desktop/DESY_TB7_DCRSD/tracks/tracks_1961.csv") {
 
   #include <iostream>
   double fxtrk1, fytrk1, fxtrk2, fytrk2, fchi2trk1;

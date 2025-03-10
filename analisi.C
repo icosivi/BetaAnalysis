@@ -94,9 +94,12 @@ void analisi( ){
   if( cf.Value("HEADER", "search_range") == 0 ) pmax_search_range = false;
   else pmax_search_range = true;
 
-  double search_range[2];
-  search_range[0] = cf.Value("HEADER", "pmax_search_range_min" ) ;
-  search_range[1] = cf.Value("HEADER", "pmax_search_range_max" ) ;
+  double search_range[2] = {0,0};
+  double search_range_global[2] = {0,0};
+  search_range_global[0] = cf.Value("HEADER", "pmax_search_range_min" ) ;
+  search_range_global[1] = cf.Value("HEADER", "pmax_search_range_max" ) ;
+  
+  double search_around_pmax = 1.5;
 
   double tot_levels[2] = { cf.Value("HEADER","tot_rising"), cf.Value("HEADER","tot_falling") };
 
@@ -196,8 +199,8 @@ void analisi( ){
   std::vector<double> t_thr1;
   std::vector<double> tot1;
   std::vector<double> rms1;
-  //std::vector<std::vector<double>> w1 ; //to be commented for skipping the waveform;
-  //std::vector<std::vector<double>> t1 ; //to be commented for skipping the waveform;
+  std::vector<std::vector<double>> w1 ; //to be commented for skipping the waveform;
+  std::vector<std::vector<double>> t1 ; //to be commented for skipping the waveform;
   double x_pos1, y_pos1,x_pos2, y_pos2, chi2_trk ;
   
   Pmax1.reserve(20);
@@ -220,17 +223,18 @@ void analisi( ){
   rms1.reserve(20);
   CFD1Fit.reserve(20);
   WIDTH1.reserve(20);
-  //w1.reserve(20);//to be commented for skipping the waveform;
-  //t1.reserve(20);//to be commented for skipping the waveform;
+  w1.reserve(20);//to be commented for skipping the waveform;
+  t1.reserve(20);//to be commented for skipping the waveform;
   Analyzer *a1=new Analyzer();
+  Analyzer *a_check=new Analyzer();
   
   int event;
   //int evt_delta = 0; //for tracker sync
   
   OutTree->Branch("event",&event);
   //OutTree->Branch("evt_delta",&evt_delta); //for tracker sync
-  //OutTree->Branch("w", "std::vector<std::vector<double>>", &w1);
-  //OutTree->Branch("t", "std::vector<std::vector<double>>" ,&t1);
+  OutTree->Branch("w", "std::vector<std::vector<double>>", &w1);
+  OutTree->Branch("t", "std::vector<std::vector<double>>" ,&t1);
   OutTree->Branch("pmax", "std::vector<double>",&Pmax1Fit);
   OutTree->Branch("negpmax", "std::vector<double>",&negPmax1Fit);
   OutTree->Branch("tmax", "std::vector<double>",&Tmax1Fit);
@@ -298,8 +302,8 @@ void analisi( ){
     rms1.clear();
     CFD1Fit.clear();
     WIDTH1.clear();
-   // w1.clear();//to be commented for skipping the waveform;
-    //t1.clear();//to be commented for skipping the waveform;
+    w1.clear();//to be commented for skipping the waveform;
+    t1.clear();//to be commented for skipping the waveform;
   
     
     if(join_txt_tracker){
@@ -324,6 +328,86 @@ void analisi( ){
   
     int enable_channel_1 = 0;
     int invert_channel_1 = 0;
+
+
+     ///////// BEGINNING OF "SMALL-RANGE" PART /////////
+
+    if(true){
+    
+      double max_p_check_plane1 = 0;
+      double max_t_check_plane1 = 0;
+  
+      for( int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
+            
+        std::vector<double> w1_check;
+        std::vector<double> t1_check;
+      
+        w1_check.reserve(221560);
+        t1_check.reserve(221560);
+          
+        enable_channel_1 = cf.Value("ACTIVE_CHANNEL", Form("ch%i", ch_counter) );
+        invert_channel_1 = cf.Value("INVERT_SIGNAL", Form("ch%i", ch_counter) );
+      
+          
+        if( enable_channel_1 == 1){
+      
+          if( invert_channel_1 == 1 ){
+        
+            for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
+      
+              if(ADC_conversion==1) w1_check.push_back( double(-voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
+              else w1_check.push_back( double(-voltageReader1.at(ch_counter).At(i)) );
+              t1_check.push_back( double(i)*temporal_bin_width ); 
+      
+            }
+      
+          }else{
+      
+            for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
+      
+              if(ADC_conversion==1) w1_check.push_back( double(voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
+              else w1_check.push_back( double(voltageReader1.at(ch_counter).At(i)) );
+              t1_check.push_back( double(i)*temporal_bin_width );
+      
+            }
+          }
+      
+          *a_check=Analyzer( w1_check, t1_check );
+          double baseline_correction = a_check->Correct_Baseline(n_points_baseline); 
+      
+          std::pair<double, unsigned int> tp_pair1 = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
+          std::pair<double, double> tp_pair1_fit = a_check->Pmax_with_GausFit(tp_pair1,maxIndex);   
+    
+          if( tp_pair1_fit.first*voltage_const > max_p_check_plane1){
+    
+            max_p_check_plane1 = tp_pair1_fit.first*voltage_const;
+            max_t_check_plane1 = tp_pair1_fit.second*time_const; 
+  
+          }  
+        } 
+      }
+  
+      if(max_t_check_plane1>5 && max_t_check_plane1<195){
+      
+        search_range[0] = max_t_check_plane1 - search_around_pmax ;
+        search_range[1] = max_t_check_plane1 + search_around_pmax ;
+  
+      }else{
+  
+        search_range[0] = search_range_global[0] ;
+        search_range[1] = search_range_global[1] ;
+  
+      }
+  
+    }
+
+
+    ///////// END OF "SMALL-RANGE" PART /////////
+
+
+    //cout<<search_range[0]<<"    "<<search_range[1]<<endl;
+
+
   
     for( int ch_counter=0; ch_counter<(active_channels+2); ch_counter++ ){
           
@@ -401,8 +485,8 @@ void analisi( ){
 
         for(int i=0; i<w1_inner.size(); i++) w1_inner.at(i) = w1_inner.at(i) - baseline_correction ;
 
-        //w1.push_back( w1_inner );//to be commented for skipping the waveform;
-        //t1.push_back( t1_inner );//to be commented for skipping the waveform;
+        w1.push_back( w1_inner );//to be commented for skipping the waveform;
+        t1.push_back( t1_inner );//to be commented for skipping the waveform;
   
 	    	std::pair<double, unsigned int> tp_pair1 = a1->Find_Signal_Maximum(pmax_search_range,search_range); 
 	    	std::pair<double, double> tp_pair1_fit = a1->Pmax_with_GausFit(tp_pair1,maxIndex);

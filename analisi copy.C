@@ -47,7 +47,7 @@ void analisi( ){
   //Config file definition
   ConfigFile cf("beta_config.ini");
 
-  bool join_txt_tracker = false;
+  bool join_txt_tracker = true;
   //int ttracker = cf.Value("HEADER", "use_tracker") ;
   //if(ttracker==1) join_txt_tracker = true;
 
@@ -198,7 +198,7 @@ void analisi( ){
   std::vector<double> rms1;
   std::vector<std::vector<double>> w1 ; //to be commented for skipping the waveform;
   std::vector<std::vector<double>> t1 ; //to be commented for skipping the waveform;
-  double x_pos1, y_pos1,x_pos2, y_pos2 ;
+  double x_pos1, y_pos1,x_pos2, y_pos2, chi2_trk ;
   
   Pmax1.reserve(20);
   Pmax1Fit.reserve(20);
@@ -253,6 +253,7 @@ void analisi( ){
   OutTree->Branch("y_pos1", &y_pos1);
   OutTree->Branch("x_pos2", &x_pos2);
   OutTree->Branch("y_pos2", &y_pos2);
+  OutTree->Branch("chi2_trk", &chi2_trk);
       
   n = 0;
   int j_counter = 0;
@@ -307,6 +308,7 @@ void analisi( ){
       y_pos1 = *y1Reader;
       x_pos2 = *x2Reader;
       y_pos2 = *y2Reader;
+      chi2_trk = *chi2Reader;
 
       n++;
       
@@ -316,6 +318,7 @@ void analisi( ){
       y_pos1 = 0;
       x_pos2 = 0;
       y_pos2 = 0;
+      chi2_trk = 0;
     }
     
   
@@ -450,11 +453,11 @@ void analisi( ){
     if(x_pos1>-800){
       
       OutTree->Fill();
-      if(j_counter%1000 == 0) cout<<x_pos1<<" "<<y_pos1<<endl;
+      if(j_counter%10000 == 0) cout<<x_pos1<<" "<<y_pos1<<endl;
 
     } 
   
-    if(j_counter%1000 == 0) cout<<"processed events:"<<j_counter<<endl;
+    if(j_counter%10000 == 0) cout<<"processed events:"<<j_counter<<endl;
     j_counter++;
   
   }
