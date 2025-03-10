@@ -63,31 +63,6 @@ void analisi( ){
   int is_fitted, n, n_old;
 
 
-  //saves tracker data on x_tracker and y_tracker
-  /*
-  if(join_txt_tracker){
-    Filein.open(txtfilename, std::ios::in);
-    if(!Filein.is_open()) std::cout << "It failed" << std::endl;
-    else std::cout << "Opened file " << txtfilename << std::endl;
-    while(getline(Filein, line)){
-        Filein >> n >> x >> y >> z_position >> is_fitted; 
-        x_tracker_dirty.push_back(x);
-        y_tracker_dirty.push_back(y);
-        nevent_dirty.push_back(n);
-    }
-    //filters out multi tracks 
-    for(size_t i = 0; i < x_tracker_dirty.size(); i++){
-        if(nevent_dirty[i] != nevent_dirty[i+1] || i == x_tracker_dirty.size()){
-                if(nevent_dirty[i] != nevent_dirty[i-1] || i == 0){
-                x_tracker.push_back(x_tracker_dirty[i]);
-                y_tracker.push_back(y_tracker_dirty[i]);
-                nevent.push_back(nevent_dirty[i]);
-            }
-        }
-    }
-
-  }*/
-
   //time window is the DAQ time window, that you can check on the oscilloscope. search range is the window where signals occur
   bool pmax_search_range;
 
@@ -128,51 +103,6 @@ void analisi( ){
   cout<<" "<<endl;
 
 
-
-  /*  old way of saving files
-  std::string path = cf.Value("HEADER","filename_path");
-  std::string file_in = cf.Value("HEADER","input_filename");
-  std::string Filename = path+"raw/"+file_in;
-  std::cout << "Anaysis of file " << Filename << " started" << endl;
-  const char *filename = Filename.c_str();
-  TFile *file = TFile::Open(filename);
-  TTree *itree = dynamic_cast<TTree*>(file->Get("wfm"));
-  TTreeReader myReader("wfm", file);
-
-  // Output file & tree
-  std::string delimiter = "Sr";
-  std::string token_pre = file_in.substr(0, file_in.find(delimiter));
-  std::string token_post = file_in.substr(file_in.find(delimiter));
-  std::string outDir = path+"stats/"+token_pre;
-  const char *outdir = outDir.c_str();
-  std::string outFilename = path+"stats/"+token_pre+"stats_"+token_post;
-
-  cout<<" "<<endl;
-  cout<<"The output file will be: "<<endl;
-  cout<<outFilename<<endl;
-  cout<<" "<<endl;
-
-  int check;
-
-  struct stat st;
-  if( stat( outdir, &st ) == 0){
-
-    cout<<"output directory already exists"<<endl;
-
-  }else{
-
-    check = mkdir(outdir, 0777);
-    if(check==0) cout<<"directory succesfully created"<<endl;
-    else cout<<"something went wrong in creating the output directory..."<<endl;
-
-  }
-
-  const char *output_filename = outFilename.c_str();
-  TFile *OutputFile = new TFile(output_filename,"recreate");
-  TTree *OutTree = new TTree("Analysis","Analysis");*/
-
-
-   
   // Variable declaration and Analyzer object 
   const double time_const = cf.Value("HEADER","time_scalar");  
   const double voltage_const = cf.Value("HEADER","voltage_scalar");
@@ -199,8 +129,8 @@ void analisi( ){
   std::vector<double> t_thr1;
   std::vector<double> tot1;
   std::vector<double> rms1;
-  std::vector<std::vector<double>> w1 ; //to be commented for skipping the waveform;
-  std::vector<std::vector<double>> t1 ; //to be commented for skipping the waveform;
+  //std::vector<std::vector<double>> w1 ; //to be commented for skipping the waveform;
+  //std::vector<std::vector<double>> t1 ; //to be commented for skipping the waveform;
   double x_pos1, y_pos1,x_pos2, y_pos2, chi2_trk ;
   
   Pmax1.reserve(20);
@@ -223,8 +153,8 @@ void analisi( ){
   rms1.reserve(20);
   CFD1Fit.reserve(20);
   WIDTH1.reserve(20);
-  w1.reserve(20);//to be commented for skipping the waveform;
-  t1.reserve(20);//to be commented for skipping the waveform;
+  //w1.reserve(20);//to be commented for skipping the waveform;
+  //t1.reserve(20);//to be commented for skipping the waveform;
   Analyzer *a1=new Analyzer();
   Analyzer *a_check=new Analyzer();
   
@@ -233,8 +163,8 @@ void analisi( ){
   
   OutTree->Branch("event",&event);
   //OutTree->Branch("evt_delta",&evt_delta); //for tracker sync
-  OutTree->Branch("w", "std::vector<std::vector<double>>", &w1);
-  OutTree->Branch("t", "std::vector<std::vector<double>>" ,&t1);
+  //OutTree->Branch("w", "std::vector<std::vector<double>>", &w1);
+  //OutTree->Branch("t", "std::vector<std::vector<double>>" ,&t1);
   OutTree->Branch("pmax", "std::vector<double>",&Pmax1Fit);
   OutTree->Branch("negpmax", "std::vector<double>",&negPmax1Fit);
   OutTree->Branch("tmax", "std::vector<double>",&Tmax1Fit);
@@ -404,6 +334,8 @@ void analisi( ){
 
     ///////// END OF "SMALL-RANGE" PART /////////
 
+    //search_range[0] = search_range_global[0] ;
+    //search_range[1] = search_range_global[1] ;
 
     //cout<<search_range[0]<<"    "<<search_range[1]<<endl;
 
