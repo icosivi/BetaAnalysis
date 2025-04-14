@@ -39,9 +39,65 @@
 #include "include/ConfigFile.hpp"
 
 
-void analisi( ){
+void analisi_csv( ){
 
-  int ch_mcp = 8;
+  int ch_mcp = 14;
+  double v_propagation = 2.3255813953; // mm/ns
+  double sensor_pitch = 0.3; //mm
+
+  float pixel_pos[8][2] = {
+    {0.250f, 0.250f},
+    {0.750f, 0.250f},
+    {1.250f, 0.250f},
+    {0.250f, 0.750f},
+    {0.750f, 0.750f},
+    {1.250f, 0.750f},
+    {0.250f, 1.250f},
+    {0.750f, 1.250f}
+  };
+
+  int mask[8][4] = {
+    {4, 6, 7, 5},
+    {3, 4, 5, 2},
+    {1, 3, 2, 0},
+    {5, 7, 8, 10},
+    {2, 5, 10, 13},
+    {0, 2, 13, 15},
+    {10, 8, 9, 11},
+    {13, 10, 11, 12}
+  };
+  
+   int number_samplings = 10;
+   //double main_vec[4*number_samplings];
+
+   ofstream f;
+   //f.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run608_ReReco_time_FASE.csv");
+   //f.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run605_ReReco_time_FASE.csv");
+   f.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run602_ReReco_time_FASE.csv");
+
+   ofstream f_bis;
+   //f_bis.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run608_ReReco_time_CHECK.csv");
+   //f_bis.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run605_ReReco_time_CHECK.csv");
+   f_bis.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run602_ReReco_time_CHECK.csv");
+
+   f << "x,y,t"; // Initial x and y
+
+   for (int i = 0; i < (number_samplings*4); ++i) {
+    f << ",w" << i; // Add "w" followed by the index
+    }
+
+   f << ", max_ch, max_pixel"; 
+   f << "\n";
+
+
+   f_bis << "x,y,t"; // Initial x and y
+
+   for (int i = 0; i < (number_samplings*4); ++i) {
+    f_bis << ",w" << i; // Add "w" followed by the index
+    }
+
+   f_bis << ", max_ch, max_pixel"; 
+   f_bis << "\n";
 
   //ROOT::EnableImplicitMT(6);
   //ROOT::EnableThreadSafety();
@@ -50,20 +106,6 @@ void analisi( ){
   ConfigFile cf("beta_config.ini");
 
   bool join_txt_tracker = true;
-  //int ttracker = cf.Value("HEADER", "use_tracker") ;
-  //if(ttracker==1) join_txt_tracker = true;
-
-  //opens txt file and takes the data
-  std::string line;
-  std::string txtfilename=cf.Value("HEADER", "tracker_filename") ;
-  std::ifstream Filein;
-  std::vector<double> x_tracker_dirty, y_tracker_dirty; //have multiple tracks per event
-  std::vector<int> nevent_dirty;
-  std::vector<double> x_tracker, y_tracker; //all multiple tracks events are omitted
-  std::vector<int> nevent;
-  double x, y, z_position;
-  int is_fitted, n, n_old;
-
 
   //time window is the DAQ time window, that you can check on the oscilloscope. search range is the window where signals occur
   bool pmax_search_range;
@@ -77,7 +119,7 @@ void analisi( ){
   search_range_global[0] = cf.Value("HEADER", "pmax_search_range_min" ) ;
   search_range_global[1] = cf.Value("HEADER", "pmax_search_range_max" ) ;
   
-  double search_around_pmax = 1;
+  double search_around_pmax = 1.5;
 
   double tot_levels[2] = { cf.Value("HEADER","tot_rising"), cf.Value("HEADER","tot_falling") };
 
@@ -93,17 +135,6 @@ void analisi( ){
   TFile *file = TFile::Open(filename);
   TTree *itree = dynamic_cast<TTree*>(file->Get("wfm"));
   TTreeReader myReader("wfm", file);
-  
-  // Output file & tree
-  std::string outFilename = cf.Value("HEADER","output_filename");
-  const char *output_filename = outFilename.c_str();
-  TFile *OutputFile = new TFile(output_filename,"recreate");
-  TTree *OutTree = new TTree("Analysis","Analysis");
-
-  cout<<" "<<endl;
-  cout<<"The output file will be: "<<endl;
-  cout<<outFilename<<endl;
-  cout<<" "<<endl;
 
 
   // Variable declaration and Analyzer object 
@@ -119,22 +150,14 @@ void analisi( ){
   std::vector<double> Tmax1Fit;
   std::vector<double> negTmax1Fit;
   std::vector<double> Area1;
-  std::vector<double> UArea1;
   std::vector<double> Area1_new;
-  std::vector<double> UArea1_new;
-  std::vector<double> DC_Area1;
-  std::vector<double> RiseTime1Fit;
-  std::vector<double> FallTime1Fit;
-  std::vector<double> dVdt1Fit;
-  std::vector<double> dVdt1Fit_2080;
-  std::vector<std::vector<double>> CFD1Fit;
-  std::vector<std::vector<double>> WIDTH1;
-  std::vector<double> t_thr1;
-  std::vector<double> tot1;
   std::vector<double> rms1;
+  std::vector<std::vector<double>> CFD1Fit;
   std::vector<std::vector<double>> w1 ; //to be commented for skipping the waveform;
   std::vector<std::vector<double>> t1 ; //to be commented for skipping the waveform;
   double x_pos1, y_pos1,x_pos2, y_pos2, chi2_trk ;
+
+  std::vector<std::array<double, 3>> gaus_param_array;
   
   Pmax1.reserve(20);
   Pmax1Fit.reserve(20);
@@ -143,56 +166,22 @@ void analisi( ){
   Tmax1Fit.reserve(20);
   negTmax1Fit.reserve(20);
   Area1.reserve(20);
-  UArea1.reserve(20);
   Area1_new.reserve(20);
-  UArea1_new.reserve(20);
-  DC_Area1.reserve(20);
-  RiseTime1Fit.reserve(20);
-  FallTime1Fit.reserve(20);
-  dVdt1Fit.reserve(20);
-  dVdt1Fit_2080.reserve(20);
-  t_thr1.reserve(20);
-  tot1.reserve(20);
   rms1.reserve(20);
   CFD1Fit.reserve(20);
-  WIDTH1.reserve(20);
-  //w1.reserve(20);//to be commented for skipping the waveform;
-  //t1.reserve(20);//to be commented for skipping the waveform;
+  gaus_param_array.reserve(20);
+
+  
+  w1.reserve(20);//to be commented for skipping the waveform;
+  t1.reserve(20);//to be commented for skipping the waveform;
   Analyzer *a1=new Analyzer();
   Analyzer *a_check=new Analyzer();
   
   int event;
   //int evt_delta = 0; //for tracker sync
   
-  OutTree->Branch("event",&event);
-  //OutTree->Branch("evt_delta",&evt_delta); //for tracker sync
-  OutTree->Branch("w", "std::vector<std::vector<double>>", &w1);
-  OutTree->Branch("t", "std::vector<std::vector<double>>" ,&t1);
-  OutTree->Branch("pmax", "std::vector<double>",&Pmax1Fit);
-  OutTree->Branch("negpmax", "std::vector<double>",&negPmax1Fit);
-  OutTree->Branch("tmax", "std::vector<double>",&Tmax1Fit);
-  OutTree->Branch("negtmax", "std::vector<double>",&negTmax1Fit);
-  OutTree->Branch("area", "std::vector<double>",&Area1);
-  OutTree->Branch("uarea", "std::vector<double>",&UArea1);
-  OutTree->Branch("area_new", "std::vector<double>",&Area1_new);
-  OutTree->Branch("uarea_new", "std::vector<double>",&UArea1_new);
-  OutTree->Branch("dc_area", "std::vector<double>",&DC_Area1);
-  OutTree->Branch("risetime", "std::vector<double>",&RiseTime1Fit);
-  OutTree->Branch("falltime", "std::vector<double>",&FallTime1Fit);
-  OutTree->Branch("dvdt", "std::vector<double>",&dVdt1Fit);
-  OutTree->Branch("dvdt_2080", "std::vector<double>",&dVdt1Fit_2080);
-  OutTree->Branch("cfd", "std::vector<std::vector<double>>",&CFD1Fit);
-  OutTree->Branch("width", "std::vector<std::vector<double>>",&WIDTH1);
-  OutTree->Branch("t_thr", "std::vector<double>",&t_thr1);  // time at which a certain thr (in V) is passed
-  OutTree->Branch("tot", "std::vector<double>",&tot1);
-  OutTree->Branch("rms", "std::vector<double>",&rms1);
-  OutTree->Branch("x_pos1", &x_pos1);
-  OutTree->Branch("y_pos1", &y_pos1);
-  OutTree->Branch("x_pos2", &x_pos2);
-  OutTree->Branch("y_pos2", &y_pos2);
-  OutTree->Branch("chi2_trk", &chi2_trk);
       
-  n = 0;
+  //n = 0;
   int j_counter = 0;
   
   std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
@@ -213,8 +202,7 @@ void analisi( ){
   voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
   
   
-  while(myReader.Next() && j_counter<100000){ //
-
+  while( myReader.Next()  ){ // && j_counter<10000  
     Pmax1.clear();
     Pmax1Fit.clear();
     negPmax1Fit.clear();
@@ -222,21 +210,13 @@ void analisi( ){
     Tmax1Fit.clear();
     negTmax1Fit.clear();
     Area1.clear();
-    UArea1.clear();
     Area1_new.clear();
-    UArea1_new.clear();
-    DC_Area1.clear();
-    RiseTime1Fit.clear();
-    FallTime1Fit.clear();
-    dVdt1Fit.clear();
-    dVdt1Fit_2080.clear();
-    t_thr1.clear();
-    tot1.clear();
     rms1.clear();
     CFD1Fit.clear();
-    WIDTH1.clear();
     w1.clear();//to be commented for skipping the waveform;
     t1.clear();//to be commented for skipping the waveform;
+
+    gaus_param_array.clear();
   
     
     if(join_txt_tracker){
@@ -247,7 +227,7 @@ void analisi( ){
       y_pos2 = *y2Reader;
       chi2_trk = *chi2Reader;
 
-      n++;
+      //n++;
       
     }else{
 
@@ -263,6 +243,7 @@ void analisi( ){
     int invert_channel_1 = 0;
 
 
+    
      ///////// BEGINNING OF "SMALL-RANGE" PART /////////
     
     
@@ -342,6 +323,8 @@ void analisi( ){
     //search_range[0] = search_range_global[0] ;
     //search_range[1] = search_range_global[1] ;
 
+    
+
 
   
     for( int ch_counter=0; ch_counter<(active_channels+2); ch_counter++ ){
@@ -357,6 +340,8 @@ void analisi( ){
         search_range_final[1] = search_range[1] ;
 
       }
+
+      //cout<<search_range_final[0]<<"    "<<search_range_final[1]<<endl;
           
       std::vector<double> w1_inner;
       std::vector<double> t1_inner;
@@ -434,76 +419,225 @@ void analisi( ){
 
         w1.push_back( w1_inner );//to be commented for skipping the waveform;
         t1.push_back( t1_inner );//to be commented for skipping the waveform;
-  
-	    	std::pair<double, unsigned int> tp_pair1 = a1->Find_Signal_Maximum(pmax_search_range,search_range_final); 
+        
+        std::pair<double, unsigned int> tp_pair1 = a1->Find_Signal_Maximum(pmax_search_range,search_range_final); 
 	    	std::pair<double, double> tp_pair1_fit = a1->Pmax_with_GausFit(tp_pair1,maxIndex);
+        std::array<double, 3> gaus_param = a1->Pmax_for_samples(tp_pair1,maxIndex);
 	    	std::pair<double, unsigned int> neg_tp_pair1 = a1->Find_Negative_Signal_Maximum(pmax_search_range,search_range_final); 
 	    	std::pair<double, double> neg_tp_pair1_fit = a1->Negative_Pmax_with_GausFit(neg_tp_pair1,maxIndex);      
 	    	Pmax1.push_back( tp_pair1.first*voltage_const ) ; //mV
 	    	Pmax1Fit.push_back( tp_pair1_fit.first*voltage_const ) ; //mV
+
+        gaus_param_array.push_back( {gaus_param[0]*voltage_const, gaus_param[1]*time_const, gaus_param[2]*time_const} );
+
 	    	negPmax1Fit.push_back(  neg_tp_pair1_fit.first*voltage_const ); //mV
 	    	Tmax1.push_back(  a1->Get_Tmax(tp_pair1)*time_const ) ; //ns
 	    	Tmax1Fit.push_back(  tp_pair1_fit.second*time_const ) ; //ns
 	    	negTmax1Fit.push_back(  neg_tp_pair1_fit.second*time_const ) ; //ns
 	    	Area1.push_back(  a1->Find_Pulse_Area(tp_pair1)*voltage_const*time_const ) ; //mV*ns
-	    	UArea1.push_back( a1->Find_Undershoot_Area(tp_pair1)*voltage_const*time_const ); //mV*ns
 	    	Area1_new.push_back( a1->New_Pulse_Area(tp_pair1_fit,tp_pair1.second,"Simpson",search_range_final)*voltage_const*time_const ) ;//mV*ns  
-        UArea1_new.push_back( a1->New_Undershoot_Area(tp_pair1_fit,neg_tp_pair1_fit, neg_tp_pair1.second,"Simpson",search_range_final)*voltage_const*time_const ) ;//mV*ns
-        DC_Area1.push_back( a1->DC_Area(baseline_correction)*voltage_const*time_const ); //mV*ns
-        RiseTime1Fit.push_back( a1->Find_Rise_Time_with_GausFit(tp_pair1_fit, tp_pair1.second, 0.1, 0.9)*time_const ) ; //ns
-        FallTime1Fit.push_back( a1->Find_Fall_Time_with_GausFit(tp_pair1_fit, tp_pair1.second, 0.1, 0.9)*time_const ) ; //ns
-        dVdt1Fit.push_back( a1->Find_Dvdt_with_GausFit(20,0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const) ) ;  //mV/ns
-	    	dVdt1Fit_2080.push_back( a1->Find_Dvdt2080_with_GausFit(0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const) );  //mV/ns
-        t_thr1.push_back( a1->Find_Time_At_Threshold_with_GausFit(tot_levels[0],tp_pair1_fit,tp_pair1.second)*time_const ); //ns  
-	    	tot1.push_back( a1->Find_Time_Over_Threshold(tot_levels[0],tp_pair1,tot_levels[1])*time_const ) ; //ns
-	    	rms1.push_back( a1->Find_Noise(n_points_baseline)*voltage_const ) ; //mV
-    
-	    	std::vector<double> cf_inner ;
-	    	std::vector<double> width_inner ;
-  
+	    	rms1.push_back( a1->Find_Noise(n_points_baseline)*voltage_const ) ; //mV     
+
+        std::vector<double> cf_inner ;
         cf_inner.reserve(7);
-        width_inner.reserve(7);
   
-	    	for(int jj=0;jj<7;jj++){
-  
-	    		cf_inner.push_back( a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair1_fit,tp_pair1.second)*time_const ) ;
-	    		width_inner.push_back( (a1->Falling_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair1_fit,tp_pair1.second)*time_const) - 
-                                 (a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair1_fit,tp_pair1.second)*time_const) ) ;
-  
-	    	}
+	    	for(int jj=0;jj<7;jj++) cf_inner.push_back( a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair1_fit,tp_pair1.second)*time_const ) ;
   
 	    	CFD1Fit.push_back( cf_inner ) ;
-	    	WIDTH1.push_back( width_inner ) ;
   
 	    }	
     }
   
-    event=j_counter;
-    
+     event=j_counter;
 
-    if(x_pos1>-800){
-      
-      OutTree->Fill();
-      if(j_counter%10000 == 0) cout<<x_pos1<<" "<<y_pos1<<endl;
+        double pmax_pixels[8] = {0,0,0,0,0,0,0,0};
+        for( int i=0; i<8;i++) pmax_pixels[i] = Pmax1Fit.at(mask[i][0]) + Pmax1Fit.at(mask[i][1]) + Pmax1Fit.at(mask[i][2]) + Pmax1Fit.at(mask[i][3]);
+  
+  
+        int size = sizeof(pmax_pixels) / sizeof(pmax_pixels[0]); // Calculate the size of the static array
+        double max_value = pmax_pixels[0]; // Initialize with the first element
+        int max_index = 0;
+  
+        for (int i = 1; i < size; ++i) {
+          if (pmax_pixels[i] > max_value) {
+              max_value = pmax_pixels[i];
+              max_index = i;
+        }
+        }
+  
+  
+        double p_all[15] = {Pmax1Fit.at(0),Pmax1Fit.at(1),Pmax1Fit.at(2),Pmax1Fit.at(3),Pmax1Fit.at(4),Pmax1Fit.at(5),Pmax1Fit.at(6),Pmax1Fit.at(7),Pmax1Fit.at(8),Pmax1Fit.at(9),Pmax1Fit.at(10),Pmax1Fit.at(11),Pmax1Fit.at(12),Pmax1Fit.at(13),Pmax1Fit.at(15)};
+        int size_all = sizeof(p_all) / sizeof(p_all[0]); // Calculate the size of the static array
+        float max_value_all = p_all[0]; // Initialize with the first element
+        int max_index_all = 0;
+  
+        for (int i = 1; i < size_all; ++i) {
+          if (p_all[i] > max_value_all) {
+              max_value_all = p_all[i];
+              max_index_all = i;
+        }
+        }
 
-    } 
+        double main_vec[4*number_samplings];
+        double main_vec_bis[4*number_samplings];
+        double timestamp = 0. ;
+        double timestamp2 = 0. ;
+        double dt = 0. ;
+
+        int mxidx = 0;
+
+        for(int j=0; j<4*number_samplings; j++)  main_vec[j]=0;
+        for(int j=0; j<4*number_samplings; j++)  main_vec_bis[j]=0;
+
+
+        for(int j=0; j<int(w1.at(max_index_all).size()); j++){
+
+         if(t1.at(max_index_all).at(j)<=Tmax1Fit.at(max_index_all) && t1.at(max_index_all).at(j+1)>=Tmax1Fit.at(max_index_all)){
+
+            mxidx = j;
+            break;
+         }
+         }
+
+
+        for(int j=0; j<int(w1.at(max_index_all).size()); j++){
+
+         if(t1.at(max_index_all).at(j)<=Tmax1Fit.at(max_index_all) && t1.at(max_index_all).at(j+1)>=Tmax1Fit.at(max_index_all)){
+
+            for(int k=0; k<number_samplings; k++){
+
+                //main_vec[k] = ylinearInter( t1.at(mask[max_index][0]).at(j-(number_samplings/2)+1+k), w1.at(mask[max_index][0]).at(j-(number_samplings/2)+1+k), t1.at(mask[max_index][0]).at(j-(number_samplings/2)+1+k+1), w1.at(mask[max_index][0]).at(j-(number_samplings/2)+1+k+1), Tmax1Fit.at(max_index_all)-temporal_bin_width*( (number_samplings/2)+1+k ) ) ;
+                
+                main_vec[k] = gaus_param_array[mask[max_index][0]][0]*TMath::Gaus( Tmax1Fit.at(max_index_all)-temporal_bin_width*( (number_samplings/2)-1-k ), gaus_param_array[mask[max_index][0]][1], gaus_param_array[mask[max_index][0]][2], true );
+
+                //if(k==(number_samplings/2)-1) cout<<main_vec[k]<<"    "<<Pmax1Fit.at(max_index_all)<<endl;
+
+                main_vec[k+number_samplings] = gaus_param_array[mask[max_index][1]][0]*TMath::Gaus( Tmax1Fit.at(max_index_all)-temporal_bin_width*( (number_samplings/2)-1-k ), gaus_param_array[mask[max_index][1]][1], gaus_param_array[mask[max_index][1]][2], true );
+
+                main_vec[k+2*number_samplings] = gaus_param_array[mask[max_index][2]][0]*TMath::Gaus( Tmax1Fit.at(max_index_all)-temporal_bin_width*( (number_samplings/2)-1-k ), gaus_param_array[mask[max_index][2]][1], gaus_param_array[mask[max_index][2]][2], true );
+
+                main_vec[k+3*number_samplings] = gaus_param_array[mask[max_index][3]][0]*TMath::Gaus( Tmax1Fit.at(max_index_all)-temporal_bin_width*( (number_samplings/2)-1-k ), gaus_param_array[mask[max_index][3]][1], gaus_param_array[mask[max_index][3]][2], true );
+
+                main_vec_bis[k] = w1.at(mask[max_index][0]).at(j-(number_samplings/2)+1+k);
+                main_vec_bis[k+number_samplings] = w1.at(mask[max_index][1]).at(j-(number_samplings/2)+1+k);
+                main_vec_bis[k+2*number_samplings] = w1.at(mask[max_index][2]).at(j-(number_samplings/2)+1+k);
+                main_vec_bis[k+3*number_samplings] = w1.at(mask[max_index][3]).at(j-(number_samplings/2)+1+k);
+
+            }
+            
+            break;
+         }
+         }
+
+        //cout<<max_index<<"  "<<max_index_all<<endl;
+        // && max_index!=8
+       if(max_value>25  && gaus_param_array[mask[max_index][0]][0]!=-1000 && gaus_param_array[mask[max_index][1]][0]!=-1000 && gaus_param_array[mask[max_index][2]][0]!=-1000 && gaus_param_array[mask[max_index][3]][0]!=-1000 ){  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+          if(ch_mcp<8){
+
+            if(max_index_all<8){ 
+              
+               dt =  (CFD1Fit[mask[max_index][0]][4]*std::pow(Pmax1Fit[mask[max_index][0]],2)+CFD1Fit[mask[max_index][1]][4]*std::pow(Pmax1Fit[mask[max_index][1]],2)+CFD1Fit[mask[max_index][2]][4]*std::pow(Pmax1Fit[mask[max_index][2]],2)+CFD1Fit[mask[max_index][3]][4]*std::pow(Pmax1Fit[mask[max_index][3]],2))/( std::pow(Pmax1Fit[mask[max_index][0]],2)+std::pow(Pmax1Fit[mask[max_index][1]],2)+std::pow(Pmax1Fit[mask[max_index][2]],2)+std::pow(Pmax1Fit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2];
+
+            }else{
+
+              dt =  (CFD1Fit[mask[max_index][0]][4]*std::pow(Pmax1Fit[mask[max_index][0]],2)+CFD1Fit[mask[max_index][1]][4]*std::pow(Pmax1Fit[mask[max_index][1]],2)+CFD1Fit[mask[max_index][2]][4]*std::pow(Pmax1Fit[mask[max_index][2]],2)+CFD1Fit[mask[max_index][3]][4]*std::pow(Pmax1Fit[mask[max_index][3]],2))/( std::pow(Pmax1Fit[mask[max_index][0]],2)+std::pow(Pmax1Fit[mask[max_index][1]],2)+std::pow(Pmax1Fit[mask[max_index][2]],2)+std::pow(Pmax1Fit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2] + (CFD1Fit[16][4]-CFD1Fit[17][4]) ;
+
+            }
+
+          }else{
+
+            //if(max_index_all>=8) dt = CFD1Fit[max_index_all][4]-CFD1Fit[ch_mcp][2];
+            //else dt = CFD1Fit[max_index_all][4]-CFD1Fit[ch_mcp][2] - (CFD1Fit[16][4]-CFD1Fit[17][4]);
+
+            if(max_index_all>=8){ 
+              
+               dt =  (CFD1Fit[mask[max_index][0]][4]*std::pow(Pmax1Fit[mask[max_index][0]],2)+CFD1Fit[mask[max_index][1]][4]*std::pow(Pmax1Fit[mask[max_index][1]],2)+CFD1Fit[mask[max_index][2]][4]*std::pow(Pmax1Fit[mask[max_index][2]],2)+CFD1Fit[mask[max_index][3]][4]*std::pow(Pmax1Fit[mask[max_index][3]],2))/( std::pow(Pmax1Fit[mask[max_index][0]],2)+std::pow(Pmax1Fit[mask[max_index][1]],2)+std::pow(Pmax1Fit[mask[max_index][2]],2)+std::pow(Pmax1Fit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2];
+
+            }else{
+
+              dt =  (CFD1Fit[mask[max_index][0]][4]*std::pow(Pmax1Fit[mask[max_index][0]],2)+CFD1Fit[mask[max_index][1]][4]*std::pow(Pmax1Fit[mask[max_index][1]],2)+CFD1Fit[mask[max_index][2]][4]*std::pow(Pmax1Fit[mask[max_index][2]],2)+CFD1Fit[mask[max_index][3]][4]*std::pow(Pmax1Fit[mask[max_index][3]],2))/( std::pow(Pmax1Fit[mask[max_index][0]],2)+std::pow(Pmax1Fit[mask[max_index][1]],2)+std::pow(Pmax1Fit[mask[max_index][2]],2)+std::pow(Pmax1Fit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2] - (CFD1Fit[16][4]-CFD1Fit[17][4]) ;
+
+            }
+
+          }
+        
+        f << x_pos1-pixel_pos[max_index][0] << "," << y_pos1-pixel_pos[max_index][1]<< "," << dt; 
+        f_bis << x_pos1-pixel_pos[max_index][0] << "," << y_pos1-pixel_pos[max_index][1]<< "," << dt; 
+
+         for (int i = 0; i < number_samplings*4; ++i) {
+           f << "," << main_vec[i]; 
+          }
+
+         f << max_index_all << "," << max_index;
+         f << "\n";
+
+
+         for (int i = 0; i < number_samplings*4; ++i) {
+           f_bis << "," << main_vec_bis[i]; 
+          }
+
+         f_bis << max_index_all << "," << max_index;
+         f_bis << "\n";
+
+       } 
+
+
+
+
   
     if(j_counter%10000 == 0) cout<<"processed events:"<<j_counter<<endl;
     j_counter++;
+
+
+
+
   
   }
-  
-  OutTree->Write();
-  OutputFile->Write();
-  OutputFile->Close();
+
+   f.close();
+   f_bis.close();
   
 }
 
 
 int main(){
 
-analisi();
+analisi_csv();
 
 return 0;
 
 }
+
+/*
+double ylinearInter(
+  const double x1,
+  const double y1,
+  const double x2,
+  const double y2,
+  const double x
+)
+{
+  double y = 0.0;
+
+  y = y1 + (x - x1)*(y2 - y1)/(x2 - x1);
+
+  return y;
+}
+*/
+
+
+/*
+  for(int g=0; g<4; g++){
+
+                if(g==0) dt_num += Pmax1Fit.at(mask[max_index][0])*Pmax1Fit.at(mask[max_index][0])*(CFD1Fit[mask[max_index][0]][4]-CFD1Fit[ch_mcp][2] - (std::sqrt( std::pow(( (x_pos1-pixel_pos[max_index][0]) - sensor_pitch/2 ),2) + std::pow(((y_pos1-pixel_pos[max_index][1]) - (-sensor_pitch/2) ),2) ))/v_propagation);
+
+                if(g==1) dt_num += Pmax1Fit.at(mask[max_index][1])*Pmax1Fit.at(mask[max_index][1])*(CFD1Fit[mask[max_index][1]][4]-CFD1Fit[ch_mcp][2] - (std::sqrt( std::pow(( (x_pos1-pixel_pos[max_index][0]) - (-sensor_pitch/2) ),2) + std::pow(((y_pos1-pixel_pos[max_index][1]) - (-sensor_pitch/2) ),2) ))/v_propagation);
+
+                if(g==2) dt_num += Pmax1Fit.at(mask[max_index][1])*Pmax1Fit.at(mask[max_index][1])*(CFD1Fit[mask[max_index][1]][4]-CFD1Fit[ch_mcp][2] - (std::sqrt( std::pow(( (x_pos1-pixel_pos[max_index][0]) - (-sensor_pitch/2) ),2) + std::pow(((y_pos1-pixel_pos[max_index][1]) - (-sensor_pitch/2) ),2) ))/v_propagation);
+
+
+                dt_den += Pmax1Fit.at(mask[max_index][g])*Pmax1Fit.at(mask[max_index][g]);
+
+              }
+*/

@@ -201,6 +201,71 @@ std::pair<double, double> Analyzer::Pmax_with_GausFit(const std::pair<double, un
 }
 
 
+std::array<double, 3> Analyzer::Pmax_for_samples(const std::pair<double, unsigned int> Pmax, unsigned int maxIndex){
+
+  std::array<double, 3> result;
+  double pmax, tmax, sigma;
+  unsigned int pmaxIndex = Pmax.second;
+  double time_bin = this->ptime.at(1)-this->ptime.at(0);
+
+  if( pmaxIndex > 5 && pmaxIndex < maxIndex-5 ){
+
+    double time_min = this->ptime.at(pmaxIndex-3);
+    double time_max = this->ptime.at(pmaxIndex+3);
+    TH1D pmax_histo("pmax_histo","pmax_histo",7,time_min,time_max);
+
+    bool good_fit = true;
+
+    for(int i=0; i<7; i++){
+
+      if(Pmax.first*this->pvoltage.at(pmaxIndex-3+i)>0) pmax_histo.Fill( this->ptime.at(pmaxIndex-3+i) , this->pvoltage.at(pmaxIndex-3+i) );
+      else{
+
+        good_fit = false;
+        break;
+
+      }
+
+     }
+
+  if(good_fit){
+
+    TF1 f("f","gaus",time_min,time_max);
+    f.SetParameter(0,Pmax.first);
+    f.SetParameter(1,this->ptime.at(Pmax.second));  //pmaxIndex*time_bin
+    f.SetParameter(2,7*time_bin);
+    pmax_histo.Fit("f","RN0Q");
+    pmax = f.GetParameter(0);
+    tmax = f.GetParameter(1);
+    sigma = f.GetParameter(2);
+
+    result = {pmax, tmax, sigma};
+
+  } else {
+
+    result = {-1000., -1000., -1000.};
+
+  }
+
+  } else {
+
+   result = {-1000., -1000., -1000.};
+
+  }
+
+
+  if( fabs(pmax-Pmax.first)<0.2*fabs(Pmax.first) ) return result;
+  else{
+
+    result = {-1000., -1000., -1000.};
+    return result;
+
+  } 
+
+}
+
+
+
 std::pair<double, unsigned int> Analyzer::Find_Negative_Signal_Maximum( bool confineSearchRegion, double searchRange[2]){
 
     double pmax = 0.0;
