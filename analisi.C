@@ -50,20 +50,6 @@ void analisi( ){
   ConfigFile cf("beta_config.ini");
 
   bool join_txt_tracker = true;
-  //int ttracker = cf.Value("HEADER", "use_tracker") ;
-  //if(ttracker==1) join_txt_tracker = true;
-
-  //opens txt file and takes the data
-  std::string line;
-  std::string txtfilename=cf.Value("HEADER", "tracker_filename") ;
-  std::ifstream Filein;
-  std::vector<double> x_tracker_dirty, y_tracker_dirty; //have multiple tracks per event
-  std::vector<int> nevent_dirty;
-  std::vector<double> x_tracker, y_tracker; //all multiple tracks events are omitted
-  std::vector<int> nevent;
-  double x, y, z_position;
-  int is_fitted, n, n_old;
-
 
   //time window is the DAQ time window, that you can check on the oscilloscope. search range is the window where signals occur
   bool pmax_search_range;
@@ -113,7 +99,10 @@ void analisi( ){
   int active_channels = cf.Value("HEADER","active_channels");
   
   std::vector<double> Pmax1;
-  std::vector<double> Pmax1Fit;
+  std::vector<double> PmaxFit;
+  std::vector<double> Pmax3Fit;
+  std::vector<double> Pmax5Fit;
+  std::vector<double> Pmax7Fit;
   std::vector<double> negPmax1Fit;
   std::vector<double> Tmax1;
   std::vector<double> Tmax1Fit;
@@ -123,6 +112,9 @@ void analisi( ){
   std::vector<double> Area1_new;
   std::vector<double> UArea1_new;
   std::vector<double> DC_Area1;
+  std::vector<double> Area_NC;
+  std::vector<double> Area_NC_pos; 
+  std::vector<double> Area_fixed_window;
   std::vector<double> RiseTime1Fit;
   std::vector<double> FallTime1Fit;
   std::vector<double> dVdt1Fit;
@@ -137,7 +129,10 @@ void analisi( ){
   double x_pos1, y_pos1,x_pos2, y_pos2, chi2_trk ;
   
   Pmax1.reserve(20);
-  Pmax1Fit.reserve(20);
+  PmaxFit.reserve(20);
+  Pmax3Fit.reserve(20);
+  Pmax5Fit.reserve(20);
+  Pmax7Fit.reserve(20);
   negPmax1Fit.reserve(20);
   Tmax1.reserve(20);
   Tmax1Fit.reserve(20);
@@ -147,6 +142,9 @@ void analisi( ){
   Area1_new.reserve(20);
   UArea1_new.reserve(20);
   DC_Area1.reserve(20);
+  Area_NC.reserve(20);
+  Area_NC_pos.reserve(20);
+  Area_fixed_window.reserve(20);
   RiseTime1Fit.reserve(20);
   FallTime1Fit.reserve(20);
   dVdt1Fit.reserve(20);
@@ -166,25 +164,33 @@ void analisi( ){
   
   OutTree->Branch("event",&event);
   //OutTree->Branch("evt_delta",&evt_delta); //for tracker sync
-  OutTree->Branch("w", "std::vector<std::vector<double>>", &w1);
-  OutTree->Branch("t", "std::vector<std::vector<double>>" ,&t1);
-  OutTree->Branch("pmax", "std::vector<double>",&Pmax1Fit);
-  OutTree->Branch("negpmax", "std::vector<double>",&negPmax1Fit);
-  OutTree->Branch("tmax", "std::vector<double>",&Tmax1Fit);
-  OutTree->Branch("negtmax", "std::vector<double>",&negTmax1Fit);
+  //OutTree->Branch("w", "std::vector<std::vector<double>>", &w1);
+  //OutTree->Branch("t", "std::vector<std::vector<double>>" ,&t1);
+  OutTree->Branch("pmax", "std::vector<double>",&Pmax1);
+  OutTree->Branch("pmax_fit", "std::vector<double>",&PmaxFit);
+  OutTree->Branch("pmax_fit_3", "std::vector<double>",&Pmax3Fit);
+  OutTree->Branch("pmax_fit_5", "std::vector<double>",&Pmax5Fit);
+  OutTree->Branch("pmax_fit_7", "std::vector<double>",&Pmax7Fit);
+  //OutTree->Branch("negpmax", "std::vector<double>",&negPmax1Fit);
+  OutTree->Branch("tmax", "std::vector<double>",&Tmax1);
+  OutTree->Branch("tmax_fit", "std::vector<double>",&Tmax1Fit);
+  //OutTree->Branch("negtmax", "std::vector<double>",&negTmax1Fit);
   OutTree->Branch("area", "std::vector<double>",&Area1);
-  OutTree->Branch("uarea", "std::vector<double>",&UArea1);
+  //OutTree->Branch("uarea", "std::vector<double>",&UArea1);
   OutTree->Branch("area_new", "std::vector<double>",&Area1_new);
-  OutTree->Branch("uarea_new", "std::vector<double>",&UArea1_new);
-  OutTree->Branch("dc_area", "std::vector<double>",&DC_Area1);
-  OutTree->Branch("risetime", "std::vector<double>",&RiseTime1Fit);
-  OutTree->Branch("falltime", "std::vector<double>",&FallTime1Fit);
+  //OutTree->Branch("uarea_new", "std::vector<double>",&UArea1_new);
+  //OutTree->Branch("dc_area", "std::vector<double>",&DC_Area1);
+  OutTree->Branch("area_nc", "std::vector<double>",&Area_NC);
+  OutTree->Branch("area_nc_pos", "std::vector<double>",&Area_NC_pos);
+  OutTree->Branch("area_fixed_window", "std::vector<double>",&Area_fixed_window);
+  //OutTree->Branch("risetime", "std::vector<double>",&RiseTime1Fit);
+  ///OutTree->Branch("falltime", "std::vector<double>",&FallTime1Fit);
   OutTree->Branch("dvdt", "std::vector<double>",&dVdt1Fit);
   OutTree->Branch("dvdt_2080", "std::vector<double>",&dVdt1Fit_2080);
   OutTree->Branch("cfd", "std::vector<std::vector<double>>",&CFD1Fit);
-  OutTree->Branch("width", "std::vector<std::vector<double>>",&WIDTH1);
-  OutTree->Branch("t_thr", "std::vector<double>",&t_thr1);  // time at which a certain thr (in V) is passed
-  OutTree->Branch("tot", "std::vector<double>",&tot1);
+  //OutTree->Branch("width", "std::vector<std::vector<double>>",&WIDTH1);
+  //OutTree->Branch("t_thr", "std::vector<double>",&t_thr1);  // time at which a certain thr (in V) is passed
+  //OutTree->Branch("tot", "std::vector<double>",&tot1);
   OutTree->Branch("rms", "std::vector<double>",&rms1);
   OutTree->Branch("x_pos1", &x_pos1);
   OutTree->Branch("y_pos1", &y_pos1);
@@ -192,8 +198,8 @@ void analisi( ){
   OutTree->Branch("y_pos2", &y_pos2);
   OutTree->Branch("chi2_trk", &chi2_trk);
       
-  n = 0;
   int j_counter = 0;
+  int fail_fit_counter = 0;
   
   std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
   
@@ -205,7 +211,7 @@ void analisi( ){
       
   for(int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
   
-    voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, Form("w%i",ch_counter) ));  
+    voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, Form("w%i",ch_counter) ));
   
   }
   
@@ -213,10 +219,13 @@ void analisi( ){
   voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
   
   
-  while(myReader.Next() && j_counter<100000){ //
+  while(myReader.Next() && j_counter<100000 ){ //  && j_counter<10000
 
     Pmax1.clear();
-    Pmax1Fit.clear();
+    PmaxFit.clear();
+    Pmax3Fit.clear();
+    Pmax5Fit.clear();
+    Pmax7Fit.clear();
     negPmax1Fit.clear();
     Tmax1.clear();
     Tmax1Fit.clear();
@@ -224,8 +233,11 @@ void analisi( ){
     Area1.clear();
     UArea1.clear();
     Area1_new.clear();
+    Area_fixed_window.clear();
     UArea1_new.clear();
     DC_Area1.clear();
+    Area_NC.clear();
+    Area_NC_pos.clear();
     RiseTime1Fit.clear();
     FallTime1Fit.clear();
     dVdt1Fit.clear();
@@ -246,8 +258,6 @@ void analisi( ){
       x_pos2 = *x2Reader;
       y_pos2 = *y2Reader;
       chi2_trk = *chi2Reader;
-
-      n++;
       
     }else{
 
@@ -310,7 +320,7 @@ void analisi( ){
           double baseline_correction = a_check->Correct_Baseline(n_points_baseline); 
       
           std::pair<double, unsigned int> tp_pair1 = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
-          std::pair<double, double> tp_pair1_fit = a_check->Pmax_with_GausFit(tp_pair1,maxIndex);   
+          std::pair<double, double> tp_pair1_fit = a_check->Pmax_with_GausFit(tp_pair1,maxIndex,7);   
     
           if( tp_pair1_fit.first*voltage_const > max_p_check_plane1){
     
@@ -436,41 +446,142 @@ void analisi( ){
         t1.push_back( t1_inner );//to be commented for skipping the waveform;
   
 	    	std::pair<double, unsigned int> tp_pair1 = a1->Find_Signal_Maximum(pmax_search_range,search_range_final); 
-	    	std::pair<double, double> tp_pair1_fit = a1->Pmax_with_GausFit(tp_pair1,maxIndex);
+	    	std::pair<double, double> tp_pair3_fit = a1->Pmax_with_GausFit(tp_pair1,maxIndex,3);
+        std::pair<double, double> tp_pair5_fit = a1->Pmax_with_GausFit(tp_pair1,maxIndex,5);
+        std::pair<double, double> tp_pair7_fit = a1->Pmax_with_GausFit(tp_pair1,maxIndex,7);
 	    	std::pair<double, unsigned int> neg_tp_pair1 = a1->Find_Negative_Signal_Maximum(pmax_search_range,search_range_final); 
-	    	std::pair<double, double> neg_tp_pair1_fit = a1->Negative_Pmax_with_GausFit(neg_tp_pair1,maxIndex);      
-	    	Pmax1.push_back( tp_pair1.first*voltage_const ) ; //mV
-	    	Pmax1Fit.push_back( tp_pair1_fit.first*voltage_const ) ; //mV
-	    	negPmax1Fit.push_back(  neg_tp_pair1_fit.first*voltage_const ); //mV
-	    	Tmax1.push_back(  a1->Get_Tmax(tp_pair1)*time_const ) ; //ns
-	    	Tmax1Fit.push_back(  tp_pair1_fit.second*time_const ) ; //ns
-	    	negTmax1Fit.push_back(  neg_tp_pair1_fit.second*time_const ) ; //ns
-	    	Area1.push_back(  a1->Find_Pulse_Area(tp_pair1)*voltage_const*time_const ) ; //mV*ns
-	    	UArea1.push_back( a1->Find_Undershoot_Area(tp_pair1)*voltage_const*time_const ); //mV*ns
-	    	Area1_new.push_back( a1->New_Pulse_Area(tp_pair1_fit,tp_pair1.second,"Simpson",search_range_final)*voltage_const*time_const ) ;//mV*ns  
-        UArea1_new.push_back( a1->New_Undershoot_Area(tp_pair1_fit,neg_tp_pair1_fit, neg_tp_pair1.second,"Simpson",search_range_final)*voltage_const*time_const ) ;//mV*ns
+	    	std::pair<double, double> neg_tp_pair1_fit = a1->Negative_Pmax_with_GausFit(neg_tp_pair1,maxIndex);   
+
+	    	
+        Pmax1.push_back( tp_pair1.first*voltage_const ) ; //mV
+        Tmax1.push_back(  a1->Get_Tmax(tp_pair1)*time_const ) ; //ns
+        Area1.push_back(  a1->Find_Pulse_Area(tp_pair1)*voltage_const*time_const ) ; 
         DC_Area1.push_back( a1->DC_Area(baseline_correction)*voltage_const*time_const ); //mV*ns
-        RiseTime1Fit.push_back( a1->Find_Rise_Time_with_GausFit(tp_pair1_fit, tp_pair1.second, 0.1, 0.9)*time_const ) ; //ns
-        FallTime1Fit.push_back( a1->Find_Fall_Time_with_GausFit(tp_pair1_fit, tp_pair1.second, 0.1, 0.9)*time_const ) ; //ns
-        dVdt1Fit.push_back( a1->Find_Dvdt_with_GausFit(20,0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const) ) ;  //mV/ns
-	    	dVdt1Fit_2080.push_back( a1->Find_Dvdt2080_with_GausFit(0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const) );  //mV/ns
-        t_thr1.push_back( a1->Find_Time_At_Threshold_with_GausFit(tot_levels[0],tp_pair1_fit,tp_pair1.second)*time_const ); //ns  
+        Area_NC.push_back( a1->Area_NC(tp_pair1, 5, 5, a1->Find_Noise(n_points_baseline)*voltage_const) ); //mV*ns
+        Area_NC_pos.push_back( a1->Area_NC_pos(tp_pair1, 5, 5, a1->Find_Noise(n_points_baseline)*voltage_const) ); //mV*ns
+
+
+	    	if( tp_pair1.first*voltage_const == tp_pair3_fit.first*voltage_const )  Pmax3Fit.push_back( -100000 ) ; //mV
+        else Pmax3Fit.push_back( tp_pair3_fit.first*voltage_const ) ; //mV
+
+        if( tp_pair1.first*voltage_const == tp_pair5_fit.first*voltage_const )  Pmax5Fit.push_back( -100000 ) ; //mV
+        else Pmax5Fit.push_back( tp_pair5_fit.first*voltage_const ) ; //mV
+
+        if( tp_pair1.first*voltage_const == tp_pair7_fit.first*voltage_const )  Pmax7Fit.push_back( -100000 ) ; //mV
+        else Pmax7Fit.push_back( tp_pair7_fit.first*voltage_const ) ; //mV
+
+        std::vector<double> cf_inner ;
+	    	std::vector<double> width_inner ;
+        cf_inner.reserve(7);
+        width_inner.reserve(7);
+
+        if( tp_pair1.first*voltage_const == tp_pair7_fit.first*voltage_const ){
+
+          if( tp_pair1.first*voltage_const != tp_pair5_fit.first*voltage_const ){
+
+            PmaxFit.push_back( tp_pair5_fit.first*voltage_const ) ; //mV
+
+            Area1_new.push_back( a1->New_Pulse_Area(tp_pair5_fit,tp_pair1.second,"Simpson",search_range_final)*voltage_const*time_const ) ;//mV*ns 
+            Area_fixed_window.push_back( a1->Pulse_Integration_with_Fixed_Window_Size_with_GausFit(tp_pair5_fit,tp_pair1.second,"Simpson", 1, 1)*voltage_const*time_const ); //mV*ns
+
+            Tmax1Fit.push_back(  tp_pair5_fit.second*time_const ) ; //ns
+
+            RiseTime1Fit.push_back( a1->Find_Rise_Time_with_GausFit(tp_pair5_fit, tp_pair1.second, 0.1, 0.9)*time_const ) ; //ns
+            FallTime1Fit.push_back( a1->Find_Fall_Time_with_GausFit(tp_pair5_fit, tp_pair1.second, 0.1, 0.9)*time_const ) ; //ns
+            dVdt1Fit.push_back( a1->Find_Dvdt_with_GausFit(20,0,tp_pair5_fit,tp_pair1.second)*(voltage_const/time_const) ) ;  //mV/ns
+	    	    dVdt1Fit_2080.push_back( a1->Find_Dvdt2080_with_GausFit(0,tp_pair5_fit,tp_pair1.second)*(voltage_const/time_const) );  //mV/ns
+            t_thr1.push_back( a1->Find_Time_At_Threshold_with_GausFit(tot_levels[0],tp_pair5_fit,tp_pair1.second)*time_const ); //ns 
+
+            for(int jj=0;jj<7;jj++){
+  
+	    		    cf_inner.push_back( a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair5_fit,tp_pair1.second)*time_const ) ;
+	    		    width_inner.push_back( (a1->Falling_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair5_fit,tp_pair1.second)*time_const) - 
+                                 (a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair5_fit,tp_pair1.second)*time_const) ) ;
+  
+	    	    }
+
+          } else if( tp_pair1.first*voltage_const != tp_pair3_fit.first*voltage_const ){
+
+            PmaxFit.push_back( tp_pair3_fit.first*voltage_const ) ; //mV
+
+            Area1_new.push_back( a1->New_Pulse_Area(tp_pair3_fit,tp_pair1.second,"Simpson",search_range_final)*voltage_const*time_const ) ;//mV*ns 
+            Area_fixed_window.push_back( a1->Pulse_Integration_with_Fixed_Window_Size_with_GausFit(tp_pair3_fit,tp_pair1.second,"Simpson", 1, 1)*voltage_const*time_const ); //mV*ns
+
+            Tmax1Fit.push_back(  tp_pair3_fit.second*time_const ) ; //ns
+
+            RiseTime1Fit.push_back( a1->Find_Rise_Time_with_GausFit(tp_pair3_fit, tp_pair1.second, 0.1, 0.9)*time_const ) ; //ns
+            FallTime1Fit.push_back( a1->Find_Fall_Time_with_GausFit(tp_pair3_fit, tp_pair1.second, 0.1, 0.9)*time_const ) ; //ns
+            dVdt1Fit.push_back( a1->Find_Dvdt_with_GausFit(20,0,tp_pair3_fit,tp_pair1.second)*(voltage_const/time_const) ) ;  //mV/ns
+	    	    dVdt1Fit_2080.push_back( a1->Find_Dvdt2080_with_GausFit(0,tp_pair3_fit,tp_pair1.second)*(voltage_const/time_const) );  //mV/ns
+            t_thr1.push_back( a1->Find_Time_At_Threshold_with_GausFit(tot_levels[0],tp_pair3_fit,tp_pair1.second)*time_const ); //ns 
+
+            for(int jj=0;jj<7;jj++){
+  
+	    		    cf_inner.push_back( a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair3_fit,tp_pair1.second)*time_const ) ;
+	    		    width_inner.push_back( (a1->Falling_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair3_fit,tp_pair1.second)*time_const) - 
+                                 (a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair3_fit,tp_pair1.second)*time_const) ) ;
+  
+	    	    }
+
+          
+          
+          }else{
+
+            fail_fit_counter++ ; //counts when none of the 3 gaus fit worked;
+
+            PmaxFit.push_back( -1000 ) ; //mV
+
+            Area1_new.push_back( -10000 ) ; //mV*ns
+            Area_fixed_window.push_back( -10000 ); //mV*ns
+
+            Tmax1Fit.push_back(  -10000 ) ; //ns
+
+            RiseTime1Fit.push_back( -10000 ) ; //ns
+            FallTime1Fit.push_back( -10000 ) ; //ns
+            dVdt1Fit.push_back( -10000 ) ;  //mV/ns
+	    	    dVdt1Fit_2080.push_back( -10000 );  //mV/ns
+            t_thr1.push_back( -10000 ); //ns 
+
+            for(int jj=0;jj<7;jj++){
+  
+	    		    cf_inner.push_back( -10000 ) ;
+	    		    width_inner.push_back( -10000 ) ;
+  
+	    	    }
+          }
+
+        }else{
+
+          PmaxFit.push_back( tp_pair7_fit.first*voltage_const ) ; //mV
+          Area1_new.push_back( a1->New_Pulse_Area(tp_pair7_fit,tp_pair1.second,"Simpson",search_range_final)*voltage_const*time_const ) ;//mV*ns 
+          Area_fixed_window.push_back( a1->Pulse_Integration_with_Fixed_Window_Size_with_GausFit(tp_pair7_fit,tp_pair1.second,"Simpson", 1, 1)*voltage_const*time_const ); //mV*ns
+
+          Tmax1Fit.push_back(  tp_pair7_fit.second*time_const ) ; //ns
+
+          RiseTime1Fit.push_back( a1->Find_Rise_Time_with_GausFit(tp_pair7_fit, tp_pair1.second, 0.1, 0.9)*time_const ) ; //ns
+          FallTime1Fit.push_back( a1->Find_Fall_Time_with_GausFit(tp_pair7_fit, tp_pair1.second, 0.1, 0.9)*time_const ) ; //ns
+          dVdt1Fit.push_back( a1->Find_Dvdt_with_GausFit(20,0,tp_pair7_fit,tp_pair1.second)*(voltage_const/time_const) ) ;  //mV/ns
+	    	  dVdt1Fit_2080.push_back( a1->Find_Dvdt2080_with_GausFit(0,tp_pair7_fit,tp_pair1.second)*(voltage_const/time_const) );  //mV/ns
+
+          for(int jj=0;jj<7;jj++){
+  
+	    		  cf_inner.push_back( a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair7_fit,tp_pair1.second)*time_const ) ;
+	    		  width_inner.push_back( (a1->Falling_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair7_fit,tp_pair1.second)*time_const) - 
+                                 (a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair7_fit,tp_pair1.second)*time_const) ) ;
+  
+	    	  }
+
+        } 
+
+
+	    	negPmax1Fit.push_back(  neg_tp_pair1_fit.first*voltage_const ); //mV
+	    	negTmax1Fit.push_back(  neg_tp_pair1_fit.second*time_const ) ; //ns
+	    	UArea1.push_back( a1->Find_Undershoot_Area(tp_pair1)*voltage_const*time_const ); //mV*ns
+        UArea1_new.push_back( a1->New_Undershoot_Area(tp_pair7_fit,neg_tp_pair1_fit, neg_tp_pair1.second,"Simpson",search_range_final)*voltage_const*time_const ) ;//mV*ns
+         
 	    	tot1.push_back( a1->Find_Time_Over_Threshold(tot_levels[0],tp_pair1,tot_levels[1])*time_const ) ; //ns
 	    	rms1.push_back( a1->Find_Noise(n_points_baseline)*voltage_const ) ; //mV
     
-	    	std::vector<double> cf_inner ;
-	    	std::vector<double> width_inner ;
-  
-        cf_inner.reserve(7);
-        width_inner.reserve(7);
-  
-	    	for(int jj=0;jj<7;jj++){
-  
-	    		cf_inner.push_back( a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair1_fit,tp_pair1.second)*time_const ) ;
-	    		width_inner.push_back( (a1->Falling_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair1_fit,tp_pair1.second)*time_const) - 
-                                 (a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair1_fit,tp_pair1.second)*time_const) ) ;
-  
-	    	}
   
 	    	CFD1Fit.push_back( cf_inner ) ;
 	    	WIDTH1.push_back( width_inner ) ;
@@ -493,6 +604,8 @@ void analisi( ){
   
   }
   
+  cout<<"Percentage of events with failed gaus fit (7,5,3 samples): "<<(double(fail_fit_counter)/double(j_counter*(active_channels+2)))*100<<endl;
+
   OutTree->Write();
   OutputFile->Write();
   OutputFile->Close();

@@ -35,8 +35,8 @@ double Correct_Baseline( int ptN );
 //==========================================================================
 // Pulse Maximum (Pmax)
 std::pair<double, unsigned int> Find_Signal_Maximum(bool confineSearchRegion, double searchRange[2]);
-std::pair<double, double> Pmax_with_GausFit(const std::pair<double, unsigned int> Pmax, unsigned int maxIndex);
-std::array<double, 3> Pmax_for_samples(const std::pair<double, unsigned int> Pmax, unsigned int maxIndex);
+std::pair<double, double> Pmax_with_GausFit(const std::pair<double, unsigned int> Pmax, unsigned int maxIndex, int samples_fit);
+std::array<double, 3> Pmax_for_samples(const std::pair<double, unsigned int> Pmax, unsigned int maxIndex, int samples_fit);
 std::pair<double, unsigned int> Find_Negative_Signal_Maximum(bool confineSearchRegion,double searchRange[2]);
 std::pair<double, double> Negative_Pmax_with_GausFit(const std::pair<double, unsigned int> NegPmax, unsigned int maxIndex);
 
@@ -61,6 +61,9 @@ double Pulse_Area_With_Linear_Interpolate_Edge_with_GausFit(const std::pair<doub
 double New_Pulse_Area(const std::pair<double,double> Pmax, unsigned int imax, std::string integration_option, double range[2]);
 
 double New_Undershoot_Area(const std::pair<double,double> Pmax, const std::pair<double,double> Pmin, unsigned int imin, std::string integration_option, double range[2]);
+
+double Area_NC(const std::pair<double,unsigned int> pmax_holder, int t_beforeSignal, int t_afterSignal, double rms);
+double Area_NC_pos(const std::pair<double,unsigned int> pmax_holder, int t_beforeSignal, int t_afterSignal, double rms);
 
 
 //==========================================================================

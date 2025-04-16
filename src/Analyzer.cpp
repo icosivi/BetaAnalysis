@@ -144,7 +144,7 @@ std::pair<double, unsigned int> Analyzer::Find_Signal_Maximum(bool confineSearch
 }
 
 
-std::pair<double, double> Analyzer::Pmax_with_GausFit(const std::pair<double, unsigned int> Pmax, unsigned int maxIndex){
+std::pair<double, double> Analyzer::Pmax_with_GausFit(const std::pair<double, unsigned int> Pmax, unsigned int maxIndex, int samples_fit){
 
   double pmax, tmax;
   unsigned int pmaxIndex = Pmax.second;
@@ -152,15 +152,15 @@ std::pair<double, double> Analyzer::Pmax_with_GausFit(const std::pair<double, un
 
   if( pmaxIndex > 5 && pmaxIndex < maxIndex-5 ){
 
-    double time_min = this->ptime.at(pmaxIndex-3);
-    double time_max = this->ptime.at(pmaxIndex+3);
-    TH1D pmax_histo("pmax_histo","pmax_histo",7,time_min,time_max);
+    double time_min = this->ptime.at(pmaxIndex-( (samples_fit-1)/2 ));
+    double time_max = this->ptime.at(pmaxIndex+( (samples_fit-1)/2 ));
+    TH1D pmax_histo("pmax_histo","pmax_histo",samples_fit,time_min,time_max);
 
     bool good_fit = true;
 
-    for(int i=0; i<7; i++){
+    for(int i=0; i<samples_fit; i++){
 
-      if(Pmax.first*this->pvoltage.at(pmaxIndex-3+i)>0) pmax_histo.Fill( this->ptime.at(pmaxIndex-3+i) , this->pvoltage.at(pmaxIndex-3+i) );
+      if(Pmax.first*this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i)>0) pmax_histo.Fill( this->ptime.at(pmaxIndex-( (samples_fit-1)/2 )+i) , this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i) );
       else{
 
         good_fit = false;
@@ -175,7 +175,7 @@ std::pair<double, double> Analyzer::Pmax_with_GausFit(const std::pair<double, un
     TF1 f("f","gaus",time_min,time_max);
     f.SetParameter(0,Pmax.first);
     f.SetParameter(1,this->ptime.at(Pmax.second));  //pmaxIndex*time_bin
-    f.SetParameter(2,7*time_bin);
+    f.SetParameter(2,samples_fit*time_bin);
     pmax_histo.Fit("f","RN0Q");
     pmax = f.GetParameter(0);
     tmax = f.GetParameter(1);
@@ -195,13 +195,15 @@ std::pair<double, double> Analyzer::Pmax_with_GausFit(const std::pair<double, un
   }
 
 
-  if( fabs(pmax-Pmax.first)<0.2*fabs(Pmax.first) ) return std::make_pair( pmax, tmax);
-  else return std::make_pair( Pmax.first, this->ptime.at(Pmax.second) );
+  //if( fabs(pmax-Pmax.first)<0.2*fabs(Pmax.first) ) return std::make_pair( pmax, tmax);
+  //else return std::make_pair( Pmax.first, this->ptime.at(Pmax.second) );
+
+  return std::make_pair( pmax, tmax);
 
 }
 
 
-std::array<double, 3> Analyzer::Pmax_for_samples(const std::pair<double, unsigned int> Pmax, unsigned int maxIndex){
+std::array<double, 3> Analyzer::Pmax_for_samples(const std::pair<double, unsigned int> Pmax, unsigned int maxIndex, int samples_fit){
 
   std::array<double, 3> result;
   double pmax, tmax, sigma;
@@ -210,15 +212,15 @@ std::array<double, 3> Analyzer::Pmax_for_samples(const std::pair<double, unsigne
 
   if( pmaxIndex > 5 && pmaxIndex < maxIndex-5 ){
 
-    double time_min = this->ptime.at(pmaxIndex-3);
-    double time_max = this->ptime.at(pmaxIndex+3);
-    TH1D pmax_histo("pmax_histo","pmax_histo",7,time_min,time_max);
+    double time_min = this->ptime.at(pmaxIndex-( (samples_fit-1)/2 ));
+    double time_max = this->ptime.at(pmaxIndex+( (samples_fit-1)/2 ));
+    TH1D pmax_histo("pmax_histo","pmax_histo",samples_fit,time_min,time_max);
 
     bool good_fit = true;
 
-    for(int i=0; i<7; i++){
+    for(int i=0; i<samples_fit; i++){
 
-      if(Pmax.first*this->pvoltage.at(pmaxIndex-3+i)>0) pmax_histo.Fill( this->ptime.at(pmaxIndex-3+i) , this->pvoltage.at(pmaxIndex-3+i) );
+      if(Pmax.first*this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i)>0) pmax_histo.Fill( this->ptime.at(pmaxIndex-( (samples_fit-1)/2 )+i) , this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i) );
       else{
 
         good_fit = false;
@@ -233,7 +235,7 @@ std::array<double, 3> Analyzer::Pmax_for_samples(const std::pair<double, unsigne
     TF1 f("f","gaus",time_min,time_max);
     f.SetParameter(0,Pmax.first);
     f.SetParameter(1,this->ptime.at(Pmax.second));  //pmaxIndex*time_bin
-    f.SetParameter(2,7*time_bin);
+    f.SetParameter(2,samples_fit*time_bin);
     pmax_histo.Fit("f","RN0Q");
     pmax = f.GetParameter(0);
     tmax = f.GetParameter(1);
@@ -486,6 +488,142 @@ double Analyzer::Find_Undershoot_Area(const std::pair<double, unsigned int> Pmax
 }
 
 
+double Analyzer::Area_NC(const std::pair<double,unsigned int> Pmax, int t_beforeSignal, int t_afterSignal, double rms){
+
+  double area = 0;
+  double area_pos = 0;
+  double tempinch= 0;
+  double tempminch2= 0;
+  double bck= 0;
+  double TMax = 0;
+  double AMax = 0;
+  int NFlag = 0;
+
+  //double RMSbck = 2;
+
+  unsigned int imax = Pmax.second;
+
+  std::size_t npoints = this->pvoltage.size();
+  if( imax == npoints-1 )imax = imax - 1;//preventing out of range.
+
+  int t_start = imax - t_beforeSignal ;
+  if(t_start<=0) t_start = 1;
+
+  int t_stop = imax + t_afterSignal ;
+  if(t_stop>=npoints) t_stop = npoints-1;
+
+  for(int j=0;j<t_start;j++)
+    {
+      bck += this->pvoltage.at(j);
+      tempinch++;
+    }
+
+  bck *=1/tempinch;
+  tempinch=0;
+
+  for(int j=t_start;j<t_stop;j++){
+      
+      if( this->pvoltage.at(j) > AMax){
+        TMax = j;
+        AMax = this->pvoltage.at(j);
+      }
+
+  }
+
+
+  for(int j=t_start;j<t_stop;j++){
+      //   if there is a signal, do not sum the undershoot
+      if (AMax> 3*rms){
+        if (j<=TMax) tempminch2 += this->pvoltage.at(j)-bck;
+        else  if (j>TMax && this->pvoltage.at(j)-bck > 0 && NFlag ==0){
+          tempminch2 += this->pvoltage.at(j)-bck;
+        }
+        else if (j>TMax && this->pvoltage.at(j)-bck < 0){
+          NFlag = 1;
+        }
+      } else tempminch2 += this->pvoltage.at(j)-bck;
+     
+      tempinch += this->pvoltage.at(j)-bck;
+    }
+
+
+    area_pos=tempminch2*(this->ptime.at(2)-this->ptime.at(1));;
+    area=tempinch*(this->ptime.at(2)-this->ptime.at(1));;
+ 
+  
+  return area;
+
+}
+
+
+double Analyzer::Area_NC_pos(const std::pair<double,unsigned int> Pmax, int t_beforeSignal, int t_afterSignal, double rms){
+
+  double area = 0;
+  double area_pos = 0;
+  double tempinch= 0;
+  double tempminch2= 0;
+  double bck= 0;
+  double TMax = 0;
+  double AMax = 0;
+  int NFlag = 0;
+
+  //double RMSbck = 2;
+
+  unsigned int imax = Pmax.second;
+
+  std::size_t npoints = this->pvoltage.size();
+  if( imax == npoints-1 )imax = imax - 1;//preventing out of range.
+
+  int t_start = imax - t_beforeSignal ;
+  if(t_start<=0) t_start = 1;
+
+  int t_stop = imax + t_afterSignal ;
+  if(t_stop>=npoints) t_stop = npoints-1;
+
+  for(int j=0;j<t_start;j++)
+    {
+      bck += this->pvoltage.at(j);
+      tempinch++;
+    }
+
+  bck *=1/tempinch;
+  tempinch=0;
+
+  for(int j=t_start;j<t_stop;j++){
+      
+      if( this->pvoltage.at(j) > AMax){
+        TMax = j;
+        AMax = this->pvoltage.at(j);
+      }
+
+  }
+
+
+  for(int j=t_start;j<t_stop;j++){
+      //   if there is a signal, do not sum the undershoot
+      if (AMax> 3*rms){
+        if (j<=TMax) tempminch2 += this->pvoltage.at(j)-bck;
+        else  if (j>TMax && this->pvoltage.at(j)-bck > 0 && NFlag ==0){
+          tempminch2 += this->pvoltage.at(j)-bck;
+        }
+        else if (j>TMax && this->pvoltage.at(j)-bck < 0){
+          NFlag = 1;
+        }
+      } else tempminch2 += this->pvoltage.at(j)-bck;
+     
+      tempinch += this->pvoltage.at(j)-bck;
+    }
+
+
+    area_pos=tempminch2*(this->ptime.at(2)-this->ptime.at(1));;
+    area=tempinch*(this->ptime.at(2)-this->ptime.at(1));;
+ 
+  
+  return area_pos;
+
+}
+
+
 double Analyzer::Pulse_Integration_with_Fixed_Window_Size(const std::pair<double,unsigned int> Pmax, std::string integration_option, 
                                                           double t_beforeSignal, double t_afterSignal){
   
@@ -574,7 +712,9 @@ double Analyzer::Pulse_Integration_with_Fixed_Window_Size_with_GausFit(const std
   
   double pulse_area = 0.0;
   const double time_difference = this->ptime.at(1) - this->ptime.at(0);
-  double tRange[2] = {t_beforeSignal*10e-9, t_afterSignal*10e-9};
+  
+  //double tRange[2] = {t_beforeSignal*10e-9, t_afterSignal*10e-9};
+  double tRange[2] = {t_beforeSignal, t_afterSignal};
 
   //unsigned int imax = Pmax.second;
 
