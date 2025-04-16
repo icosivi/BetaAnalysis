@@ -144,9 +144,10 @@ std::pair<double, unsigned int> Analyzer::Find_Signal_Maximum(bool confineSearch
 }
 
 
-std::pair<double, double> Analyzer::Pmax_with_GausFit(const std::pair<double, unsigned int> Pmax, unsigned int maxIndex, int samples_fit){
+std::array<double, 3> Analyzer::Pmax_with_GausFit(const std::pair<double, unsigned int> Pmax, unsigned int maxIndex, int samples_fit){
 
-  double pmax, tmax;
+  std::array<double, 3> result;
+  double pmax, tmax, chi2;
   unsigned int pmaxIndex = Pmax.second;
   double time_bin = this->ptime.at(1)-this->ptime.at(0);
 
@@ -160,7 +161,7 @@ std::pair<double, double> Analyzer::Pmax_with_GausFit(const std::pair<double, un
 
     for(int i=0; i<samples_fit; i++){
 
-      if(Pmax.first*this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i)>0) pmax_histo.Fill( this->ptime.at(pmaxIndex-( (samples_fit-1)/2 )+i) , this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i) );
+      if( Pmax.first*this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i)>0 ) pmax_histo.Fill( this->ptime.at(pmaxIndex-( (samples_fit-1)/2 )+i) , this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i) );
       else{
 
         good_fit = false;
@@ -179,11 +180,13 @@ std::pair<double, double> Analyzer::Pmax_with_GausFit(const std::pair<double, un
     pmax_histo.Fit("f","RN0Q");
     pmax = f.GetParameter(0);
     tmax = f.GetParameter(1);
+    chi2 = f.GetChisquare();
 
   } else {
 
    pmax = Pmax.first;
    tmax = this->ptime.at(Pmax.second);
+   chi2 = -10000;
 
   }
 
@@ -191,14 +194,17 @@ std::pair<double, double> Analyzer::Pmax_with_GausFit(const std::pair<double, un
 
    pmax = Pmax.first;
    tmax = this->ptime.at(Pmax.second);
+   chi2 = -10000;
 
   }
 
 
   //if( fabs(pmax-Pmax.first)<0.2*fabs(Pmax.first) ) return std::make_pair( pmax, tmax);
   //else return std::make_pair( Pmax.first, this->ptime.at(Pmax.second) );
+  //return std::make_pair( pmax, tmax);
 
-  return std::make_pair( pmax, tmax);
+  result = {pmax,tmax,chi2};
+  return result;
 
 }
 
@@ -311,9 +317,10 @@ std::pair<double, unsigned int> Analyzer::Find_Negative_Signal_Maximum( bool con
 }
 
 
-std::pair<double, double> Analyzer::Negative_Pmax_with_GausFit(const std::pair<double, unsigned int> NegPmax, unsigned int maxIndex){
+std::array<double, 3> Analyzer::Negative_Pmax_with_GausFit(const std::pair<double, unsigned int> NegPmax, unsigned int maxIndex, int samples_fit){
 
-  double pmax, tmax;
+  std::array<double, 3> result;
+  double pmax, tmax, chi2;
   unsigned int pmaxIndex = NegPmax.second;
   double time_bin = this->ptime.at(1)-this->ptime.at(0);
 
@@ -321,13 +328,13 @@ std::pair<double, double> Analyzer::Negative_Pmax_with_GausFit(const std::pair<d
 
     double time_min = this->ptime.at(pmaxIndex-3);
     double time_max = this->ptime.at(pmaxIndex+3);
-    TH1D pmax_histo("pmax_histo","pmax_histo",7,time_min,time_max);
+    TH1D pmax_histo("pmax_histo","pmax_histo",samples_fit,time_min,time_max);
 
     bool good_fit = true;
 
     for(int i=0; i<7; i++){
 
-      if(NegPmax.first*this->pvoltage.at(pmaxIndex-3+i)>0) pmax_histo.Fill( this->ptime.at(pmaxIndex-3+i) , -this->pvoltage.at(pmaxIndex-3+i) );
+      if(NegPmax.first*this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i)>0) pmax_histo.Fill( this->ptime.at(pmaxIndex-( (samples_fit-1)/2 )+i) , -this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i) );
       else{
 
         good_fit = false;
@@ -342,15 +349,17 @@ std::pair<double, double> Analyzer::Negative_Pmax_with_GausFit(const std::pair<d
     TF1 f("f","gaus",time_min,time_max);
     f.SetParameter(0,-NegPmax.first);
     f.SetParameter(1,this->ptime.at(NegPmax.second));  //pmaxIndex*time_bin
-    f.SetParameter(2,7*time_bin);
+    f.SetParameter(2,samples_fit*time_bin);
     pmax_histo.Fit("f","RN0Q");
     pmax = -f.GetParameter(0);
     tmax = f.GetParameter(1);
+    chi2 = f.GetChisquare();
 
   } else {
 
    pmax = NegPmax.first;
    tmax = this->ptime.at(NegPmax.second);
+   chi2 = -10000;
 
   }
 
@@ -358,10 +367,14 @@ std::pair<double, double> Analyzer::Negative_Pmax_with_GausFit(const std::pair<d
 
    pmax = NegPmax.first;
    tmax = this->ptime.at(NegPmax.second);
+   chi2 = -10000;
 
   }
 
-  return std::make_pair( pmax, tmax);
+  //return std::make_pair( pmax, tmax);
+
+  result = {pmax,tmax,chi2};
+  return result;
 
 }
 
