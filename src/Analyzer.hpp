@@ -13,6 +13,28 @@
 #include "TTreeReaderValue.h"
 #include "TTreeReaderArray.h"
 #include "TObject.h"
+#include "TH1.h"
+#include "TH1F.h"
+//------ROOT----------------//
+#include <Riostream.h>
+#include <TTree.h>
+#include <TTreeReader.h>
+#include <TTreeReaderValue.h>
+#include <TTreeReaderArray.h>
+#include <TBranch.h>
+#include <TFile.h>
+#include <TH1.h>
+#include <TH1F.h>
+#include <array>
+#include <utility>
+#include <TF1.h>
+#include <TGraph.h>
+#include <TThread.h>
+#include <TROOT.h>
+#include <TStyle.h>
+#include <TImage.h>
+#include <TCanvas.h>
+
 
 
 class Analyzer : public TObject

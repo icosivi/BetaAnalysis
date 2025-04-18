@@ -44,6 +44,9 @@ void analisi( ){
   //ROOT::EnableImplicitMT(6);
   //ROOT::EnableThreadSafety();
 
+  //TH1F *pmax_histo = new TH1F("pmax_histo","pmax_histo",100,-1,1);
+  const int reserve_length=1100;
+
   //Config file definition
   ConfigFile cf("beta_config.ini");
 
@@ -212,8 +215,8 @@ void analisi( ){
 
   std::vector<float> w1_check;
   std::vector<float> t1_check;
-  w1_check.reserve(221560);
-  t1_check.reserve(221560);
+  w1_check.reserve(reserve_length);
+  t1_check.reserve(reserve_length);
 
   int enable_channel_1 = 0;
   int invert_channel_1 = 0;
@@ -229,8 +232,8 @@ void analisi( ){
 
   std::vector<float> w1_inner;
   std::vector<float> t1_inner;
-  w1_inner.reserve(221560);
-  t1_inner.reserve(221560);
+  w1_inner.reserve(reserve_length);
+  t1_inner.reserve(reserve_length);
 
   std::pair<float, unsigned int> tp_pair1{0.,0};
   std::array<float, 3> fit_array = {0.,0.,0.};
@@ -245,7 +248,7 @@ void analisi( ){
   width_inner.reserve(7);
   
   
-  while(myReader.Next() && j_counter<100000 ){ //  && j_counter<10000
+  while(myReader.Next() && j_counter<10000 ){ //  && j_counter<10000
 
     w1_check.clear();
     t1_check.clear();
@@ -296,16 +299,11 @@ void analisi( ){
       chi2_trk = 0;
     }
     
-    
-    //int enable_channel_1 = 0;
-    //int invert_channel_1 = 0;
 
     
     ///////// BEGINNING OF "SMALL-RANGE" PART /////////
     if(small_range==1){
     
-      //float max_p_check_plane1 = 0;
-      //float max_t_check_plane1 = 0;
       max_p_check_plane1 = 0;
       max_t_check_plane1 = 0;
   
@@ -313,10 +311,6 @@ void analisi( ){
 
        if(ch_counter!=ch_mcp){
             
-        //std::vector<float> w1_check;
-        //std::vector<float> t1_check;
-        //w1_check.reserve(221560);
-        //t1_check.reserve(221560);
         w1_check.clear();
         t1_check.clear();
           
@@ -348,12 +342,8 @@ void analisi( ){
           }
       
           *a_check=Analyzer( w1_check, t1_check );
-          //float baseline_correction = a_check->Correct_Baseline(n_points_baseline); 
           baseline_correction = a_check->Correct_Baseline(n_points_baseline);
       
-          //std::pair<float, unsigned int> tp_pair1_small = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
-          //std::array<float, 3> fit_array_small = a_check->Pmax_with_GausFit(tp_pair1_small,maxIndex,7);  
-          //std::pair<float, float> tp_pair1_fit_small{0.,0.}; 
           tp_pair1_small = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
           fit_array_small = a_check->Pmax_with_GausFit(tp_pair1_small,maxIndex,number_points_gaus_fit);
           tp_pair1_fit_small = std::make_pair( fit_array_small[0], fit_array_small[1] ) ;
@@ -382,15 +372,9 @@ void analisi( ){
 
     }else if(mcp_range==1){
     
-      //float max_p_check_plane1 = 0;
-      //float max_t_check_plane1 = 0;
       max_p_check_plane1 = 0;
       max_t_check_plane1 = 0;
             
-      //std::vector<float> w1_check;
-      //std::vector<float> t1_check;
-      //w1_check.reserve(221560);
-      //t1_check.reserve(221560);
       w1_check.clear();
       t1_check.clear();
           
@@ -421,13 +405,9 @@ void analisi( ){
             }
           }
       
-          *a_check=Analyzer( w1_check, t1_check );
-          //float baseline_correction = a_check->Correct_Baseline(n_points_baseline); 
+          *a_check=Analyzer( w1_check, t1_check ); 
           baseline_correction = a_check->Correct_Baseline(n_points_baseline);
       
-          //std::pair<float, unsigned int> tp_pair1_small = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
-          //std::array<float, 3> fit_array_small = a_check->Pmax_with_GausFit(tp_pair1_small,maxIndex,7);  
-          //std::pair<float, float> tp_pair1_fit_small{0.,0.}; 
           tp_pair1_small = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
           fit_array_small = a_check->Pmax_with_GausFit(tp_pair1_small,maxIndex,number_points_gaus_fit);
      
@@ -475,10 +455,6 @@ void analisi( ){
 
       }
           
-      //std::vector<float> w1_inner;
-      //std::vector<float> t1_inner;
-      //w1_inner.reserve(221560);
-      //t1_inner.reserve(221560);
       w1_inner.clear();
       t1_inner.clear();
   
@@ -546,19 +522,13 @@ void analisi( ){
  	    	}
   
 	    	*a1=Analyzer( w1_inner, t1_inner );
-	    	//float baseline_correction = a1->Correct_Baseline(n_points_baseline); // we do not want signals in the first 5 ns, otherwise baseline correction is biased
         baseline_correction = a1->Correct_Baseline(n_points_baseline); // we do not want signals in the first 5 ns, otherwise baseline correction is biased
 
         for(int i=0; i<int(w1_inner.size()); i++) w1_inner.at(i) = w1_inner.at(i) - baseline_correction ;
 
         w1.push_back( w1_inner );//to be commented for skipping the waveform;
         t1.push_back( t1_inner );//to be commented for skipping the waveform;
-  
-	    	//std::pair<float, unsigned int> tp_pair1 = a1->Find_Signal_Maximum(pmax_search_range,search_range_final); 
-        //std::array<float, 3> fit_array = a1->Pmax_with_GausFit(tp_pair1,maxIndex,number_points_gaus_fit);
-        //std::pair<float, float> tp_pair1_fit{0.,0.};
-	    	//std::pair<float, unsigned int> neg_tp_pair1 = a1->Find_Negative_Signal_Maximum(pmax_search_range,search_range_final); 
-	    	//std::pair<float, float> neg_tp_pair1_fit = a1->Negative_Pmax_with_GausFit(neg_tp_pair1,maxIndex);   
+     
         tp_pair1 = a1->Find_Signal_Maximum(pmax_search_range,search_range_final); 
         fit_array = a1->Pmax_with_GausFit(tp_pair1,maxIndex,number_points_gaus_fit);
         tp_pair1_fit = std::make_pair( fit_array[0], fit_array[1] ) ;

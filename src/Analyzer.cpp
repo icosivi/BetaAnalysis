@@ -20,6 +20,7 @@
 #include <TBranch.h>
 #include <TFile.h>
 #include <TH1.h>
+#include <TH1F.h>
 #include <TF1.h>
 #include <TGraph.h>
 #include <TThread.h>
@@ -418,7 +419,7 @@ float Analyzer::DC_Area(float baseline_correction){ //
   float dc_area = 0;
   float time_difference = this->ptime.at(1) - this->ptime.at(0);
 
-  for(int j=5; j<(this->pvoltage.size()-10); j++ ){ 
+  for(int j=5; j<int(this->pvoltage.size()-10); j++ ){ 
 
     dc_area += (this->pvoltage.at(j))*time_difference ;  //-baseline_correction
     //std::cout<<(this->pvoltage.at(j))*time_difference<<std::endl;
@@ -538,7 +539,7 @@ float Analyzer::Area_NC(const std::pair<float,unsigned int> Pmax, int t_beforeSi
   if(t_start<=0) t_start = 1;
 
   int t_stop = imax + t_afterSignal ;
-  if(t_stop>=npoints) t_stop = npoints-1;
+  if(t_stop>=int(npoints)) t_stop = npoints-1;
 
   for(int j=0;j<t_start;j++)
     {
@@ -606,7 +607,7 @@ float Analyzer::Area_NC_pos(const std::pair<float,unsigned int> Pmax, int t_befo
   if(t_start<=0) t_start = 1;
 
   int t_stop = imax + t_afterSignal ;
-  if(t_stop>=npoints) t_stop = npoints-1;
+  if(t_stop>=int(npoints)) t_stop = npoints-1;
 
   for(int j=0;j<t_start;j++)
     {
@@ -1500,7 +1501,7 @@ float Analyzer::Find_Time_At_Threshold_Falling_Edge_with_GausFit(const float thr
     if( pmax < thr ){ return -1000.0;}
     else
     {
-      for( int i = pmax_index; i < npoints; i++ )
+      for( int i = pmax_index; i < int(npoints); i++ )
       {
         if( this->pvoltage.at(i) <= thr )
         {
