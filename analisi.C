@@ -71,59 +71,59 @@ void analisi( ){
   bool pmax_search_range;
   if( cf.Value("RANGES", "search_range") == 0 ) pmax_search_range = false;
   else pmax_search_range = true;
-  double search_range[2] = {0,0};
-  double search_range_final[2] = {0,0};
-  double search_range_global[2] = {0,0};
+  float search_range[2] = {0,0};
+  float search_range_final[2] = {0,0};
+  float search_range_global[2] = {0,0};
   search_range_global[0] = cf.Value("RANGES", "pmax_search_range_min" ) ;
   search_range_global[1] = cf.Value("RANGES", "pmax_search_range_max" ) ;
   int small_range = cf.Value("RANGES", "small_range" );
   int mcp_range = cf.Value("RANGES", "mcp_range" );
-  double search_around_pmax = cf.Value("RANGES", "small_range_interval" );
-  double search_around_mcp = cf.Value("RANGES", "mcp_range_interval" );
+  float search_around_pmax = cf.Value("RANGES", "small_range_interval" );
+  float search_around_mcp = cf.Value("RANGES", "mcp_range_interval" );
 
   // PARAMETERS
   int number_points_gaus_fit = cf.Value("PARAMETERS","number_points_gaus_fit");
   int n_points_baseline = cf.Value("PARAMETERS","n_points_baseline");
   int ADC_conversion = cf.Value("PARAMETERS","ADC_conversion");
-  double ADC_conversion_factor = cf.Value("PARAMETERS","ADC_conversion_factor");
-  double temporal_bin_width = cf.Value("PARAMETERS","temporal_bin_width"); //0.2; 0.0488;
-  const double time_const = cf.Value("PARAMETERS","time_scalar");  
-  const double voltage_const = cf.Value("PARAMETERS","voltage_scalar");
+  float ADC_conversion_factor = cf.Value("PARAMETERS","ADC_conversion_factor");
+  float temporal_bin_width = cf.Value("PARAMETERS","temporal_bin_width"); //0.2; 0.0488;
+  const float time_const = cf.Value("PARAMETERS","time_scalar");  
+  const float voltage_const = cf.Value("PARAMETERS","voltage_scalar");
   unsigned int maxIndex = cf.Value("PARAMETERS","sampling_points");
-  double tot_levels[2] = { cf.Value("PARAMETERS","tot_rising"), cf.Value("PARAMETERS","tot_falling") };
-  double mcp_delay = cf.Value("PARAMETERS","mcp_delay");
+  float tot_levels[2] = { float(cf.Value("PARAMETERS","tot_rising")), float(cf.Value("PARAMETERS","tot_falling")) };
+  float mcp_delay = cf.Value("PARAMETERS","mcp_delay");
 
   // TRACKER
   int join_txt_tracker = cf.Value("TRACKER", "join_txt_tracker" );
 
   
-  std::vector<double> Pmax1;
-  std::vector<double> PmaxFit;
-  std::vector<double> negPmax1Fit;
-  std::vector<double> Tmax1;
-  std::vector<double> Tmax1Fit;
-  std::vector<double> negTmax1Fit;
-  std::vector<double> Area1;
-  std::vector<double> UArea1;
-  std::vector<double> Area1_new;
-  std::vector<double> UArea1_new;
-  std::vector<double> DC_Area1;
-  std::vector<double> Area_NC;
-  std::vector<double> Area_NC_pos; 
-  std::vector<double> Area_fixed_window;
-  std::vector<double> RiseTime1Fit;
-  std::vector<double> FallTime1Fit;
-  std::vector<double> dVdt1Fit;
-  std::vector<double> dVdt1Fit_2080;
+  std::vector<float> Pmax1;
+  std::vector<float> PmaxFit;
+  std::vector<float> negPmax1Fit;
+  std::vector<float> Tmax1;
+  std::vector<float> Tmax1Fit;
+  std::vector<float> negTmax1Fit;
+  std::vector<float> Area1;
+  std::vector<float> UArea1;
+  std::vector<float> Area1_new;
+  std::vector<float> UArea1_new;
+  std::vector<float> DC_Area1;
+  std::vector<float> Area_NC;
+  std::vector<float> Area_NC_pos; 
+  std::vector<float> Area_fixed_window;
+  std::vector<float> RiseTime1Fit;
+  std::vector<float> FallTime1Fit;
+  std::vector<float> dVdt1Fit;
+  std::vector<float> dVdt1Fit_2080;
   std::vector<std::vector<double>> CFD1Fit;
   std::vector<std::vector<double>> WIDTH1;
-  std::vector<double> chi2;
-  std::vector<double> t_thr1;
-  std::vector<double> tot1;
-  std::vector<double> rms1;
-  std::vector<std::vector<double>> w1 ; //to be commented for skipping the waveform;
-  std::vector<std::vector<double>> t1 ; //to be commented for skipping the waveform;
-  double x_pos1, y_pos1,x_pos2, y_pos2, chi2_trk ;
+  std::vector<float> chi2;
+  std::vector<float> t_thr1;
+  std::vector<float> tot1;
+  std::vector<float> rms1;
+  std::vector<std::vector<float>> w1 ; //to be commented for skipping the waveform;
+  std::vector<std::vector<float>> t1 ; //to be commented for skipping the waveform;
+  float x_pos1, y_pos1,x_pos2, y_pos2, chi2_trk ;
   
   Pmax1.reserve(20);
   PmaxFit.reserve(20);
@@ -159,31 +159,31 @@ void analisi( ){
   
   OutTree->Branch("event",&event);
   //OutTree->Branch("evt_delta",&evt_delta); //for tracker sync
-  //OutTree->Branch("w", "std::vector<std::vector<double>>", &w1);
-  //OutTree->Branch("t", "std::vector<std::vector<double>>" ,&t1);
-  OutTree->Branch("pmax", "std::vector<double>",&Pmax1);
-  OutTree->Branch("pmax_fit", "std::vector<double>",&PmaxFit);
-  //OutTree->Branch("negpmax", "std::vector<double>",&negPmax1Fit);
-  OutTree->Branch("tmax", "std::vector<double>",&Tmax1);
-  OutTree->Branch("tmax_fit", "std::vector<double>",&Tmax1Fit);
-  //OutTree->Branch("negtmax", "std::vector<double>",&negTmax1Fit);
-  OutTree->Branch("area", "std::vector<double>",&Area1);
-  //OutTree->Branch("uarea", "std::vector<double>",&UArea1);
-  OutTree->Branch("area_new", "std::vector<double>",&Area1_new);
-  //OutTree->Branch("uarea_new", "std::vector<double>",&UArea1_new);
-  //OutTree->Branch("dc_area", "std::vector<double>",&DC_Area1);
-  OutTree->Branch("area_nc", "std::vector<double>",&Area_NC);
-  OutTree->Branch("area_nc_pos", "std::vector<double>",&Area_NC_pos);
-  OutTree->Branch("area_fixed_window", "std::vector<double>",&Area_fixed_window);
-  //OutTree->Branch("risetime", "std::vector<double>",&RiseTime1Fit);
-  ///OutTree->Branch("falltime", "std::vector<double>",&FallTime1Fit);
-  OutTree->Branch("dvdt", "std::vector<double>",&dVdt1Fit);
-  OutTree->Branch("dvdt_2080", "std::vector<double>",&dVdt1Fit_2080);
+  //OutTree->Branch("w", "std::vector<std::vector<float>>", &w1);
+  //OutTree->Branch("t", "std::vector<std::vector<float>>" ,&t1);
+  OutTree->Branch("pmax", "std::vector<float>",&Pmax1);
+  OutTree->Branch("pmax_fit", "std::vector<float>",&PmaxFit);
+  //OutTree->Branch("negpmax", "std::vector<float>",&negPmax1Fit);
+  OutTree->Branch("tmax", "std::vector<float>",&Tmax1);
+  OutTree->Branch("tmax_fit", "std::vector<float>",&Tmax1Fit);
+  //OutTree->Branch("negtmax", "std::vector<float>",&negTmax1Fit);
+  OutTree->Branch("area", "std::vector<float>",&Area1);
+  //OutTree->Branch("uarea", "std::vector<float>",&UArea1);
+  OutTree->Branch("area_new", "std::vector<float>",&Area1_new);
+  //OutTree->Branch("uarea_new", "std::vector<float>",&UArea1_new);
+  //OutTree->Branch("dc_area", "std::vector<float>",&DC_Area1);
+  OutTree->Branch("area_nc", "std::vector<float>",&Area_NC);
+  OutTree->Branch("area_nc_pos", "std::vector<float>",&Area_NC_pos);
+  OutTree->Branch("area_fixed_window", "std::vector<float>",&Area_fixed_window);
+  //OutTree->Branch("risetime", "std::vector<float>",&RiseTime1Fit);
+  ///OutTree->Branch("falltime", "std::vector<float>",&FallTime1Fit);
+  OutTree->Branch("dvdt", "std::vector<float>",&dVdt1Fit);
+  OutTree->Branch("dvdt_2080", "std::vector<float>",&dVdt1Fit_2080);
   OutTree->Branch("cfd", "std::vector<std::vector<double>>",&CFD1Fit);
   //OutTree->Branch("width", "std::vector<std::vector<double>>",&WIDTH1);
-  //OutTree->Branch("t_thr", "std::vector<double>",&t_thr1);  // time at which a certain thr (in V) is passed
-  //OutTree->Branch("tot", "std::vector<double>",&tot1);
-  OutTree->Branch("rms", "std::vector<double>",&rms1);
+  //OutTree->Branch("t_thr", "std::vector<float>",&t_thr1);  // time at which a certain thr (in V) is passed
+  //OutTree->Branch("tot", "std::vector<float>",&tot1);
+  OutTree->Branch("rms", "std::vector<float>",&rms1);
   OutTree->Branch("x_pos1", &x_pos1);
   OutTree->Branch("y_pos1", &y_pos1);
   OutTree->Branch("x_pos2", &x_pos2);
@@ -210,34 +210,34 @@ void analisi( ){
   voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg0" )); 
   voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
 
-  std::vector<double> w1_check;
-  std::vector<double> t1_check;
+  std::vector<float> w1_check;
+  std::vector<float> t1_check;
   w1_check.reserve(221560);
   t1_check.reserve(221560);
 
   int enable_channel_1 = 0;
   int invert_channel_1 = 0;
 
-  double max_p_check_plane1 = 0;
-  double max_t_check_plane1 = 0;
+  float max_p_check_plane1 = 0;
+  float max_t_check_plane1 = 0;
 
-  double baseline_correction = 0;
+  float baseline_correction = 0;
 
-  std::pair<double, unsigned int> tp_pair1_small{0.,0}; 
-  std::array<double, 3> fit_array_small = {0.,0.,0.};
-  std::pair<double, double> tp_pair1_fit_small{0.,0.};
+  std::pair<float, unsigned int> tp_pair1_small{0.,0}; 
+  std::array<float, 3> fit_array_small = {0.,0.,0.};
+  std::pair<float, float> tp_pair1_fit_small{0.,0.};
 
-  std::vector<double> w1_inner;
-  std::vector<double> t1_inner;
+  std::vector<float> w1_inner;
+  std::vector<float> t1_inner;
   w1_inner.reserve(221560);
   t1_inner.reserve(221560);
 
-  std::pair<double, unsigned int> tp_pair1{0.,0};
-  std::array<double, 3> fit_array = {0.,0.,0.};
-  std::pair<double, double> tp_pair1_fit{0.,0.};
-	std::pair<double, unsigned int> neg_tp_pair1{0.,0}; 
-  std::array<double, 3> neg_fit_array = {0.,0.,0.};
-	std::pair<double, double> neg_tp_pair1_fit{0.,0.};
+  std::pair<float, unsigned int> tp_pair1{0.,0};
+  std::array<float, 3> fit_array = {0.,0.,0.};
+  std::pair<float, float> tp_pair1_fit{0.,0.};
+	std::pair<float, unsigned int> neg_tp_pair1{0.,0}; 
+  std::array<float, 3> neg_fit_array = {0.,0.,0.};
+	std::pair<float, float> neg_tp_pair1_fit{0.,0.};
 
   std::vector<double> cf_inner ;
 	std::vector<double> width_inner ;
@@ -304,8 +304,8 @@ void analisi( ){
     ///////// BEGINNING OF "SMALL-RANGE" PART /////////
     if(small_range==1){
     
-      //double max_p_check_plane1 = 0;
-      //double max_t_check_plane1 = 0;
+      //float max_p_check_plane1 = 0;
+      //float max_t_check_plane1 = 0;
       max_p_check_plane1 = 0;
       max_t_check_plane1 = 0;
   
@@ -313,8 +313,8 @@ void analisi( ){
 
        if(ch_counter!=ch_mcp){
             
-        //std::vector<double> w1_check;
-        //std::vector<double> t1_check;
+        //std::vector<float> w1_check;
+        //std::vector<float> t1_check;
         //w1_check.reserve(221560);
         //t1_check.reserve(221560);
         w1_check.clear();
@@ -330,9 +330,9 @@ void analisi( ){
         
             for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
       
-              if(ADC_conversion==1) w1_check.push_back( double(-voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
-              else w1_check.push_back( double(-voltageReader1.at(ch_counter).At(i)) );
-              t1_check.push_back( double(i)*temporal_bin_width ); 
+              if(ADC_conversion==1) w1_check.push_back( float(-voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
+              else w1_check.push_back( float(-voltageReader1.at(ch_counter).At(i)) );
+              t1_check.push_back( float(i)*temporal_bin_width ); 
       
             }
       
@@ -340,20 +340,20 @@ void analisi( ){
       
             for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
       
-              if(ADC_conversion==1) w1_check.push_back( double(voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
-              else w1_check.push_back( double(voltageReader1.at(ch_counter).At(i)) );
-              t1_check.push_back( double(i)*temporal_bin_width );
+              if(ADC_conversion==1) w1_check.push_back( float(voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
+              else w1_check.push_back( float(voltageReader1.at(ch_counter).At(i)) );
+              t1_check.push_back( float(i)*temporal_bin_width );
       
             }
           }
       
           *a_check=Analyzer( w1_check, t1_check );
-          //double baseline_correction = a_check->Correct_Baseline(n_points_baseline); 
+          //float baseline_correction = a_check->Correct_Baseline(n_points_baseline); 
           baseline_correction = a_check->Correct_Baseline(n_points_baseline);
       
-          //std::pair<double, unsigned int> tp_pair1_small = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
-          //std::array<double, 3> fit_array_small = a_check->Pmax_with_GausFit(tp_pair1_small,maxIndex,7);  
-          //std::pair<double, double> tp_pair1_fit_small{0.,0.}; 
+          //std::pair<float, unsigned int> tp_pair1_small = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
+          //std::array<float, 3> fit_array_small = a_check->Pmax_with_GausFit(tp_pair1_small,maxIndex,7);  
+          //std::pair<float, float> tp_pair1_fit_small{0.,0.}; 
           tp_pair1_small = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
           fit_array_small = a_check->Pmax_with_GausFit(tp_pair1_small,maxIndex,number_points_gaus_fit);
           tp_pair1_fit_small = std::make_pair( fit_array_small[0], fit_array_small[1] ) ;
@@ -382,13 +382,13 @@ void analisi( ){
 
     }else if(mcp_range==1){
     
-      //double max_p_check_plane1 = 0;
-      //double max_t_check_plane1 = 0;
+      //float max_p_check_plane1 = 0;
+      //float max_t_check_plane1 = 0;
       max_p_check_plane1 = 0;
       max_t_check_plane1 = 0;
             
-      //std::vector<double> w1_check;
-      //std::vector<double> t1_check;
+      //std::vector<float> w1_check;
+      //std::vector<float> t1_check;
       //w1_check.reserve(221560);
       //t1_check.reserve(221560);
       w1_check.clear();
@@ -404,9 +404,9 @@ void analisi( ){
         
             for(unsigned int i=0; i<voltageReader1.at(ch_mcp).GetSize();i++){
       
-              if(ADC_conversion==1) w1_check.push_back( double(-voltageReader1.at(ch_mcp).At(i))*ADC_conversion_factor );
-              else w1_check.push_back( double(-voltageReader1.at(ch_mcp).At(i)) );
-              t1_check.push_back( double(i)*temporal_bin_width ); 
+              if(ADC_conversion==1) w1_check.push_back( float(-voltageReader1.at(ch_mcp).At(i))*ADC_conversion_factor );
+              else w1_check.push_back( float(-voltageReader1.at(ch_mcp).At(i)) );
+              t1_check.push_back( float(i)*temporal_bin_width ); 
       
             }
       
@@ -414,20 +414,20 @@ void analisi( ){
       
             for(unsigned int i=0; i<voltageReader1.at(ch_mcp).GetSize();i++){
       
-              if(ADC_conversion==1) w1_check.push_back( double(voltageReader1.at(ch_mcp).At(i))*ADC_conversion_factor );
-              else w1_check.push_back( double(voltageReader1.at(ch_mcp).At(i)) );
-              t1_check.push_back( double(i)*temporal_bin_width );
+              if(ADC_conversion==1) w1_check.push_back( float(voltageReader1.at(ch_mcp).At(i))*ADC_conversion_factor );
+              else w1_check.push_back( float(voltageReader1.at(ch_mcp).At(i)) );
+              t1_check.push_back( float(i)*temporal_bin_width );
       
             }
           }
       
           *a_check=Analyzer( w1_check, t1_check );
-          //double baseline_correction = a_check->Correct_Baseline(n_points_baseline); 
+          //float baseline_correction = a_check->Correct_Baseline(n_points_baseline); 
           baseline_correction = a_check->Correct_Baseline(n_points_baseline);
       
-          //std::pair<double, unsigned int> tp_pair1_small = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
-          //std::array<double, 3> fit_array_small = a_check->Pmax_with_GausFit(tp_pair1_small,maxIndex,7);  
-          //std::pair<double, double> tp_pair1_fit_small{0.,0.}; 
+          //std::pair<float, unsigned int> tp_pair1_small = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
+          //std::array<float, 3> fit_array_small = a_check->Pmax_with_GausFit(tp_pair1_small,maxIndex,7);  
+          //std::pair<float, float> tp_pair1_fit_small{0.,0.}; 
           tp_pair1_small = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
           fit_array_small = a_check->Pmax_with_GausFit(tp_pair1_small,maxIndex,number_points_gaus_fit);
      
@@ -475,8 +475,8 @@ void analisi( ){
 
       }
           
-      //std::vector<double> w1_inner;
-      //std::vector<double> t1_inner;
+      //std::vector<float> w1_inner;
+      //std::vector<float> t1_inner;
       //w1_inner.reserve(221560);
       //t1_inner.reserve(221560);
       w1_inner.clear();
@@ -506,9 +506,9 @@ void analisi( ){
     
 	        for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
   
-            if(ADC_conversion==1) w1_inner.push_back( double(-voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
-            else w1_inner.push_back( double(-voltageReader1.at(ch_counter).At(i)) );
-            t1_inner.push_back( double(i)*temporal_bin_width ); 
+            if(ADC_conversion==1) w1_inner.push_back( float(-voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
+            else w1_inner.push_back( float(-voltageReader1.at(ch_counter).At(i)) );
+            t1_inner.push_back( float(i)*temporal_bin_width ); 
   
  	        }
   
@@ -516,9 +516,9 @@ void analisi( ){
   
 	        for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
   
-	    	    if(ADC_conversion==1) w1_inner.push_back( double(voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
-            else w1_inner.push_back( double(voltageReader1.at(ch_counter).At(i)) );
-            t1_inner.push_back( double(i)*temporal_bin_width );
+	    	    if(ADC_conversion==1) w1_inner.push_back( float(voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
+            else w1_inner.push_back( float(voltageReader1.at(ch_counter).At(i)) );
+            t1_inner.push_back( float(i)*temporal_bin_width );
   
  	        }
  	      }
@@ -546,19 +546,19 @@ void analisi( ){
  	    	}
   
 	    	*a1=Analyzer( w1_inner, t1_inner );
-	    	//double baseline_correction = a1->Correct_Baseline(n_points_baseline); // we do not want signals in the first 5 ns, otherwise baseline correction is biased
+	    	//float baseline_correction = a1->Correct_Baseline(n_points_baseline); // we do not want signals in the first 5 ns, otherwise baseline correction is biased
         baseline_correction = a1->Correct_Baseline(n_points_baseline); // we do not want signals in the first 5 ns, otherwise baseline correction is biased
 
-        for(int i=0; i<w1_inner.size(); i++) w1_inner.at(i) = w1_inner.at(i) - baseline_correction ;
+        for(int i=0; i<int(w1_inner.size()); i++) w1_inner.at(i) = w1_inner.at(i) - baseline_correction ;
 
         w1.push_back( w1_inner );//to be commented for skipping the waveform;
         t1.push_back( t1_inner );//to be commented for skipping the waveform;
   
-	    	//std::pair<double, unsigned int> tp_pair1 = a1->Find_Signal_Maximum(pmax_search_range,search_range_final); 
-        //std::array<double, 3> fit_array = a1->Pmax_with_GausFit(tp_pair1,maxIndex,number_points_gaus_fit);
-        //std::pair<double, double> tp_pair1_fit{0.,0.};
-	    	//std::pair<double, unsigned int> neg_tp_pair1 = a1->Find_Negative_Signal_Maximum(pmax_search_range,search_range_final); 
-	    	//std::pair<double, double> neg_tp_pair1_fit = a1->Negative_Pmax_with_GausFit(neg_tp_pair1,maxIndex);   
+	    	//std::pair<float, unsigned int> tp_pair1 = a1->Find_Signal_Maximum(pmax_search_range,search_range_final); 
+        //std::array<float, 3> fit_array = a1->Pmax_with_GausFit(tp_pair1,maxIndex,number_points_gaus_fit);
+        //std::pair<float, float> tp_pair1_fit{0.,0.};
+	    	//std::pair<float, unsigned int> neg_tp_pair1 = a1->Find_Negative_Signal_Maximum(pmax_search_range,search_range_final); 
+	    	//std::pair<float, float> neg_tp_pair1_fit = a1->Negative_Pmax_with_GausFit(neg_tp_pair1,maxIndex);   
         tp_pair1 = a1->Find_Signal_Maximum(pmax_search_range,search_range_final); 
         fit_array = a1->Pmax_with_GausFit(tp_pair1,maxIndex,number_points_gaus_fit);
         tp_pair1_fit = std::make_pair( fit_array[0], fit_array[1] ) ;
@@ -590,8 +590,8 @@ void analisi( ){
         dVdt1Fit.push_back( a1->Find_Dvdt_with_GausFit(20,0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const) ) ;  //mV/ns
 	    	dVdt1Fit_2080.push_back( a1->Find_Dvdt2080_with_GausFit(0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const) );  //mV/ns
 
-        //std::vector<double> cf_inner ;
-	    	//std::vector<double> width_inner ;
+        //std::vector<float> cf_inner ;
+	    	//std::vector<float> width_inner ;
         //cf_inner.reserve(7);
         //width_inner.reserve(7);
         cf_inner.clear();
@@ -599,9 +599,9 @@ void analisi( ){
 
         for(int jj=0;jj<7;jj++){
   
-	    		  cf_inner.push_back( a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair1_fit,tp_pair1.second)*time_const ) ;
-	    		  width_inner.push_back( (a1->Falling_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair1_fit,tp_pair1.second)*time_const) - 
-                                 (a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair1_fit,tp_pair1.second)*time_const) ) ;
+	    		  cf_inner.push_back( double(a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair1_fit,tp_pair1.second)*time_const) ) ;
+	    		  width_inner.push_back( double((a1->Falling_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair1_fit,tp_pair1.second)*time_const) - 
+                                 (a1->Rising_Edge_CFD_Time_with_GausFit(10+jj*10,tp_pair1_fit,tp_pair1.second)*time_const)) ) ;
   
 	    	}
 
