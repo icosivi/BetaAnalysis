@@ -248,7 +248,7 @@ void analisi( ){
   width_inner.reserve(7);
   
   
-  while(myReader.Next() && j_counter<10000 ){ //  && j_counter<10000
+  while(myReader.Next() && j_counter<100000 ){ //  && j_counter<10000
 
     w1_check.clear();
     t1_check.clear();
@@ -324,8 +324,8 @@ void analisi( ){
         
             for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
       
-              if(ADC_conversion==1) w1_check.push_back( float(-voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
-              else w1_check.push_back( float(-voltageReader1.at(ch_counter).At(i)) );
+              if(ADC_conversion==1) w1_check.push_back( float(-voltageReader1.at(ch_counter)[i])*ADC_conversion_factor );
+              else w1_check.push_back( float(-voltageReader1.at(ch_counter)[i]) );
               t1_check.push_back( float(i)*temporal_bin_width ); 
       
             }
@@ -334,8 +334,8 @@ void analisi( ){
       
             for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
       
-              if(ADC_conversion==1) w1_check.push_back( float(voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
-              else w1_check.push_back( float(voltageReader1.at(ch_counter).At(i)) );
+              if(ADC_conversion==1) w1_check.push_back( float(voltageReader1.at(ch_counter)[i])*ADC_conversion_factor );
+              else w1_check.push_back( float(voltageReader1.at(ch_counter)[i]) );
               t1_check.push_back( float(i)*temporal_bin_width );
       
             }
@@ -388,8 +388,8 @@ void analisi( ){
         
             for(unsigned int i=0; i<voltageReader1.at(ch_mcp).GetSize();i++){
       
-              if(ADC_conversion==1) w1_check.push_back( float(-voltageReader1.at(ch_mcp).At(i))*ADC_conversion_factor );
-              else w1_check.push_back( float(-voltageReader1.at(ch_mcp).At(i)) );
+              if(ADC_conversion==1) w1_check.push_back( float(-voltageReader1.at(ch_mcp)[i])*ADC_conversion_factor );
+              else w1_check.push_back( float(-voltageReader1.at(ch_mcp)[i]) );
               t1_check.push_back( float(i)*temporal_bin_width ); 
       
             }
@@ -398,8 +398,8 @@ void analisi( ){
       
             for(unsigned int i=0; i<voltageReader1.at(ch_mcp).GetSize();i++){
       
-              if(ADC_conversion==1) w1_check.push_back( float(voltageReader1.at(ch_mcp).At(i))*ADC_conversion_factor );
-              else w1_check.push_back( float(voltageReader1.at(ch_mcp).At(i)) );
+              if(ADC_conversion==1) w1_check.push_back( float(voltageReader1.at(ch_mcp)[i])*ADC_conversion_factor );
+              else w1_check.push_back( float(voltageReader1.at(ch_mcp)[i]) );
               t1_check.push_back( float(i)*temporal_bin_width );
       
             }
@@ -482,8 +482,8 @@ void analisi( ){
     
 	        for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
   
-            if(ADC_conversion==1) w1_inner.push_back( float(-voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
-            else w1_inner.push_back( float(-voltageReader1.at(ch_counter).At(i)) );
+            if(ADC_conversion==1) w1_inner.push_back( float(-voltageReader1.at(ch_counter)[i])*ADC_conversion_factor );
+            else w1_inner.push_back( float(-voltageReader1.at(ch_counter)[i]) );
             t1_inner.push_back( float(i)*temporal_bin_width ); 
   
  	        }
@@ -492,8 +492,8 @@ void analisi( ){
   
 	        for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
   
-	    	    if(ADC_conversion==1) w1_inner.push_back( float(voltageReader1.at(ch_counter).At(i))*ADC_conversion_factor );
-            else w1_inner.push_back( float(voltageReader1.at(ch_counter).At(i)) );
+	    	    if(ADC_conversion==1) w1_inner.push_back( float(voltageReader1.at(ch_counter)[i])*ADC_conversion_factor );
+            else w1_inner.push_back( float(voltageReader1.at(ch_counter)[i]) );
             t1_inner.push_back( float(i)*temporal_bin_width );
   
  	        }

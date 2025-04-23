@@ -239,10 +239,24 @@ std::array<float, 3> Analyzer::Pmax_for_samples(const std::pair<float, unsigned 
     TH1D pmax_histo("pmax_histo","pmax_histo",samples_fit,time_min,time_max);
 
     bool good_fit = true;
+    int points_above_zero_counter = 0;
 
     for(int i=0; i<samples_fit; i++){
 
-      if(Pmax.first*this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i)>0) pmax_histo.Fill( this->ptime.at(pmaxIndex-( (samples_fit-1)/2 )+i) , this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i) );
+      if( Pmax.first*this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i)>0 ){ 
+        
+        pmax_histo.Fill( this->ptime.at(pmaxIndex-( (samples_fit-1)/2 )+i) , this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i) );
+        points_above_zero_counter++ ;
+
+      }
+
+     }
+
+     if( points_above_zero_counter < samples_fit-2 ) good_fit = false;
+
+     /*for(int i=0; i<samples_fit; i++){
+
+      if( Pmax.first*this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i)>0 ) pmax_histo.Fill( this->ptime.at(pmaxIndex-( (samples_fit-1)/2 )+i) , this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i) );
       else{
 
         good_fit = false;
@@ -250,9 +264,10 @@ std::array<float, 3> Analyzer::Pmax_for_samples(const std::pair<float, unsigned 
 
       }
 
-     }
+     }*/
 
-  if(good_fit){
+
+   if(good_fit){
 
     TF1 f("f","gaus",time_min,time_max);
     f.SetParameter(0,Pmax.first);
@@ -265,26 +280,19 @@ std::array<float, 3> Analyzer::Pmax_for_samples(const std::pair<float, unsigned 
 
     result = {pmax, tmax, sigma};
 
+   } else {
+
+    result = {-1000., -1000., -1000.};
+
+   }
+
   } else {
 
     result = {-1000., -1000., -1000.};
 
   }
 
-  } else {
-
-   result = {-1000., -1000., -1000.};
-
-  }
-
-
-  if( fabs(pmax-Pmax.first)<0.2*fabs(Pmax.first) ) return result;
-  else{
-
-    result = {-1000., -1000., -1000.};
-    return result;
-
-  } 
+  return result;
 
 }
 
