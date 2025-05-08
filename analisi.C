@@ -68,7 +68,24 @@ void analisi( ){
 
   // CHANNELS
   int active_channels = cf.Value("CHANNELS","active_channels");
-  int ch_mcp = cf.Value("CHANNELS", "ch_mcp" );
+  int active_channel[8] = {0,0,0,0,0,0,0,0};
+  active_channel[0] = cf.Value("ACTIVE_CHANNEL", "ch1" );
+  active_channel[1] = cf.Value("ACTIVE_CHANNEL", "ch2" );
+  active_channel[2] = cf.Value("ACTIVE_CHANNEL", "ch3" );
+  active_channel[3] = cf.Value("ACTIVE_CHANNEL", "ch4" );
+  active_channel[4] = cf.Value("ACTIVE_CHANNEL", "ch5" );
+  active_channel[5] = cf.Value("ACTIVE_CHANNEL", "ch6" );
+  active_channel[6] = cf.Value("ACTIVE_CHANNEL", "ch7" );
+  active_channel[7] = cf.Value("ACTIVE_CHANNEL", "ch8" );
+  int invert_channel[8] = {0,0,0,0,0,0,0,0};
+  invert_channel[0] = cf.Value("INVERT_SIGNAL", "ch1" );
+  invert_channel[1] = cf.Value("INVERT_SIGNAL", "ch2" );
+  invert_channel[2] = cf.Value("INVERT_SIGNAL", "ch3" );
+  invert_channel[3] = cf.Value("INVERT_SIGNAL", "ch4" );
+  invert_channel[4] = cf.Value("INVERT_SIGNAL", "ch5" );
+  invert_channel[5] = cf.Value("INVERT_SIGNAL", "ch6" );
+  invert_channel[6] = cf.Value("INVERT_SIGNAL", "ch7" );
+  invert_channel[7] = cf.Value("INVERT_SIGNAL", "ch8" );
 
   // RANGES
   bool pmax_search_range;
@@ -76,28 +93,27 @@ void analisi( ){
   else pmax_search_range = true;
   float search_range[2] = {0,0};
   float search_range_final[2] = {0,0};
-  float search_range_global[2] = {0,0};
-  search_range_global[0] = cf.Value("RANGES", "pmax_search_range_min" ) ;
-  search_range_global[1] = cf.Value("RANGES", "pmax_search_range_max" ) ;
-  int small_range = cf.Value("RANGES", "small_range" );
-  int mcp_range = cf.Value("RANGES", "mcp_range" );
-  float search_around_pmax = cf.Value("RANGES", "small_range_interval" );
-  float search_around_mcp = cf.Value("RANGES", "mcp_range_interval" );
+  search_range_final[0] = cf.Value("RANGES", "pmax_search_range_min" ) ;
+  search_range_final[1] = cf.Value("RANGES", "pmax_search_range_max" ) ;
+  
 
   // PARAMETERS
   int number_points_gaus_fit = cf.Value("PARAMETERS","number_points_gaus_fit");
   int n_points_baseline = cf.Value("PARAMETERS","n_points_baseline");
-  int ADC_conversion = cf.Value("PARAMETERS","ADC_conversion");
-  float ADC_conversion_factor = cf.Value("PARAMETERS","ADC_conversion_factor");
-  float temporal_bin_width = cf.Value("PARAMETERS","temporal_bin_width"); //0.2; 0.0488;
   const float time_const = cf.Value("PARAMETERS","time_scalar");  
   const float voltage_const = cf.Value("PARAMETERS","voltage_scalar");
   unsigned int maxIndex = cf.Value("PARAMETERS","sampling_points");
   float tot_levels[2] = { float(cf.Value("PARAMETERS","tot_rising")), float(cf.Value("PARAMETERS","tot_falling")) };
-  float mcp_delay = cf.Value("PARAMETERS","mcp_delay");
 
   // TRACKER
   int join_txt_tracker = cf.Value("TRACKER", "join_txt_tracker" );
+
+  // POWER SUPPLY
+  int ps_channel[4] = {0,0,0,0};
+  ps_channel[0] = cf.Value("PS", "ps_channel0" ) ;
+  ps_channel[1] = cf.Value("PS", "ps_channel1" ) ;
+  ps_channel[2] = cf.Value("PS", "ps_channel2" ) ;
+  ps_channel[3] = cf.Value("PS", "ps_channel3" ) ;
 
   
   std::vector<float> Pmax1;
@@ -110,9 +126,9 @@ void analisi( ){
   std::vector<float> UArea1;
   std::vector<float> Area1_new;
   std::vector<float> UArea1_new;
-  std::vector<float> DC_Area1;
+  //std::vector<float> DC_Area1;
   std::vector<float> Area_NC;
-  std::vector<float> Area_NC_pos; 
+  //std::vector<float> Area_NC_pos; 
   std::vector<float> Area_fixed_window;
   std::vector<float> RiseTime1Fit;
   std::vector<float> FallTime1Fit;
@@ -126,7 +142,9 @@ void analisi( ){
   std::vector<float> rms1;
   std::vector<std::vector<float>> w1 ; //to be commented for skipping the waveform;
   std::vector<std::vector<float>> t1 ; //to be commented for skipping the waveform;
-  float x_pos1, y_pos1,x_pos2, y_pos2, chi2_trk ;
+  //float x_pos1, y_pos1,x_pos2, y_pos2, chi2_trk ;
+   std::vector<float> i_current;
+  std::vector<float> v_bias;
   
   Pmax1.reserve(20);
   PmaxFit.reserve(20);
@@ -138,9 +156,9 @@ void analisi( ){
   UArea1.reserve(20);
   Area1_new.reserve(20);
   UArea1_new.reserve(20);
-  DC_Area1.reserve(20);
+  //DC_Area1.reserve(20);
   Area_NC.reserve(20);
-  Area_NC_pos.reserve(20);
+  //Area_NC_pos.reserve(20);
   Area_fixed_window.reserve(20);
   RiseTime1Fit.reserve(20);
   FallTime1Fit.reserve(20);
@@ -154,11 +172,15 @@ void analisi( ){
   chi2.reserve(20);
   //w1.reserve(20);//to be commented for skipping the waveform;
   //t1.reserve(20);//to be commented for skipping the waveform;
+  i_current.reserve(20);
+  v_bias.reserve(20);
   Analyzer *a1=new Analyzer();
   Analyzer *a_check=new Analyzer();
   
   int event;
   //int evt_delta = 0; //for tracker sync
+
+  float timestamp;
   
   OutTree->Branch("event",&event);
   //OutTree->Branch("evt_delta",&evt_delta); //for tracker sync
@@ -176,7 +198,7 @@ void analisi( ){
   //OutTree->Branch("uarea_new", "std::vector<float>",&UArea1_new);
   //OutTree->Branch("dc_area", "std::vector<float>",&DC_Area1);
   OutTree->Branch("area_nc", "std::vector<float>",&Area_NC);
-  OutTree->Branch("area_nc_pos", "std::vector<float>",&Area_NC_pos);
+  //OutTree->Branch("area_nc_pos", "std::vector<float>",&Area_NC_pos);
   OutTree->Branch("area_fixed_window", "std::vector<float>",&Area_fixed_window);
   //OutTree->Branch("risetime", "std::vector<float>",&RiseTime1Fit);
   ///OutTree->Branch("falltime", "std::vector<float>",&FallTime1Fit);
@@ -187,31 +209,52 @@ void analisi( ){
   //OutTree->Branch("t_thr", "std::vector<float>",&t_thr1);  // time at which a certain thr (in V) is passed
   //OutTree->Branch("tot", "std::vector<float>",&tot1);
   OutTree->Branch("rms", "std::vector<float>",&rms1);
-  OutTree->Branch("x_pos1", &x_pos1);
-  OutTree->Branch("y_pos1", &y_pos1);
-  OutTree->Branch("x_pos2", &x_pos2);
-  OutTree->Branch("y_pos2", &y_pos2);
+  //OutTree->Branch("x_pos1", &x_pos1);
+  //OutTree->Branch("y_pos1", &y_pos1);
+  //OutTree->Branch("x_pos2", &x_pos2);
+  //OutTree->Branch("y_pos2", &y_pos2);
   OutTree->Branch("chi2", &chi2);
-  OutTree->Branch("chi2_trk", &chi2_trk);
+  //OutTree->Branch("chi2_trk", &chi2_trk);
+  OutTree->Branch("time",&timestamp);
+  OutTree->Branch("I", "std::vector<float>", &i_current);
+  OutTree->Branch("V", "std::vector<float>", &v_bias);
       
   int j_counter = 0;
   
   std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
+  std::vector<TTreeReaderArray<Double32_t>> timeReader1 ;
   
-  TTreeReaderValue<float> x1Reader(myReader, "xtrk1" );
-  TTreeReaderValue<float> y1Reader(myReader, "ytrk1" );
-  TTreeReaderValue<float> x2Reader(myReader, "xtrk2" );
-  TTreeReaderValue<float> y2Reader(myReader, "ytrk2" );
-  TTreeReaderValue<float> chi2Reader(myReader, "chi2trk" );
+  //TTreeReaderValue<float> x1Reader(myReader, "xtrk1" );
+  //TTreeReaderValue<float> y1Reader(myReader, "ytrk1" );
+  //TTreeReaderValue<float> x2Reader(myReader, "xtrk2" );
+  //TTreeReaderValue<float> y2Reader(myReader, "ytrk2" );
+  //TTreeReaderValue<float> chi2Reader(myReader, "chi2trk" );
       
-  for(int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
-  
-    voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, Form("w%i",ch_counter) ));
-  
+  for(int ch_counter=1; ch_counter<=active_channels; ch_counter++ ){
+
+    if(active_channel[ch_counter-1]==1){
+
+      voltageReader1.push_back(TTreeReaderArray<double>(myReader, Form("w%i",ch_counter) ));  
+      timeReader1.push_back(TTreeReaderArray<double>(myReader, Form("t%i",ch_counter) ));
+
+    }    
   }
+
+  TTreeReaderArray<double> currentReader1(myReader,"i_current") ;
+  TTreeReaderArray<double> biasReader1(myReader,"v_bias") ;
+  TTreeReaderValue<double> tstampReader1(myReader,"i_timestamp") ;
+
+  int ps_total = 0 ;
   
-  voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg0" )); 
-  voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
+  for(int ps_counter=0; ps_counter<4; ps_counter++){
+
+    if(ps_channel[ps_counter] == 1){ 
+
+      ps_total++ ;
+
+    }
+
+  }
 
   std::vector<float> w1_check;
   std::vector<float> t1_check;
@@ -225,10 +268,6 @@ void analisi( ){
   float max_t_check_plane1 = 0;
 
   float baseline_correction = 0;
-
-  std::pair<float, unsigned int> tp_pair1_small{0.,0}; 
-  std::array<float, 3> fit_array_small = {0.,0.,0.};
-  std::pair<float, float> tp_pair1_fit_small{0.,0.};
 
   std::vector<float> w1_inner;
   std::vector<float> t1_inner;
@@ -247,8 +286,20 @@ void analisi( ){
   cf_inner.reserve(7);
   width_inner.reserve(7);
   
-  
-  while(myReader.Next() && j_counter<100000 ){ //  && j_counter<10000
+  while(myReader.Next() ){ //  && j_counter<10000
+
+    timestamp = *tstampReader1;
+    i_current.clear();
+    v_bias.clear();
+    
+    for( int ps_counter=0; ps_counter<ps_total; ps_counter++ ){
+
+      //i_current.push_back( *currentReader1.at(ps_counter) ) ;
+      //v_bias.push_back( *biasReader1.at(ps_counter) ) ;
+      i_current.push_back( currentReader1[ps_counter] ) ;
+      v_bias.push_back( biasReader1[ps_counter] ) ;
+
+    }
 
     w1_check.clear();
     t1_check.clear();
@@ -265,9 +316,9 @@ void analisi( ){
     Area1_new.clear();
     Area_fixed_window.clear();
     UArea1_new.clear();
-    DC_Area1.clear();
+    //DC_Area1.clear();
     Area_NC.clear();
-    Area_NC_pos.clear();
+    //Area_NC_pos.clear();
     RiseTime1Fit.clear();
     FallTime1Fit.clear();
     dVdt1Fit.clear();
@@ -282,7 +333,7 @@ void analisi( ){
     t1.clear();//to be commented for skipping the waveform;
   
     
-    if(join_txt_tracker==1){
+    /*if(join_txt_tracker==1){
 
       x_pos1 = *x1Reader;
       y_pos1 = *y1Reader;
@@ -297,209 +348,45 @@ void analisi( ){
       x_pos2 = 0;
       y_pos2 = 0;
       chi2_trk = 0;
-    }
-    
+    }*/
 
-    
-    ///////// BEGINNING OF "SMALL-RANGE" PART /////////
-    if(small_range==1){
-    
-      max_p_check_plane1 = 0;
-      max_t_check_plane1 = 0;
-  
-      for( int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
-
-       if(ch_counter!=ch_mcp){
-            
-        w1_check.clear();
-        t1_check.clear();
-          
-        enable_channel_1 = cf.Value("ACTIVE_CHANNEL", Form("ch%i", ch_counter) );
-        invert_channel_1 = cf.Value("INVERT_SIGNAL", Form("ch%i", ch_counter) );
-      
-          
-        if( enable_channel_1 == 1){
-      
-          if( invert_channel_1 == 1 ){
-        
-            for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
-      
-              if(ADC_conversion==1) w1_check.push_back( float(-voltageReader1.at(ch_counter)[i])*ADC_conversion_factor );
-              else w1_check.push_back( float(-voltageReader1.at(ch_counter)[i]) );
-              t1_check.push_back( float(i)*temporal_bin_width ); 
-      
-            }
-      
-          }else{
-      
-            for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
-      
-              if(ADC_conversion==1) w1_check.push_back( float(voltageReader1.at(ch_counter)[i])*ADC_conversion_factor );
-              else w1_check.push_back( float(voltageReader1.at(ch_counter)[i]) );
-              t1_check.push_back( float(i)*temporal_bin_width );
-      
-            }
-          }
-      
-          *a_check=Analyzer( w1_check, t1_check );
-          baseline_correction = a_check->Correct_Baseline(n_points_baseline);
-      
-          tp_pair1_small = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
-          fit_array_small = a_check->Pmax_with_GausFit(tp_pair1_small,maxIndex,number_points_gaus_fit);
-          tp_pair1_fit_small = std::make_pair( fit_array_small[0], fit_array_small[1] ) ;
-    
-          if( tp_pair1_fit_small.first*voltage_const > max_p_check_plane1){
-    
-            max_p_check_plane1 = tp_pair1_fit_small.first*voltage_const;
-            max_t_check_plane1 = tp_pair1_fit_small.second*time_const; 
-  
-          }  
-        } 
-       }
-      }
-  
-      if(max_t_check_plane1>search_range_global[0] && max_t_check_plane1<search_range_global[1]){
-      
-        search_range[0] = max_t_check_plane1 - search_around_pmax ;
-        search_range[1] = max_t_check_plane1 + search_around_pmax ;
-  
-      }else{
-  
-        search_range[0] = search_range_global[0] ;
-        search_range[1] = search_range_global[1] ;
-  
-      }
-
-    }else if(mcp_range==1){
-    
-      max_p_check_plane1 = 0;
-      max_t_check_plane1 = 0;
-            
-      w1_check.clear();
-      t1_check.clear();
-          
-      enable_channel_1 = cf.Value("ACTIVE_CHANNEL", Form("ch%i", ch_mcp) );
-      invert_channel_1 = cf.Value("INVERT_SIGNAL", Form("ch%i", ch_mcp) );
-      
-          
-        if( enable_channel_1 == 1){
-      
-          if( invert_channel_1 == 1 ){
-        
-            for(unsigned int i=0; i<voltageReader1.at(ch_mcp).GetSize();i++){
-      
-              if(ADC_conversion==1) w1_check.push_back( float(-voltageReader1.at(ch_mcp)[i])*ADC_conversion_factor );
-              else w1_check.push_back( float(-voltageReader1.at(ch_mcp)[i]) );
-              t1_check.push_back( float(i)*temporal_bin_width ); 
-      
-            }
-      
-          }else{
-      
-            for(unsigned int i=0; i<voltageReader1.at(ch_mcp).GetSize();i++){
-      
-              if(ADC_conversion==1) w1_check.push_back( float(voltageReader1.at(ch_mcp)[i])*ADC_conversion_factor );
-              else w1_check.push_back( float(voltageReader1.at(ch_mcp)[i]) );
-              t1_check.push_back( float(i)*temporal_bin_width );
-      
-            }
-          }
-      
-          *a_check=Analyzer( w1_check, t1_check ); 
-          baseline_correction = a_check->Correct_Baseline(n_points_baseline);
-      
-          tp_pair1_small = a_check->Find_Signal_Maximum(pmax_search_range,search_range_global); 
-          fit_array_small = a_check->Pmax_with_GausFit(tp_pair1_small,maxIndex,number_points_gaus_fit);
-     
-        } 
-       
-      
-  
-      if(fit_array_small[1]>search_range_global[0] && fit_array_small[1]<search_range_global[1]){
-      
-        search_range[0] = fit_array_small[1] - mcp_delay - search_around_mcp ;
-        search_range[1] = fit_array_small[1] - mcp_delay + search_around_mcp ;
-  
-      }else{
-  
-        search_range[0] = search_range_global[0] ;
-        search_range[1] = search_range_global[1] ;
-  
-      }
-
-    }else{
-
-      search_range[0] = search_range_global[0] ;
-      search_range[1] = search_range_global[1] ;
-
-    }
-    ///////// END OF "MCP RANGE" PART /////////
-    
-
- 
-
-
-  
-  
-    for( int ch_counter=0; ch_counter<(active_channels+2); ch_counter++ ){
-
-      if(ch_counter==ch_mcp || ch_counter==16 || ch_counter==17){
-
-        search_range_final[0] = search_range_global[0] ;
-        search_range_final[1] = search_range_global[1] ;
-
-      }else{
-
-        search_range_final[0] = search_range[0] ;
-        search_range_final[1] = search_range[1] ;
-
-      }
+    int active_ch_counter = 0;
+    for( int ch_counter=1; ch_counter<=active_channels; ch_counter++ ){
+      //for( int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
           
       w1_inner.clear();
       t1_inner.clear();
   
-      if(ch_counter < active_channels ){
+      /*if(ch_counter < active_channels ){
           
         enable_channel_1 = cf.Value("ACTIVE_CHANNEL", Form("ch%i", ch_counter) );
         invert_channel_1 = cf.Value("INVERT_SIGNAL", Form("ch%i", ch_counter) );
           
-      }else if(ch_counter == active_channels){
-          
-        enable_channel_1 = cf.Value("ACTIVE_CHANNEL", "trg0" );
-        invert_channel_1 = cf.Value("INVERT_SIGNAL", "trg0" );
-          
-      }else if(ch_counter == active_channels+1 ){
-          
-        enable_channel_1 = cf.Value("ACTIVE_CHANNEL", "trg1" );
-        invert_channel_1 = cf.Value("INVERT_SIGNAL", "trg1" );
-          
-      }
+      }*/
 
   
- 	    if( enable_channel_1 == 1){
+ 	    if( active_channel[ch_counter-1]==1 ){
+      //if( enable_channel_1 == 1){
   
- 	      if( invert_channel_1 == 1 ){
+ 	      if( invert_channel[ch_counter-1]==1 ){
     
-	        for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
+	        for(unsigned int i=0; i<voltageReader1.at(active_ch_counter).GetSize();i++){
   
-            if(ADC_conversion==1) w1_inner.push_back( float(-voltageReader1.at(ch_counter)[i])*ADC_conversion_factor );
-            else w1_inner.push_back( float(-voltageReader1.at(ch_counter)[i]) );
-            t1_inner.push_back( float(i)*temporal_bin_width ); 
+            w1_inner.push_back(-voltageReader1.at(active_ch_counter).At(i));
+	 			    t1_inner.push_back(timeReader1.at(active_ch_counter).At(i));
   
  	        }
   
  	      }else{
   
-	        for(unsigned int i=0; i<voltageReader1.at(ch_counter).GetSize();i++){
+	        for(unsigned int i=0; i<voltageReader1.at(active_ch_counter).GetSize();i++){
   
-	    	    if(ADC_conversion==1) w1_inner.push_back( float(voltageReader1.at(ch_counter)[i])*ADC_conversion_factor );
-            else w1_inner.push_back( float(voltageReader1.at(ch_counter)[i]) );
-            t1_inner.push_back( float(i)*temporal_bin_width );
+	    	    w1_inner.push_back(voltageReader1.at(active_ch_counter).At(i));
+	 			    t1_inner.push_back(timeReader1.at(active_ch_counter).At(i));
   
  	        }
  	      }
     
-  
  	      if(w1_inner.size()<maxIndex || t1_inner.size()<maxIndex){
   
  	    	  cout<<"Voltage or Time vector less than 1000 entries. Skipping whole event"<<endl;
@@ -541,7 +428,6 @@ void analisi( ){
 	    	
         Pmax1.push_back( tp_pair1.first*voltage_const ) ; //mV
         Tmax1.push_back(  a1->Get_Tmax(tp_pair1)*time_const ) ; //ns
-        
         PmaxFit.push_back( tp_pair1_fit.first*voltage_const ) ; //mV
         Tmax1Fit.push_back(  tp_pair1_fit.second*time_const ) ; //ns
 
@@ -549,9 +435,9 @@ void analisi( ){
 	    	negTmax1Fit.push_back(  neg_tp_pair1_fit.second*time_const ) ; //ns
 
         Area1.push_back(  a1->Find_Pulse_Area(tp_pair1)*voltage_const*time_const ) ; 
-        DC_Area1.push_back( a1->DC_Area(baseline_correction)*voltage_const*time_const ); //mV*ns
-        Area_NC.push_back( a1->Area_NC(tp_pair1, 5, 5, a1->Find_Noise(n_points_baseline)*voltage_const) ); //mV*ns
-        Area_NC_pos.push_back( a1->Area_NC_pos(tp_pair1, 5, 5, a1->Find_Noise(n_points_baseline)*voltage_const) ); //mV*ns
+        //DC_Area1.push_back( a1->DC_Area(baseline_correction)*voltage_const*time_const ); //mV*ns
+        Area_NC.push_back( a1->Area_NC(tp_pair1, 5, 5, a1->Find_Noise(n_points_baseline)*voltage_const*time_const) ); //mV*ns
+        //Area_NC_pos.push_back( a1->Area_NC_pos(tp_pair1, 5, 5, a1->Find_Noise(n_points_baseline)*voltage_const) ); //mV*ns
         Area1_new.push_back( a1->New_Pulse_Area(tp_pair1_fit,tp_pair1.second,"Simpson",search_range_final)*voltage_const*time_const ) ;//mV*ns 
         Area_fixed_window.push_back( a1->Pulse_Integration_with_Fixed_Window_Size_with_GausFit(tp_pair1_fit,tp_pair1.second,"Simpson", 1, 1)*voltage_const*time_const ); //mV*ns
 
@@ -583,6 +469,8 @@ void analisi( ){
          
 	    	tot1.push_back( a1->Find_Time_Over_Threshold(tot_levels[0],tp_pair1,tot_levels[1])*time_const ) ; //ns
 	    	rms1.push_back( a1->Find_Noise(n_points_baseline)*voltage_const ) ; //mV
+
+        active_ch_counter++;
   
 	    }	
     }
@@ -590,12 +478,13 @@ void analisi( ){
     event=j_counter;
     
 
-    if(x_pos1>-800){
+    OutTree->Fill();
+
+    /*if(x_pos1>-800){
       
       OutTree->Fill();
-      //if(j_counter%10000 == 0) cout<<x_pos1<<" "<<y_pos1<<endl;
 
-    } 
+    } */
   
     if(j_counter%10000 == 0) cout<<"processed events:"<<j_counter<<endl;
     j_counter++;
