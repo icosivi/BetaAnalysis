@@ -41,6 +41,9 @@
 
 void analisi( ){
 
+  int n_segments = 10;
+  float time_window_size = 50e-9;
+
   //ROOT::EnableImplicitMT(6);
   //ROOT::EnableThreadSafety();
 
@@ -300,37 +303,6 @@ void analisi( ){
       v_bias.push_back( biasReader1[ps_counter] ) ;
 
     }
-
-    w1_check.clear();
-    t1_check.clear();
-    w1_inner.clear();
-    t1_inner.clear();
-    Pmax1.clear();
-    PmaxFit.clear();
-    negPmax1Fit.clear();
-    Tmax1.clear();
-    Tmax1Fit.clear();
-    negTmax1Fit.clear();
-    Area1.clear();
-    UArea1.clear();
-    Area1_new.clear();
-    Area_fixed_window.clear();
-    UArea1_new.clear();
-    //DC_Area1.clear();
-    Area_NC.clear();
-    //Area_NC_pos.clear();
-    RiseTime1Fit.clear();
-    FallTime1Fit.clear();
-    dVdt1Fit.clear();
-    dVdt1Fit_2080.clear();
-    t_thr1.clear();
-    tot1.clear();
-    rms1.clear();
-    CFD1Fit.clear();
-    WIDTH1.clear();
-    chi2.clear();
-    w1.clear();//to be commented for skipping the waveform;
-    t1.clear();//to be commented for skipping the waveform;
   
     
     /*if(join_txt_tracker==1){
@@ -350,12 +322,48 @@ void analisi( ){
       chi2_trk = 0;
     }*/
 
-    int active_ch_counter = 0;
-    for( int ch_counter=1; ch_counter<=active_channels; ch_counter++ ){
+    for(int ns=0; ns<n_segments; ns++){
+
+      w1_check.clear();
+      t1_check.clear();
+      w1_inner.clear();
+      t1_inner.clear();
+      Pmax1.clear();
+      PmaxFit.clear();
+      negPmax1Fit.clear();
+      Tmax1.clear();
+      Tmax1Fit.clear();
+      negTmax1Fit.clear();
+      Area1.clear();
+      UArea1.clear();
+      Area1_new.clear();
+      Area_fixed_window.clear();
+      UArea1_new.clear();
+      //DC_Area1.clear();
+      Area_NC.clear();
+      //Area_NC_pos.clear();
+      RiseTime1Fit.clear();
+      FallTime1Fit.clear();
+      dVdt1Fit.clear();
+      dVdt1Fit_2080.clear();
+      t_thr1.clear();
+      tot1.clear();
+      rms1.clear();
+      CFD1Fit.clear();
+      WIDTH1.clear();
+      chi2.clear();
+      w1.clear();//to be commented for skipping the waveform;
+      t1.clear();//to be commented for skipping the waveform;
+    
+     if(j_counter>500){
+     int active_ch_counter = 0;
+     for( int ch_counter=1; ch_counter<=active_channels; ch_counter++ ){
       //for( int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
           
       w1_inner.clear();
       t1_inner.clear();
+
+      //cout<<voltageReader1.at(active_ch_counter).GetSize()<<endl;
   
       /*if(ch_counter < active_channels ){
           
@@ -363,14 +371,15 @@ void analisi( ){
         invert_channel_1 = cf.Value("INVERT_SIGNAL", Form("ch%i", ch_counter) );
           
       }*/
-
   
  	    if( active_channel[ch_counter-1]==1 ){
-      //if( enable_channel_1 == 1){
+       //if( enable_channel_1 == 1){
   
  	      if( invert_channel[ch_counter-1]==1 ){
+
+          //cout<<ns*(voltageReader1.at(active_ch_counter).GetSize()/n_segments)<<"    "<<(ns+1)*(voltageReader1.at(active_ch_counter).GetSize()/n_segments)<<endl;
     
-	        for(unsigned int i=0; i<voltageReader1.at(active_ch_counter).GetSize();i++){
+	        for(unsigned int i=ns*(voltageReader1.at(active_ch_counter).GetSize()/n_segments); i<(ns+1)*(voltageReader1.at(active_ch_counter).GetSize()/n_segments) ; i++){
   
             w1_inner.push_back(-voltageReader1.at(active_ch_counter).At(i));
 	 			    t1_inner.push_back(timeReader1.at(active_ch_counter).At(i));
@@ -407,6 +416,9 @@ void analisi( ){
  	    		continue;
 
  	    	}
+
+        search_range_final[0] = search_range_final[0]+float(ns)*time_window_size;
+        search_range_final[1] = search_range_final[1]+float(ns)*time_window_size;
   
 	    	*a1=Analyzer( w1_inner, t1_inner );
         baseline_correction = a1->Correct_Baseline(n_points_baseline); // we do not want signals in the first 5 ns, otherwise baseline correction is biased
@@ -473,21 +485,23 @@ void analisi( ){
         active_ch_counter++;
   
 	    }	
-    }
-  
-    event=j_counter;
+     }
     
-
-    OutTree->Fill();
-
-    /*if(x_pos1>-800){
-      
+      event=j_counter;
       OutTree->Fill();
 
-    } */
-  
-    if(j_counter%10000 == 0) cout<<"processed events:"<<j_counter<<endl;
-    j_counter++;
+       /*if(x_pos1>-800){
+      
+          OutTree->Fill();
+
+       } */
+       
+      }
+
+      if(j_counter%10000 == 0) cout<<"processed events:"<<j_counter<<endl;
+      j_counter++;
+
+    }
   
   }
 
