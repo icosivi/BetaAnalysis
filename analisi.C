@@ -166,24 +166,24 @@ void analisi( ){
   //OutTree->Branch("t", "std::vector<std::vector<float>>" ,&t1);
   OutTree->Branch("pmax", "std::vector<float>",&Pmax1);
   OutTree->Branch("pmax_fit", "std::vector<float>",&PmaxFit);
-  //OutTree->Branch("negpmax", "std::vector<float>",&negPmax1Fit);
+  OutTree->Branch("negpmax_fit", "std::vector<float>",&negPmax1Fit);
   OutTree->Branch("tmax", "std::vector<float>",&Tmax1);
   OutTree->Branch("tmax_fit", "std::vector<float>",&Tmax1Fit);
-  //OutTree->Branch("negtmax", "std::vector<float>",&negTmax1Fit);
+  OutTree->Branch("negtmax_fit", "std::vector<float>",&negTmax1Fit);
   OutTree->Branch("area", "std::vector<float>",&Area1);
   //OutTree->Branch("uarea", "std::vector<float>",&UArea1);
   OutTree->Branch("area_new", "std::vector<float>",&Area1_new);
   //OutTree->Branch("uarea_new", "std::vector<float>",&UArea1_new);
   //OutTree->Branch("dc_area", "std::vector<float>",&DC_Area1);
   OutTree->Branch("area_nc", "std::vector<float>",&Area_NC);
-  OutTree->Branch("area_nc_pos", "std::vector<float>",&Area_NC_pos);
+  //OutTree->Branch("area_nc_pos", "std::vector<float>",&Area_NC_pos);
   OutTree->Branch("area_fixed_window", "std::vector<float>",&Area_fixed_window);
-  //OutTree->Branch("risetime", "std::vector<float>",&RiseTime1Fit);
-  ///OutTree->Branch("falltime", "std::vector<float>",&FallTime1Fit);
+  OutTree->Branch("risetime", "std::vector<float>",&RiseTime1Fit);
+  OutTree->Branch("falltime", "std::vector<float>",&FallTime1Fit);
   OutTree->Branch("dvdt", "std::vector<float>",&dVdt1Fit);
   OutTree->Branch("dvdt_2080", "std::vector<float>",&dVdt1Fit_2080);
   OutTree->Branch("cfd", "std::vector<std::vector<double>>",&CFD1Fit);
-  //OutTree->Branch("width", "std::vector<std::vector<double>>",&WIDTH1);
+  OutTree->Branch("width", "std::vector<std::vector<double>>",&WIDTH1);
   //OutTree->Branch("t_thr", "std::vector<float>",&t_thr1);  // time at which a certain thr (in V) is passed
   //OutTree->Branch("tot", "std::vector<float>",&tot1);
   OutTree->Branch("rms", "std::vector<float>",&rms1);
@@ -248,7 +248,7 @@ void analisi( ){
   width_inner.reserve(7);
   
   
-  while(myReader.Next() && j_counter<100000 ){ //  && j_counter<10000
+  while(myReader.Next() ){ //  && j_counter<10000
 
     w1_check.clear();
     t1_check.clear();
