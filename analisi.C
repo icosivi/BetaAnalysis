@@ -105,7 +105,11 @@ void TrkMerge_wfm() {
   std::cout << "Total number of events = " << tree->GetEntries() << "\n";
   // Loop over the events in the original TTree and fill the new TTree in the new file with each event
 
-  // Filein >>  fntrk >> fxtrk1 >> fytrk1 >> fchi2trk1 >> fxtrk2 >> fytrk2 >> fchi2trk1  ;   
+  // Filein >>  fntrk >> fxtrk1 >> fytrk1 >> fchi2trk1 >> fxtrk2 >> fytrk2 >> fchi2trk1  ; 
+
+  int tracker_offset=1; // MIMOSA
+  //int tracker_offset=0; // ADENIUM
+
 
   // needs to start from 0, otherwise it is offsink with the gigi2 file. 
   for (Long64_t i=0; i<tree->GetEntries(); i++){ 
@@ -115,14 +119,14 @@ void TrkMerge_wfm() {
 	  fReader.SetLocalEntry(i);
 	  // skip one events to be in sink with the tracker file
 	  
-	  if (i>0){ 
+	  if (i>tracker_offset){
 	    //Filein >>  fntrk >> fxtrk1 >> fytrk1 >> fchi2trk1 >> fxtrk2 >> fytrk2 >> fchi2trk1  ; 
       Filein >>  fntrk >> fxtrk1 >> fytrk1 >> fxtrk2 >> fytrk2 >> fchi2trk1 ;  
     } 
 
 	  if (fntrk % 10000 == 0){
 
-	      std::cout << "Event = " << i-1 << " " << fntrk << "\n";
+	      std::cout << "Event = " << i-tracker_offset-1 << " " << fntrk << "\n";
         	    
     }
 
@@ -314,7 +318,8 @@ void analisi( ){
       
   int j_counter = 0;
   
-  std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
+  //std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
+  std::vector<TTreeReaderArray<float>> voltageReader1 ;
   
   TTreeReaderValue<float> x1Reader(myReader, "xtrk1" );
   TTreeReaderValue<float> y1Reader(myReader, "ytrk1" );
@@ -324,12 +329,15 @@ void analisi( ){
       
   for(int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
   
-    voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, Form("w%i",ch_counter) ));
+    //voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, Form("w%i",ch_counter) ));
+    voltageReader1.push_back(TTreeReaderArray<float>(myReader, Form("w%i",ch_counter) ));
   
   }
   
-  voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg0" )); 
-  voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
+  //voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg0" )); 
+  //voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
+  voltageReader1.push_back(TTreeReaderArray<float>(myReader, "trg0" )); 
+  voltageReader1.push_back(TTreeReaderArray<float>(myReader, "trg1" ));
 
   std::vector<float> w1_check;
   std::vector<float> t1_check;
@@ -366,7 +374,7 @@ void analisi( ){
   width_inner.reserve(7);
   
   
-  while(myReader.Next() ){ //  && j_counter<10000
+  while(myReader.Next()   ) {  // && j_counter < 200000
 
     w1_check.clear();
     t1_check.clear();
