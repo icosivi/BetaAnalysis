@@ -1,0 +1,36 @@
+# Example card to run analysis over a given file or set of files for beta or TB analysis
+# Run the script with command `python3 analyseInPY3.py exampleCard.txt` - note that it must be run in Py3!
+
+# Specify the list of files to read and analyse here, in comma-separated format string
+
+files = "../../../../../../DESY_TB_Dec_24/data_TB/Run5_W16_W17_RT_Ex1/stats_Sr_Run5_Ch1-180V_Ch2-130V_Ch3-2750V_trig230V.root"
+#files = "../../../../../../DESY_TB_Dec_24/data_TB/Run5_W16_W17_RT_Ex1/stats_Sr_Run5_Ch1-180V_Ch2-130V_Ch3-2750V_trig230V.root"
+#files = "../../../../../../DESY_TB_Dec_24/data_TB/Run4_W5_RT_Ex1/stats_Sr_Run4_Ch1-120V_Ch2-120V_Ch3-2750V_trig230V.root"
+#files = "../../../../../../DESY_TB_Dec_24/data_TB/Run4_W5_RT_Ex1/stats_Sr_Run4_Ch1-110V_Ch2-110V_Ch3-2750V_trig230V.root"
+
+# To use a channel, specify whether it is a DUT or MCP or REF.
+# For DUT, a fit will be performed.
+# For MCP, time resolution will be extracted from the DUT temporally to this.
+# For REF, the channel will be shown in plotting but not fitted or used for time resolution
+# Specify channel with the board type, e.g. "DUT, SC" so during analysis the area can be accurately converted to charge
+# Also specify the thickness of the sensor, in microns
+
+CH_1 = "REF, SC"
+CH_2 = "DUT, SC, 20, [10]"
+CH_3 = "DUT, SC, 20, [12]"
+CH_4 = "MCP, None, (5, 2), (20,540)"
+CH_5 = 0
+CH_6 = 0
+CH_7 = 0
+CH_8 = 0
+
+# Specify what results and fits are to be performed
+
+first_pass = "False, 220"
+
+# Specify which selections should be applied to which channel (these are not applied simultaneously unless calculating time resolution
+# For time resolution, the MCP channel selection is applied with the corresponding DUT.
+# If the three-DUT setup is used, the cuts for the relevant channels for time resolution extraction will be applied
+# The inputs are PMAX_LOWER,PMAX_UPPER,NEGPMAX_LOWER,TMAX_LOWER,TMAX_UPPER (in mV and ns), written e.g. [20,34,40],160,-20,-0.5,0.5.
+# PMAX_LOWER has to be an array of comma-separated values of length equal to the number of files.
+# If the value is 0 (or [] or 0 for PMAX_LOWER), no cut will be performed.

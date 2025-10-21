@@ -1,3 +1,6 @@
 *.so
 *.pcm
 *.d
+*.png
+*.root
+*.csv
