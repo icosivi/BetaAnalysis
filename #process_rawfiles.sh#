@@ -1,8 +1,0 @@
-echo 'Starting file analysis'
-nohup nice root -lq Compilatore.C
-echo 'File analysis completed successfully'
-cd ~/Desktop/Luca/DiscordBots/
-python3 Betaalert.py
-cd ~/Desktop/BetaDAQ/BetaAnalysis/analisi_RSD/
-rm nohup.out
-

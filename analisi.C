@@ -169,20 +169,20 @@ void analisi(){
   std::vector<double> Area1_new;
   std::vector<double> UArea1_new;
   std::vector<double> DC_Area1;
-  //std::vector<double> RiseTime1Fit;
-  //std::vector<double> FallTime1Fit;
-  //std::vector<double> dVdt1Fit;
-  //std::vector<double> dVdt1Fit_2080;
+  std::vector<double> RiseTime1Fit;
+  std::vector<double> FallTime1Fit;
+  std::vector<double> dVdt1Fit;
+  std::vector<double> dVdt1Fit_2080;
   std::vector<std::vector<double>> CFD1Fit;
-  //std::vector<std::vector<double>> WIDTH1;
-  //std::vector<double> t_thr1;
+  std::vector<std::vector<double>> WIDTH1;
+  std::vector<double> t_thr1;
   std::vector<double> tot1;
   std::vector<double> rms1;
   std::vector<std::vector<double>> w1;
   std::vector<std::vector<double>> t1;
 
-  //std::vector<double> i_current;
-  //std::vector<double> v_bias;
+  std::vector<double> i_current;
+  std::vector<double> v_bias;
   
 
   Pmax1.reserve(20);
@@ -196,27 +196,27 @@ void analisi(){
   Area1_new.reserve(20);
   UArea1_new.reserve(20);
   DC_Area1.reserve(20);
-  //RiseTime1Fit.reserve(20);
-  //FallTime1Fit.reserve(20);
-  //dVdt1Fit.reserve(20);
-  //dVdt1Fit_2080.reserve(20);
-  //t_thr1.reserve(20);
+  RiseTime1Fit.reserve(20);
+  FallTime1Fit.reserve(20);
+  dVdt1Fit.reserve(20);
+  dVdt1Fit_2080.reserve(20);
+  t_thr1.reserve(20);
   tot1.reserve(20);
   rms1.reserve(20);
   CFD1Fit.reserve(20);
-  //WIDTH1.reserve(20);
+  WIDTH1.reserve(20);
   w1.reserve(20);
   t1.reserve(20);
   Analyzer *a1=new Analyzer();
 
-  //i_current.reserve(20);
-  //v_bias.reserve(20);
+  i_current.reserve(20);
+  v_bias.reserve(20);
 
   int event;
-  //double timestamp;
+  double timestamp;
 
   OutTree->Branch("event",&event);
-  //OutTree->Branch("time",&timestamp);
+  OutTree->Branch("time",&timestamp);
   OutTree->Branch("w", "std::vector<std::vector<double>>", &w1);
   OutTree->Branch("t", "std::vector<std::vector<double>>" ,&t1);
   OutTree->Branch("pmax", "std::vector<double>",&Pmax1Fit);
@@ -228,25 +228,26 @@ void analisi(){
   OutTree->Branch("area_new", "std::vector<double>",&Area1_new);
   OutTree->Branch("uarea_new", "std::vector<double>",&UArea1_new);
   OutTree->Branch("dc_area", "std::vector<double>",&DC_Area1);
-  //OutTree->Branch("risetime", "std::vector<double>",&RiseTime1Fit);
-  //OutTree->Branch("falltime", "std::vector<double>",&FallTime1Fit);
-  //OutTree->Branch("dvdt", "std::vector<double>",&dVdt1Fit);
-  //OutTree->Branch("dvdt_2080", "std::vector<double>",&dVdt1Fit_2080);
+  OutTree->Branch("risetime", "std::vector<double>",&RiseTime1Fit);
+  OutTree->Branch("falltime", "std::vector<double>",&FallTime1Fit);
+  OutTree->Branch("dvdt", "std::vector<double>",&dVdt1Fit);
+  OutTree->Branch("dvdt_2080", "std::vector<double>",&dVdt1Fit_2080);
   OutTree->Branch("cfd", "std::vector<std::vector<double>>",&CFD1Fit);
-  //OutTree->Branch("width", "std::vector<std::vector<double>>",&WIDTH1);
-  //OutTree->Branch("t_thr", "std::vector<double>",&t_thr1);  // time at which a certain thr (in V) is passed
+  OutTree->Branch("width", "std::vector<std::vector<double>>",&WIDTH1);
+  OutTree->Branch("t_thr", "std::vector<double>",&t_thr1);  // time at which a certain thr (in V) is passed
   OutTree->Branch("tot", "std::vector<double>",&tot1);
   OutTree->Branch("rms", "std::vector<double>",&rms1);
   
-  //OutTree->Branch("I", "std::vector<double>", &i_current);
-  //OutTree->Branch("V", "std::vector<double>", &v_bias);
+  OutTree->Branch("I", "std::vector<double>", &i_current);
+  OutTree->Branch("V", "std::vector<double>", &v_bias);
   
-  int j_counter = 2;
+ 
+  int j_counter = 0;
 
   std::vector<TTreeReaderArray<double>> voltageReader1 ;
   std::vector<TTreeReaderArray<double>> timeReader1 ;
-  //TTreeReaderArray<double> currentReader1(myReader,"i_current") ;
-  //TTreeReaderArray<double> biasReader1(myReader,"v_bias") ;
+  TTreeReaderArray<double> currentReader1(myReader,"i_current") ;
+  TTreeReaderArray<double> biasReader1(myReader,"v_bias") ;
 
   //int enable_channel = 0;
   //for(int ch_counter=1; ch_counter<=ch_number; ch_counter++ ){
@@ -260,7 +261,7 @@ void analisi(){
     }    
   }
 
-  //TTreeReaderValue<double> tstampReader1(myReader,"i_timestamp") ;
+  TTreeReaderValue<double> tstampReader1(myReader,"i_timestamp") ;
 
   int ps_total = 0 ;
   
@@ -276,22 +277,25 @@ void analisi(){
 
   }
 
+
+
   while(myReader.Next()){
 
-    //timestamp = *tstampReader1;
-    //i_current.clear();
-    //v_bias.clear();
+    timestamp = *tstampReader1;
+    i_current.clear();
+    v_bias.clear();
     
-    //for( int ps_counter=0; ps_counter<ps_total; ps_counter++ ){
+    for( int ps_counter=0; ps_counter<ps_total; ps_counter++ ){
 
       //i_current.push_back( *currentReader1.at(ps_counter) ) ;
       //v_bias.push_back( *biasReader1.at(ps_counter) ) ;
-    //  i_current.push_back( currentReader1[ps_counter] ) ;
-    //  v_bias.push_back( biasReader1[ps_counter] ) ;
+      i_current.push_back( currentReader1[ps_counter] ) ;
+      v_bias.push_back( biasReader1[ps_counter] ) ;
       //i_current.push_back( 0 ) ;
       //v_bias.push_back( 0 ) ;
 
-    //}
+    }
+
 
     Pmax1.clear();
     Pmax1Fit.clear();
@@ -304,15 +308,15 @@ void analisi(){
     Area1_new.clear();
     UArea1_new.clear();
     DC_Area1.clear();
-    //RiseTime1Fit.clear();
-    //FallTime1Fit.clear();
-    //dVdt1Fit.clear();
-    //dVdt1Fit_2080.clear();
-    //t_thr1.clear();
+    RiseTime1Fit.clear();
+    FallTime1Fit.clear();
+    dVdt1Fit.clear();
+    dVdt1Fit_2080.clear();
+    t_thr1.clear();
     tot1.clear();
     rms1.clear();
     CFD1Fit.clear();
-    //WIDTH1.clear();
+    WIDTH1.clear();
     w1.clear();
     t1.clear();
     
@@ -332,12 +336,14 @@ void analisi(){
 
  	    if( active_channel[ch_counter-1]==1){
 
-        if( j_counter == 2 ){
+        if( j_counter == 0 ){
+
           time_window[0] = timeReader1.at(active_ch_counter).At(0);
           time_window[1] = timeReader1.at(active_ch_counter).At(timeReader1.at(active_ch_counter).GetSize()-1);
           
           cout<<" "<<endl;
           cout<<"Time window: "<<time_window[0]<<"; "<<time_window[1]<<endl;
+        
         }
 
  		    if( invert_channel[ch_counter-1]==1 ){
@@ -361,6 +367,7 @@ void analisi(){
 
  		    w1.push_back( w1_inner );
  		    t1.push_back( t1_inner );
+
 
  		    if(w1_inner.size()<maxIndex || t1_inner.size()<maxIndex){
 
@@ -399,17 +406,17 @@ void analisi(){
 		    Area1_new.push_back( a1->New_Pulse_Area(tp_pair1_fit,tp_pair1.second,"Simpson",search_range)*voltage_const*time_const ) ;//mV*ns  
 		    UArea1_new.push_back( a1->New_Undershoot_Area(tp_pair1_fit,neg_tp_pair1_fit, neg_tp_pair1.second,"Simpson",search_range)*voltage_const*time_const ) ;//mV*ns
 		    DC_Area1.push_back( a1->DC_Area(baseline_correction)*voltage_const*time_const ); //mV*ns
-                    //RiseTime1Fit.push_back( a1->Find_Rise_Time_with_GausFit(tp_pair1_fit, tp_pair1.second, 0.1, 0.9)*time_const ) ; //ns
-		    //FallTime1Fit.push_back( a1->Find_Fall_Time_with_GausFit(tp_pair1_fit, tp_pair1.second, 0.1, 0.9)*time_const ) ; //ns
-		    //dVdt1Fit.push_back( a1->Find_Dvdt_with_GausFit(20,0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const) ) ;  //mV/ns
-		    //dVdt1Fit_2080.push_back( a1->Find_Dvdt2080_with_GausFit(0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const) );  //mV/ns
-		    //t_thr1.push_back( a1->Find_Time_At_Threshold_with_GausFit(tot_levels[0],tp_pair1_fit,tp_pair1.second)*time_const ); //ns  
+        RiseTime1Fit.push_back( a1->Find_Rise_Time_with_GausFit(tp_pair1_fit, tp_pair1.second, 0.1, 0.9)*time_const ) ; //ns
+		    FallTime1Fit.push_back( a1->Find_Fall_Time_with_GausFit(tp_pair1_fit, tp_pair1.second, 0.1, 0.9)*time_const ) ; //ns
+		    dVdt1Fit.push_back( a1->Find_Dvdt_with_GausFit(20,0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const) ) ;  //mV/ns
+		    dVdt1Fit_2080.push_back( a1->Find_Dvdt2080_with_GausFit(0,tp_pair1_fit,tp_pair1.second)*(voltage_const/time_const) );  //mV/ns
+		    t_thr1.push_back( a1->Find_Time_At_Threshold_with_GausFit(tot_levels[0],tp_pair1_fit,tp_pair1.second)*time_const ); //ns  
 		    tot1.push_back( a1->Find_Time_Over_Threshold(tot_levels[0],tp_pair1,tot_levels[1])*time_const ) ; //ns
 		    rms1.push_back( a1->Find_Noise(n_points_baseline)*voltage_const ) ; //mV
 
 		    std::vector<double> cf_inner ;
 		    std::vector<double> width_inner ;
-                    cout << "Channel " << active_ch_counter << " and jcounter " << j_counter << endl;
+
         cf_inner.reserve(7);
         width_inner.reserve(7);
 
@@ -422,7 +429,7 @@ void analisi(){
 		    }
 
 		    CFD1Fit.push_back( cf_inner ) ;
-		    //WIDTH1.push_back( width_inner ) ;
+		    WIDTH1.push_back( width_inner ) ;
 
         active_ch_counter++;
 
