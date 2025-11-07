@@ -32,7 +32,7 @@ def round_to_sig_figs(x, sig):
   else:
     return round(x, sig - int(math.floor(math.log10(abs(x)))) - 1)
 
-def get_fit_results_TR(arr_of_fits, arr_of_biases, arr_of_nevents, dut_channels, mcp_channel):
+def get_fit_results_TR(arr_of_fits, arr_of_biases, arr_of_nevents, dut_channels, mcp_channel, arr_sigma_uncs_half_range):
 
   arr_of_ch = []
   arr_of_biases_fitted = []
@@ -57,9 +57,9 @@ def get_fit_results_TR(arr_of_fits, arr_of_biases, arr_of_nevents, dut_channels,
     ndf = fit_func[0].GetNDF()  # Number of degrees of freedom
     arr_of_mean.append(round_to_sig_figs(mean,4))
     arr_of_sigma.append(sigma)
-    arr_of_unc_sig.append(unc_sig)
+    arr_of_unc_sig.append(arr_sigma_uncs_half_range[channel_i][0])
     arr_up_var.append(var_up)
-    arr_up_var_unc.append(var_up_err)
+    arr_up_var_unc.append(arr_sigma_uncs_half_range[channel_i][2])
     arr_of_ampl.append(round_to_sig_figs(amplitude,3))
     arr_of_ch.append("Ch" + str(dut_channels[channel_i]))
     arr_of_biases_fitted.append(arr_of_biases[channel_i])
@@ -151,3 +151,36 @@ def plot_fit_curves(xLower,xUpper,fit_type,hist_to_fit,channel_index,biasVal):
   thisFit.SetLineColor(channel_index+1)
   #thisFit.SetLineStyle(2)
   return thisFit
+
+# calculating uncertainty as half the range between the max and min sigma values were the set of events
+# used to define nominal time res split into three unique sets of events then fitted for sigma
+def compute_sigma_uncertainty(xLower,xUpper,fit_type,hist_to_fit,channel_index,biasVal):
+  sub_hists = [hist_to_fit.Clone(f"{hist_to_fit.GetName()}_sub{i}") for i in range(3)]
+  for h in sub_hists:
+    h.Reset()
+
+  n_entries = int(hist_to_fit.GetEntries())
+  if n_entries < 6:
+    return 0.0
+
+  rng = np.random.default_rng(seed=42)
+
+  for b in range(1, hist_to_fit.GetNbinsX() + 1):
+    n_bin = int(hist_to_fit.GetBinContent(b))
+    if n_bin > 0:
+      split = rng.multinomial(n_bin, [1/3, 1/3, 1/3])
+      for i in range(3):
+        sub_hists[i].SetBinContent(b, split[i])
+
+  sigmas = []
+  for i, sub_hist in enumerate(sub_hists):
+    if sub_hist.GetEntries() > 5:
+      fit = plot_fit_curves(xLower, xUpper, fit_type, sub_hist, channel_index, f"{biasVal}_sub{i}")
+      sigma = fit.GetParameter(2)
+      sigmas.append(sigma)
+
+  if len(sigmas) < 2:
+    return 0.0
+
+  sigma_uncert = (max(sigmas) - min(sigmas)) / 2.0
+  return sigma_uncert
