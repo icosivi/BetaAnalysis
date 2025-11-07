@@ -18,7 +18,7 @@ import csv
 import math
 import sys
 
-from proc_tools_TR import get_fit_results_TR, hist_tree_file_timeres, plot_fit_curves
+from proc_tools_TR import get_fit_results_TR, hist_tree_file_timeres, plot_fit_curves, compute_sigma_uncertainty
 from proc_tools import getBias
 
 class plotTRVar:
@@ -117,12 +117,18 @@ class plotTRVar:
     print(f"[BETA ANALYSIS]: [TIME RESOLUTION] Saved time resolution as timeres/"+self.save_name)
 
     arr_of_fits = []
+    arr_sigma_uncs_half_range = []
     for i, nom_up_down_hists in enumerate(arr_of_hists):
       fit_down_up_dev = []
+      fit_down_up_uncs = []
       for j, toa_thresh_hist in enumerate(nom_up_down_hists):
         thisFit = plot_fit_curves(self.xLower, self.xUpper, "gaus", toa_thresh_hist, channel_of_dut[i], arr_of_biases[i])
         fit_down_up_dev.append(thisFit)
+        sigma_unc_half_range = compute_sigma_uncertainty(self.xLower, self.xUpper, "gaus", toa_thresh_hist, channel_of_dut[i], arr_of_biases[i])
+        fit_down_up_uncs.append(sigma_unc_half_range)
       arr_of_fits.append(fit_down_up_dev)
+      arr_sigma_uncs_half_range.append(fit_down_up_uncs)
 
-    fit_results = get_fit_results_TR(arr_of_fits, arr_of_biases, arr_of_nevents, channel_of_dut, mcp_tr)
+    fit_results = get_fit_results_TR(arr_of_fits, arr_of_biases, arr_of_nevents, channel_of_dut, mcp_tr, arr_sigma_uncs_half_range)
+
     return fit_results
