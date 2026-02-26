@@ -72,8 +72,7 @@ double Falling_Edge_CFD_Time_with_GausFit(const double fraction, const std::pair
 // Rise Time
 double Find_Rise_Time(const std::pair<double, unsigned int> Pmax, double bottom = 0.1, double top = 0.9);
 double Find_Rise_Time_with_GausFit(const std::pair<double, double> Pmax, unsigned int imax, double bottom = 0.1, double top = 0.9);
-double Find_Rise_Time_with_RELU_fit(const std::pair<double, double> Pmax, unsigned int imax, double bottom = 0.1, double top = 0.9);
-double Find_Rise_Time_with_LinFit_Rob(const std::pair<double, double> Pmax, unsigned int imax, double bottom = 0.1, double top = 0.9);
+double Find_Rise_Time_with_GausFit_LINFIT_Rob(const std::pair<double, double> Pmax, unsigned int imax, double bottom = 0.1, double top = 0.9);
 double Find_Fall_Time_with_GausFit(const std::pair<double, double> Pmax, unsigned int imax, double bottom = 0.1, double top = 0.9);
 
 //==========================================================================
@@ -140,10 +139,6 @@ double Find_Time_Over_Threshold(const double thresholdLevel, const std::pair<dou
   const unsigned int  expect_count = 6
 );*/
 
-//==========================================================================
-// getters
-inline std::vector<double> const& getVoltages() const { return pvoltage; }
-inline std::vector<double> const& getTimes() const { return ptime; }
   
  private:
 

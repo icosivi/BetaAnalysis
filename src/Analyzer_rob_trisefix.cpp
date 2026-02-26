@@ -19,8 +19,6 @@
 #include <TTreeReaderArray.h>
 #include <TBranch.h>
 #include <TFile.h>
-//#include <TLatex.h>
-//#include <TLine.h>
 #include <TH1.h>
 #include <TF1.h>
 #include <TGraph.h>
@@ -925,140 +923,63 @@ double rise = 0.0;
 
 }
 
-double Analyzer::Find_Rise_Time_with_LinFit_Rob(
-  const std::pair<double, double> Pmax, unsigned int imax, double bottom , double top
-) {
-  static TF1 ff("ff_lin_rise_time_rob", "1++x");
+double Analyzer::Find_Rise_Time_with_GausFit_LINFIT_Rob(const std::pair<double, double> Pmax, unsigned int imax, double bottom , double top){
+  double rise = 0.0;
+  //unsigned int itop = this->pvoltage.size()-2, ibottom = 0;
+  unsigned int itop = 400, ibottom = 400;
+  bool ten = true, ninety = true;
 
-  unsigned int itop = 2, ibottom = 0;
-  const double pmax = Pmax.first;
-  const double lowerval = pmax * bottom;
-  const double upperval = pmax * top;
+  //unsigned int imax = Pmax.second;
+  double pmax = Pmax.first;
 
-  for(int j = imax; j > 0; j--) {
-    if(pvoltage.at(j) < upperval) {
-      itop = j;
-      break;
+  double lowerval = pmax * bottom;
+  double upperval = pmax * top;
+
+  for( int j = imax; j > 0; j--)
+  {
+    if( ninety && this->pvoltage.at(j) < upperval)
+    {
+      itop    = j;     //find the index right below 90%
+      ninety  = false;
     }
-  }
-  for (int j = itop - 1; j >= 0; j--) {
-    // if(fabs(pvoltage.at(j) - lowerval) < fabs(pvoltage[ibottom] - lowerval)) {
-    if(pvoltage.at(j) < lowerval) {
-      ibottom = j;
-      break;
+    if( ten && this->pvoltage.at(j) < lowerval)
+    {
+      ibottom = j;      //find the index right below 10%
+      ten     = false;
     }
+    if( !ten && !ninety ){ break; }
   }
-  if(ibottom == this->pvoltage.size()-1) ibottom--;
-  if(itop == this->pvoltage.size()-1) itop--;
-  if (itop - ibottom + 1 < 2) ibottom = itop - 1;
+  if(ibottom == this->pvoltage.size()-1){ibottom--;}
+  if(itop == this->pvoltage.size()-1){itop--;}
 
   const int N = (itop - ibottom + 1);
+  double Sx = 0.0, Sy = 0.0, Sxx = 0.0, Sxy = 0.0;
 
-  TGraph g(N, ptime.data()+ibottom, pvoltage.data()+ibottom);
-  g.Fit(&ff, "QNC");
+  for (unsigned int i = ibottom; i <= itop; i++){
+    double t = ptime[i];
+    double v = pvoltage[i];
 
-  const double a = ff.GetParameter(0);
-  const double b = ff.GetParameter(1);
+    Sx  += t;
+    Sy  += v;
+    Sxx += t * t;
+    Sxy += t * v;
+  }
 
-  const double t10 = (lowerval  - a) / b;
-  const double t90 = (upperval  - a) / b;
-  return t90 - t10;
+  const double denom = (N * Sxx - Sx * Sx);
+  if (fabs(denom) < 1e-20)
+    return 0.0;
+  double b = (N * Sxy - Sx * Sy) / denom;
+  double a = (Sy - b * Sx) / N;
+  if (b <= 0) 
+    return 0.0;
+
+  double t10 = (lowerval  - a) / b;
+  double t90 = (upperval  - a) / b;
+  rise = t90 - t10
+
+  return rise;
 }
 
-double Analyzer::Find_Rise_Time_with_RELU_fit(
-  const std::pair<double, double> Pmax, unsigned int imax, double bottom, double top
-) {
-  static TF1 fitFunc("Rise_Time_RELU_fit_func",
-                     "[a] + ((x > [x0]) ? ([b] * (x - [x0])) : 0.0)");
-
-  // // Debug canvas
-  // static TCanvas* debugC = new TCanvas("c", "c", 800, 600);
-  // static unsigned debugI = 0;
-  // static TLatex debugL;
-  // static TLine debugLn;
-  // static std::map<int, unsigned> debugH;
-  // debugL.SetTextSize(0.035);
-  // debugL.SetNDC(true);
-  // debugLn.SetLineColor(kBlack);
-  // debugLn.SetLineStyle(kSolid);
-  // debugLn.SetLineWidth(3);
-  // gStyle->SetOptStat(0);
-  // gStyle->SetOptFit(0);
-
-  // Find rough estimates for top and bottom values
-  unsigned iTop = imax;
-  for (; iTop > 0; --iTop)
-    if (pvoltage.at(iTop) < top * Pmax.first)
-      break;
-  unsigned iBtm = iTop-1;
-  for (; iBtm > 0; --iBtm)
-    if (pvoltage.at(iBtm) < bottom * Pmax.first)
-      break;
-  double pTop = pvoltage.at(iTop);
-  double pBtm = pvoltage.at(iBtm);
-  double tTop = ptime.at(iTop);
-  double tBtm = ptime.at(iBtm);
-  const double tDelta = tTop - tBtm;
-  double slope = (pTop - pBtm) / tDelta;
-
-  // Graph of the waveforms that autodeletes
-  TGraph g(pvoltage.size(), ptime.data(), pvoltage.data());
-  // Initial parameter guesses
-  fitFunc.SetParameter("a", 0.0); // Baseline should have been corrected
-  fitFunc.SetParLimits(fitFunc.GetParNumber("a"), -Pmax.first * 0.5, Pmax.first * 0.5);
-  fitFunc.SetParameter("x0", tBtm);
-  const double rl = tTop - 4 * tDelta;
-  const double ru = tTop;
-  fitFunc.SetParLimits(fitFunc.GetParNumber("x0"), rl, ru);
-  fitFunc.SetParameter("b", slope);
-  fitFunc.SetParLimits(fitFunc.GetParNumber("b"), slope * 0.1, slope * 10);
-  fitFunc.SetRange(rl, ru);
-  g.Fit(&fitFunc, "RNQ"); // No debug plots
-  // g.Fit(&fitFunc, "RQ"); // Debug plots
-
-  // Compute top and bottom values wrt the fitted baseline `a`
-  const double baseline = fitFunc.GetParameter("a");
-  slope = fitFunc.GetParameter("b");
-  const double x0 = fitFunc.GetParameter("x0");
-  pTop = Pmax.first - (1 - top) * (Pmax.first - baseline);
-  pBtm = Pmax.first - (1 - bottom) * (Pmax.first - baseline);
-  tTop = x0 + (pTop - baseline) / slope;
-  tBtm = x0 + (pBtm - baseline) / slope;
-
-  // // Debug plots
-  // if ((Pmax.first > 50e-3) && (++debugH[TMath::FloorNint(TMath::Log10(tTop-tBtm)*10)]) < 6) {
-  //   g.SetMarkerStyle(kCircle);
-  //   debugC->cd();
-  //   g.Draw("APL");
-
-  //   debugC->Update();
-  //   g.GetHistogram()->GetXaxis()->SetRangeUser(rl - (ru-rl)*2, ru+(ru-rl)*2);
-
-  //   for (int i = 0; i < fitFunc.GetNpar(); ++i) {
-  //     double parlow, parhi;
-  //     fitFunc.GetParLimits(i, parlow, parhi);
-  //     debugL.DrawLatexNDC(0.15, 0.85 - 0.05 * i, TString::Format(
-  //       "%s = %.3g #pm %3.g (%.3g to %.3g)",
-  //       fitFunc.GetParName(i),
-  //       fitFunc.GetParameter(i),
-  //       fitFunc.GetParError(i),
-  //       parlow,
-  //       parhi
-  //     ));
-  //   }
-
-  //   debugLn.DrawLine(tBtm - 1e-10, pBtm, tBtm + 1e-10, pBtm);
-  //   debugLn.DrawLine(tTop - 1e-10, pTop, tTop + 1e-10, pTop);
-  //   debugL.DrawLatexNDC(0.15, 0.6, TString::Format(
-  //     "t_{Top} = %.3g, p_{Top} = %.3g, t_{Btm} = %.3g, p_{Btm} = %.3g, t_{rise} = %.3g",
-  //     tTop, pTop, tBtm, pBtm, tTop - tBtm
-  //   ));
-
-  //   debugC->Print(TString::Format("debug_%04d.png", debugI++));
-  // }
-
-  return tTop - tBtm;
-}
 
 double Analyzer::Find_Fall_Time_with_GausFit(const std::pair<double, double> Pmax, unsigned int imax, double bottom , double top){
 
