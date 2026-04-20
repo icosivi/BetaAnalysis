@@ -7,18 +7,18 @@ class Chameleon {
 public:
   Chameleon() {};
   explicit Chameleon(const std::string&);
-  explicit Chameleon(double);
+  explicit Chameleon(float);
   explicit Chameleon(const char*);
 
   Chameleon(const Chameleon&);
   Chameleon& operator=(Chameleon const&);
 
-  Chameleon& operator=(double);
+  Chameleon& operator=(float);
   Chameleon& operator=(std::string const&);
 
 public:
   operator std::string() const;
-  operator double     () const;
+  operator float     () const;
 private:
   std::string value_;
 };

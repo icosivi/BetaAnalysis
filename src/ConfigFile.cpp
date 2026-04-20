@@ -53,7 +53,7 @@ Chameleon const& ConfigFile::Value(std::string const& section, std::string const
   return ci->second;
 }
 
-Chameleon const& ConfigFile::Value(std::string const& section, std::string const& entry, double value) {
+Chameleon const& ConfigFile::Value(std::string const& section, std::string const& entry, float value) {
   try {
     return Value(section, entry);
   } catch(const char *) {
