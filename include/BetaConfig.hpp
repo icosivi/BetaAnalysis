@@ -45,8 +45,8 @@ struct BetaConfig
   const char* Pmax_search_MinRange_key = "Pmax_search_MinRange";
   const char* Pmax_search_MaxRange_key = "Pmax_search_MaxRange";
 
-  double time_scalar;
-  double voltage_scalar;
+  float time_scalar;
+  float voltage_scalar;
 
   //bool ScopeTimestamp;
 
@@ -71,12 +71,12 @@ struct BetaConfig
   //std::string directory_location;
 
   bool trimTimeWindow;
-  double trimTimeRangeMin;
-  double trimTimeRangeMax;
+  float trimTimeRangeMin;
+  float trimTimeRangeMax;
 
   bool limiting_Pmax_search_window;
-  double Pmax_search_MinRange;
-  double Pmax_search_MaxRange;
+  float Pmax_search_MinRange;
+  float Pmax_search_MaxRange;
 
   void ReadConfig( std::string configFile );
   //void CreateConfig();

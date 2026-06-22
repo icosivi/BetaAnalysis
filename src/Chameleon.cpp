@@ -13,7 +13,7 @@ Chameleon::Chameleon(const char* c) {
   value_=c;
 }
 
-Chameleon::Chameleon(double d) {
+Chameleon::Chameleon(float d) {
   std::stringstream s;
   s<<d;
   value_=s.str();
@@ -28,7 +28,7 @@ Chameleon& Chameleon::operator=(Chameleon const& other) {
   return *this;
 }
 
-Chameleon& Chameleon::operator=(double i) {
+Chameleon& Chameleon::operator=(float i) {
   std::stringstream s;
   s << i;
   value_ = s.str();
@@ -44,6 +44,6 @@ Chameleon::operator std::string() const {
   return value_;
 }
 
-Chameleon::operator double() const {
+Chameleon::operator float() const {
   return atof(value_.c_str());
 }
