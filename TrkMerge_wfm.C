@@ -1,4 +1,4 @@
-void TrkMerge_wfm(TString originalFileName = "/media/tb_pc/320935fb-07d3-4c77-8da1-ced50467a779/DC_RSD/TB8/raw/W3_C44_DC19_220V_Run304.root", TString treeName= "wfm",TString  newFileName= "/media/tb_pc/320935fb-07d3-4c77-8da1-ced50467a779/DC_RSD/TB8/raw/with_tracks/W3_C44_DC19_220V_Run304_Tracks_DUT.root", TString  TrkFile= "/home/tb_pc/Desktop/TestBeam/Tracking/data8/data/tracks_304_withDUT.csv") {
+void TrkMerge_wfm(TString originalFileName = "/media/tb_pc/320935fb-07d3-4c77-8da1-ced50467a779/DC_RSD/TB7/raw/W3_A1_DC5FNAL_1950.root", TString treeName= "wfm",TString  newFileName= "/media/tb_pc/320935fb-07d3-4c77-8da1-ced50467a779/DC_RSD/TB7/raw/run_1950_tracks.root", TString  TrkFile= "/media/tb_pc/320935fb-07d3-4c77-8da1-ced50467a779/DC_RSD/TB7/tracks/tracks_1950.csv") {
 
   #include <iostream>
   double fxtrk1, fytrk1, fxtrk2, fytrk2, fchi2trk1;
@@ -58,8 +58,9 @@ void TrkMerge_wfm(TString originalFileName = "/media/tb_pc/320935fb-07d3-4c77-8d
     //    Filein >>  fntrk >> fxtrk1 >> fytrk1 >> fchi2trk1 >> fxtrk2 >> fytrk2 >> fchi2trk1  ;   
 
     // needs to start from 0, otherwise it is offsink with the gigi2 file. 
-    for (Long64_t i=0; i<tree->GetEntries(); i++) 
-    //for (Long64_t i=1; i<1000; i++)
+    //for (Long64_t i=0; i<tree->GetEntries(); i++)
+    for (Long64_t i=0; i<300000; i++) 
+  
       {	    
 	tree->GetEntry(i);
 	fReader.SetLocalEntry(i);

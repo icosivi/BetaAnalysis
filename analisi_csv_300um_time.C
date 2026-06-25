@@ -42,46 +42,47 @@
 void analisi_csv( ){
 
   float pixel_pos[8][2] = {
-    {0.250f, 0.250f},
-    {0.750f, 0.250f},
-    {1.250f, 0.250f},
-    {0.250f, 0.750f},
-    {0.750f, 0.750f},
-    {1.250f, 0.750f},
-    {0.250f, 1.250f},
-    {0.750f, 1.250f}
+    {0.150f, 0.150f},
+    {0.450f, 0.150f},
+    {0.150f, 0.450f},
+    {0.450f, 0.450f},
+    {0.150f, 0.750f},
+    {0.450f, 0.750f},
+    {0.150f, 1.050f},
+    {0.450f, 1.050f}
   };
 
   int mask[8][4] = {
-    {4, 6, 7, 5},
-    {3, 4, 5, 2},
-    {1, 3, 2, 0},
-    {5, 7, 8, 10},
-    {2, 5, 10, 13},
-    {0, 2, 13, 15},
-    {10, 8, 9, 11},
-    {13, 10, 11, 12}
+    {3, 5, 6, 4},
+    {2, 3, 4, 1},
+    {4, 6, 7, 13},
+    {1, 4, 13, 0},
+    {13, 7, 9, 11},
+    {0, 13, 11, 15},
+    {11, 9, 10, 12},
+    {15, 11, 12, 14}
   };
 
-  double delays[16] = {}; //DA CALCOLARE 
+  double delays[16] = {-3.112, -3.279, -3.3, -3.414, -3.457, -3.472, -3.486, -3.46, 0., -3.152, -3.188, -3.244, -3.234, -3.18, -3.141, -3.186}; 
   
   int number_samplings = 10;
   //double main_vec[4*number_samplings];
 
   ofstream f;
-   //f.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run608_ReReco_time_FASE.csv");
-   //f.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run605_ReReco_time_FASE.csv");
-   //f.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run602_ReReco_time_FASE.csv");
-   f.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB8_DCRSD/csv/samples_in_fase/run607_ReReco_time_FASE_new.csv");
-   //f.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB8_DCRSD/csv/samples_in_fase/run609_ReReco_time_FASE.csv");
+  f.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB8_DCRSD/csv/samples_in_fase/run103_time-simple.csv");
+  //f.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run103_ReReco_time_FASE_ter.csv");
+  //f.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run106_ReReco_time_FASE_bis.csv");
+  //f.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run101_ReReco_time_FASE.csv");
+  //f.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run108_ReReco_time_FASE.csv");
+  //f.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run110_ReReco_time_FASE.csv");
 
-   ofstream f_bis;
-   //f_bis.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run608_ReReco_time_CHECK.csv");
-   //f_bis.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run605_ReReco_time_CHECK.csv");
-   //f_bis.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run602_ReReco_time_CHECK.csv");
-   f_bis.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB8_DCRSD/csv/samples_in_fase/run607_ReReco_time_CHECK_new.csv");
-   //f_bis.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB8_DCRSD/csv/samples_in_fase/run609_ReReco_time_CHECK.csv");
-
+  ofstream f_bis;
+  f_bis.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB8_DCRSD/csv/samples_in_fase/run103_time-simple_CHECK.csv");
+  //f_bis.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run103_ReReco_time_CHECK_ter.csv");
+  //f_bis.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run106_ReReco_time_CHECK_bis.csv");
+  //f_bis.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run101_ReReco_time_CHECK.csv");
+  //f_bis.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run108_ReReco_time_CHECK.csv");
+  //f_bis.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run110_ReReco_time_CHECK.csv");
 
   f << "x,y,t"; // Initial x and y
 
@@ -312,7 +313,7 @@ void analisi_csv( ){
   width_inner.reserve(7);
   
   
-  while(myReader.Next() && j_counter<1000000 ){ //  && j_counter<300000
+  while(myReader.Next() ){ //  && j_counter<10000
 
     w1_check.clear();
     t1_check.clear();
@@ -698,7 +699,7 @@ void analisi_csv( ){
     for(int j=0; j<4*number_samplings; j++)  main_vec_bis[j]=0;
 
 
-    for(int j=0; j<int(w1.at(max_index_all).size())-10; j++){
+    for(int j=0; j<int(w1.at(max_index_all).size()); j++){
 
       if(t1.at(max_index_all).at(j)<=Tmax1Fit.at(max_index_all) && t1.at(max_index_all).at(j+1)>=Tmax1Fit.at(max_index_all)){
 
@@ -708,7 +709,7 @@ void analisi_csv( ){
     }
 
 
-    for(int j=0; j<int(w1.at(max_index_all).size())-10; j++){
+    for(int j=0; j<int(w1.at(max_index_all).size()); j++){
 
       if(t1.at(max_index_all).at(j)<=Tmax1Fit.at(max_index_all) && t1.at(max_index_all).at(j+1)>=Tmax1Fit.at(max_index_all)){
 
@@ -751,13 +752,15 @@ void analisi_csv( ){
               
           //dt =  ( CFD1Fit[mask[max_index][0]][4]*std::pow(PmaxFit[mask[max_index][0]],2)+CFD1Fit[mask[max_index][1]][4]*std::pow(PmaxFit[mask[max_index][1]],2)+CFD1Fit[mask[max_index][2]][4]*std::pow(PmaxFit[mask[max_index][2]],2)+CFD1Fit[mask[max_index][3]][4]*std::pow(PmaxFit[mask[max_index][3]],2) )/( std::pow(PmaxFit[mask[max_index][0]],2)+std::pow(PmaxFit[mask[max_index][1]],2)+std::pow(PmaxFit[mask[max_index][2]],2)+std::pow(PmaxFit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2];
                
-          dt =  ( (CFD1Fit[mask[max_index][0]][4]-delays[mask[max_index][0]])*std::pow(PmaxFit[mask[max_index][0]],2)+(CFD1Fit[mask[max_index][1]][4]-delays[mask[max_index][1]])*std::pow(PmaxFit[mask[max_index][1]],2)+(CFD1Fit[mask[max_index][2]][4]-delays[mask[max_index][2]])*std::pow(PmaxFit[mask[max_index][2]],2)+(CFD1Fit[mask[max_index][3]][4]-delays[mask[max_index][3]])*std::pow(PmaxFit[mask[max_index][3]],2) )/( std::pow(PmaxFit[mask[max_index][0]],2)+std::pow(PmaxFit[mask[max_index][1]],2)+std::pow(PmaxFit[mask[max_index][2]],2)+std::pow(PmaxFit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2];
+          //dt =  ( (CFD1Fit[mask[max_index][0]][4]-delays[mask[max_index][0]])*std::pow(PmaxFit[mask[max_index][0]],2)+(CFD1Fit[mask[max_index][1]][4]-delays[mask[max_index][1]])*std::pow(PmaxFit[mask[max_index][1]],2)+(CFD1Fit[mask[max_index][2]][4]-delays[mask[max_index][2]])*std::pow(PmaxFit[mask[max_index][2]],2)+(CFD1Fit[mask[max_index][3]][4]-delays[mask[max_index][3]])*std::pow(PmaxFit[mask[max_index][3]],2) )/( std::pow(PmaxFit[mask[max_index][0]],2)+std::pow(PmaxFit[mask[max_index][1]],2)+std::pow(PmaxFit[mask[max_index][2]],2)+std::pow(PmaxFit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2];
+          dt =  CFD1Fit[ch_mcp][2];
 
         }else{
 
           //dt =  (CFD1Fit[mask[max_index][0]][4]*std::pow(PmaxFit[mask[max_index][0]],2)+CFD1Fit[mask[max_index][1]][4]*std::pow(PmaxFit[mask[max_index][1]],2)+CFD1Fit[mask[max_index][2]][4]*std::pow(PmaxFit[mask[max_index][2]],2)+CFD1Fit[mask[max_index][3]][4]*std::pow(PmaxFit[mask[max_index][3]],2))/( std::pow(PmaxFit[mask[max_index][0]],2)+std::pow(PmaxFit[mask[max_index][1]],2)+std::pow(PmaxFit[mask[max_index][2]],2)+std::pow(PmaxFit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2] + (CFD1Fit[16][4]-CFD1Fit[17][4]) ;
 
-          dt =  ( (CFD1Fit[mask[max_index][0]][4]-delays[mask[max_index][0]])*std::pow(PmaxFit[mask[max_index][0]],2)+(CFD1Fit[mask[max_index][1]][4]-delays[mask[max_index][1]])*std::pow(PmaxFit[mask[max_index][1]],2)+(CFD1Fit[mask[max_index][2]][4]-delays[mask[max_index][2]])*std::pow(PmaxFit[mask[max_index][2]],2)+(CFD1Fit[mask[max_index][3]][4]-delays[mask[max_index][3]])*std::pow(PmaxFit[mask[max_index][3]],2) )/( std::pow(PmaxFit[mask[max_index][0]],2)+std::pow(PmaxFit[mask[max_index][1]],2)+std::pow(PmaxFit[mask[max_index][2]],2)+std::pow(PmaxFit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2] + (CFD1Fit[16][4]-CFD1Fit[17][4]) ;
+          //dt =  ( (CFD1Fit[mask[max_index][0]][4]-delays[mask[max_index][0]])*std::pow(PmaxFit[mask[max_index][0]],2)+(CFD1Fit[mask[max_index][1]][4]-delays[mask[max_index][1]])*std::pow(PmaxFit[mask[max_index][1]],2)+(CFD1Fit[mask[max_index][2]][4]-delays[mask[max_index][2]])*std::pow(PmaxFit[mask[max_index][2]],2)+(CFD1Fit[mask[max_index][3]][4]-delays[mask[max_index][3]])*std::pow(PmaxFit[mask[max_index][3]],2) )/( std::pow(PmaxFit[mask[max_index][0]],2)+std::pow(PmaxFit[mask[max_index][1]],2)+std::pow(PmaxFit[mask[max_index][2]],2)+std::pow(PmaxFit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2] + (CFD1Fit[16][4]-CFD1Fit[17][4]) ;
+          dt =  CFD1Fit[ch_mcp][2] - (CFD1Fit[16][4]-CFD1Fit[17][4]) ;
 
         }
 
@@ -770,13 +773,15 @@ void analisi_csv( ){
               
             //dt =  (CFD1Fit[mask[max_index][0]][4]*std::pow(PmaxFit[mask[max_index][0]],2)+CFD1Fit[mask[max_index][1]][4]*std::pow(PmaxFit[mask[max_index][1]],2)+CFD1Fit[mask[max_index][2]][4]*std::pow(PmaxFit[mask[max_index][2]],2)+CFD1Fit[mask[max_index][3]][4]*std::pow(PmaxFit[mask[max_index][3]],2))/( std::pow(PmaxFit[mask[max_index][0]],2)+std::pow(PmaxFit[mask[max_index][1]],2)+std::pow(PmaxFit[mask[max_index][2]],2)+std::pow(PmaxFit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2];
 
-            dt =  ( (CFD1Fit[mask[max_index][0]][4]-delays[mask[max_index][0]])*std::pow(PmaxFit[mask[max_index][0]],2)+(CFD1Fit[mask[max_index][1]][4]-delays[mask[max_index][1]])*std::pow(PmaxFit[mask[max_index][1]],2)+(CFD1Fit[mask[max_index][2]][4]-delays[mask[max_index][2]])*std::pow(PmaxFit[mask[max_index][2]],2)+(CFD1Fit[mask[max_index][3]][4]-delays[mask[max_index][3]])*std::pow(PmaxFit[mask[max_index][3]],2) )/( std::pow(PmaxFit[mask[max_index][0]],2)+std::pow(PmaxFit[mask[max_index][1]],2)+std::pow(PmaxFit[mask[max_index][2]],2)+std::pow(PmaxFit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2];
+            //dt =  ( (CFD1Fit[mask[max_index][0]][4]-delays[mask[max_index][0]])*std::pow(PmaxFit[mask[max_index][0]],2)+(CFD1Fit[mask[max_index][1]][4]-delays[mask[max_index][1]])*std::pow(PmaxFit[mask[max_index][1]],2)+(CFD1Fit[mask[max_index][2]][4]-delays[mask[max_index][2]])*std::pow(PmaxFit[mask[max_index][2]],2)+(CFD1Fit[mask[max_index][3]][4]-delays[mask[max_index][3]])*std::pow(PmaxFit[mask[max_index][3]],2) )/( std::pow(PmaxFit[mask[max_index][0]],2)+std::pow(PmaxFit[mask[max_index][1]],2)+std::pow(PmaxFit[mask[max_index][2]],2)+std::pow(PmaxFit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2];
+            dt =  CFD1Fit[ch_mcp][2];
 
         }else{
 
           //dt =  (CFD1Fit[mask[max_index][0]][4]*std::pow(PmaxFit[mask[max_index][0]],2)+CFD1Fit[mask[max_index][1]][4]*std::pow(PmaxFit[mask[max_index][1]],2)+CFD1Fit[mask[max_index][2]][4]*std::pow(PmaxFit[mask[max_index][2]],2)+CFD1Fit[mask[max_index][3]][4]*std::pow(PmaxFit[mask[max_index][3]],2))/( std::pow(PmaxFit[mask[max_index][0]],2)+std::pow(PmaxFit[mask[max_index][1]],2)+std::pow(PmaxFit[mask[max_index][2]],2)+std::pow(PmaxFit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2] - (CFD1Fit[16][4]-CFD1Fit[17][4]) ;
 
-          dt =  ( (CFD1Fit[mask[max_index][0]][4]-delays[mask[max_index][0]])*std::pow(PmaxFit[mask[max_index][0]],2)+(CFD1Fit[mask[max_index][1]][4]-delays[mask[max_index][1]])*std::pow(PmaxFit[mask[max_index][1]],2)+(CFD1Fit[mask[max_index][2]][4]-delays[mask[max_index][2]])*std::pow(PmaxFit[mask[max_index][2]],2)+(CFD1Fit[mask[max_index][3]][4]-delays[mask[max_index][3]])*std::pow(PmaxFit[mask[max_index][3]],2) )/( std::pow(PmaxFit[mask[max_index][0]],2)+std::pow(PmaxFit[mask[max_index][1]],2)+std::pow(PmaxFit[mask[max_index][2]],2)+std::pow(PmaxFit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2] - (CFD1Fit[16][4]-CFD1Fit[17][4]) ;
+          //dt =  ( (CFD1Fit[mask[max_index][0]][4]-delays[mask[max_index][0]])*std::pow(PmaxFit[mask[max_index][0]],2)+(CFD1Fit[mask[max_index][1]][4]-delays[mask[max_index][1]])*std::pow(PmaxFit[mask[max_index][1]],2)+(CFD1Fit[mask[max_index][2]][4]-delays[mask[max_index][2]])*std::pow(PmaxFit[mask[max_index][2]],2)+(CFD1Fit[mask[max_index][3]][4]-delays[mask[max_index][3]])*std::pow(PmaxFit[mask[max_index][3]],2) )/( std::pow(PmaxFit[mask[max_index][0]],2)+std::pow(PmaxFit[mask[max_index][1]],2)+std::pow(PmaxFit[mask[max_index][2]],2)+std::pow(PmaxFit[mask[max_index][3]],2) ) - CFD1Fit[ch_mcp][2] - (CFD1Fit[16][4]-CFD1Fit[17][4]) ;
+          dt =  CFD1Fit[ch_mcp][2] - (CFD1Fit[16][4]-CFD1Fit[17][4]) ;
 
         }
 

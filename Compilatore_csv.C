@@ -27,8 +27,10 @@ void Compilatore_csv(){
   gSystem->CompileMacro("src/Chameleon.cpp","kg");
   gSystem->CompileMacro("src/ConfigFile.cpp","kg");
   gSystem->CompileMacro("src/Analyzer.cpp","kg");
-  gSystem->CompileMacro("analisi_csv_300um.C","kg");
+  //gSystem->CompileMacro("analisi_csv_300um.C","kg");
+  gSystem->CompileMacro("analisi_csv_300um_time.C","kg");
   //gSystem->CompileMacro("analisi_csv_500um.C","kg");
+  //gSystem->CompileMacro("analisi_csv_500um_TB9.C","kg");
 
   gROOT->ProcessLine("analisi_csv()");
 

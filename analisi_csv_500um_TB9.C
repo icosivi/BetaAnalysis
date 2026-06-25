@@ -41,26 +41,23 @@
 
 void analisi_csv( ){
 
-  float pixel_pos[8][2] = {
-    {0.250f, 0.250f},
-    {0.750f, 0.250f},
+  int total_number_pixels = 5;
+  float pmax_pixel_max = 20.; // pmax threshold on a pixel (sum of 4 electrodes)
+
+  float pixel_pos[5][2] = {
     {1.250f, 0.250f},
-    {0.250f, 0.750f},
-    {0.750f, 0.750f},
     {1.250f, 0.750f},
     {0.250f, 1.250f},
-    {0.750f, 1.250f}
+    {0.750f, 1.250f},
+    {1.250f, 1.250f}
   };
 
-  int mask[8][4] = {
-    {4, 6, 7, 5},
-    {3, 4, 5, 2},
-    {1, 3, 2, 0},
-    {5, 7, 8, 10},
-    {2, 5, 10, 13},
-    {0, 2, 13, 15},
-    {10, 8, 9, 11},
-    {13, 10, 11, 12}
+  int mask[5][4] = {
+    {6, 4, 5, 7},
+    {7, 5, 10, 8},
+    {13, 15, 14, 12},
+    {10, 13, 12, 11},
+    {8, 10, 11, 9}
   };
 
   double delays[16] = {}; //DA CALCOLARE 
@@ -69,18 +66,20 @@ void analisi_csv( ){
   //double main_vec[4*number_samplings];
 
   ofstream f;
-   //f.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run608_ReReco_time_FASE.csv");
-   //f.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run605_ReReco_time_FASE.csv");
-   //f.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run602_ReReco_time_FASE.csv");
-   f.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB8_DCRSD/csv/samples_in_fase/run607_ReReco_time_FASE_new.csv");
-   //f.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB8_DCRSD/csv/samples_in_fase/run609_ReReco_time_FASE.csv");
+  //f.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB9_DCRSD/csv/samples_in_fase/run309_time_new.csv");
+  //f.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB9_DCRSD/csv/samples_in_fase/run306_time_new.csv");
+  //f.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB9_DCRSD/csv/samples_in_fase/run303_time_new.csv");
+  //f.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB9_DCRSD/csv/samples_in_fase/run302_time_new.csv");
+  //f.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB9_DCRSD/csv/samples_in_fase/run305_time_new.csv");
+  f.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB9_DCRSD/csv/samples_in_fase/run308_time_new.csv");
 
-   ofstream f_bis;
-   //f_bis.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run608_ReReco_time_CHECK.csv");
-   //f_bis.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run605_ReReco_time_CHECK.csv");
-   //f_bis.open("/Users/icosivi/Desktop/DESY_TB8_DCRSD/csv/samples_in_fase/run602_ReReco_time_CHECK.csv");
-   f_bis.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB8_DCRSD/csv/samples_in_fase/run607_ReReco_time_CHECK_new.csv");
-   //f_bis.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB8_DCRSD/csv/samples_in_fase/run609_ReReco_time_CHECK.csv");
+  ofstream f_bis;
+  //f_bis.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB9_DCRSD/csv/samples_in_fase/run309_time_CHECK_new.csv");
+  //f_bis.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB9_DCRSD/csv/samples_in_fase/run306_time_CHECK_new.csv");
+  //f_bis.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB9_DCRSD/csv/samples_in_fase/run303_time_CHECK_new.csv");
+  //f_bis.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB9_DCRSD/csv/samples_in_fase/run302_time_CHECK_new.csv");
+  //f_bis.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB9_DCRSD/csv/samples_in_fase/run305_time_CHECK_new.csv");
+  f_bis.open("/home/tb_pc/Desktop/Federico/ML/DESY_TB9_DCRSD/csv/samples_in_fase/run308_time_CHECK_new.csv");
 
 
   f << "x,y,t"; // Initial x and y
@@ -89,7 +88,7 @@ void analisi_csv( ){
     f << ",w" << i; // Add "w" followed by the index
   }
 
-  f << ", max_ch, max_pixel"; 
+  f << ",max_ch,max_pixel,pmax_pixel0,pmax_pixel1,pmax_pixel2,pmax_pixel3,pmax_pixel4"; 
   f << "\n";
 
 
@@ -99,7 +98,7 @@ void analisi_csv( ){
     f_bis << ",w" << i; // Add "w" followed by the index
   }
 
-  f_bis << ", max_ch, max_pixel"; 
+  f_bis << ",max_ch,max_pixel,pmax_pixel0,pmax_pixel1,pmax_pixel2,pmax_pixel3,pmax_pixel4"; 
   f_bis << "\n";
 
   //ROOT::EnableImplicitMT(6);
@@ -260,7 +259,8 @@ void analisi_csv( ){
       
   int j_counter = 0;
   
-  std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
+  //std::vector<TTreeReaderArray<Double32_t>> voltageReader1 ;
+  std::vector<TTreeReaderArray<float>> voltageReader1 ;
   
   TTreeReaderValue<float> x1Reader(myReader, "xtrk1" );
   TTreeReaderValue<float> y1Reader(myReader, "ytrk1" );
@@ -270,12 +270,15 @@ void analisi_csv( ){
       
   for(int ch_counter=0; ch_counter<active_channels; ch_counter++ ){
   
-    voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, Form("w%i",ch_counter) ));
+    //voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, Form("w%i",ch_counter) ));
+    voltageReader1.push_back(TTreeReaderArray<float>(myReader, Form("w%i",ch_counter) ));
   
   }
   
-  voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg0" )); 
-  voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
+  //voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg0" )); 
+  //voltageReader1.push_back(TTreeReaderArray<Double32_t>(myReader, "trg1" ));
+  voltageReader1.push_back(TTreeReaderArray<float>(myReader, "trg0" )); 
+  voltageReader1.push_back(TTreeReaderArray<float>(myReader, "trg1" ));
 
   std::vector<float> w1_check;
   std::vector<float> t1_check;
@@ -312,7 +315,7 @@ void analisi_csv( ){
   width_inner.reserve(7);
   
   
-  while(myReader.Next() && j_counter<1000000 ){ //  && j_counter<300000
+  while(myReader.Next() ){ // && j_counter<3000  
 
     w1_check.clear();
     t1_check.clear();
@@ -658,8 +661,8 @@ void analisi_csv( ){
     event=j_counter;
 
 
-    double pmax_pixels[8] = {0,0,0,0,0,0,0,0};
-    for( int i=0; i<8;i++) pmax_pixels[i] = PmaxFit.at(mask[i][0]) + PmaxFit.at(mask[i][1]) + PmaxFit.at(mask[i][2]) + PmaxFit.at(mask[i][3]);
+    double pmax_pixels[5] = {0,0,0,0,0};
+    for( int i=0; i<total_number_pixels;i++) pmax_pixels[i] = PmaxFit.at(mask[i][0]) + PmaxFit.at(mask[i][1]) + PmaxFit.at(mask[i][2]) + PmaxFit.at(mask[i][3]);
   
   
     int size = sizeof(pmax_pixels) / sizeof(pmax_pixels[0]); // Calculate the size of the static array
@@ -674,7 +677,7 @@ void analisi_csv( ){
     }
   
   
-    double p_all[15] = {PmaxFit.at(0),PmaxFit.at(1),PmaxFit.at(2),PmaxFit.at(3),PmaxFit.at(4),PmaxFit.at(5),PmaxFit.at(6),PmaxFit.at(7),PmaxFit.at(9),PmaxFit.at(10),PmaxFit.at(11),PmaxFit.at(12),PmaxFit.at(13),PmaxFit.at(14),PmaxFit.at(15)};
+    double p_all[15] = {PmaxFit.at(0),PmaxFit.at(1),PmaxFit.at(3),PmaxFit.at(4),PmaxFit.at(5),PmaxFit.at(6),PmaxFit.at(7),PmaxFit.at(8),PmaxFit.at(9),PmaxFit.at(10),PmaxFit.at(11),PmaxFit.at(12),PmaxFit.at(13),PmaxFit.at(14),PmaxFit.at(15)};
     int size_all = sizeof(p_all) / sizeof(p_all[0]); // Calculate the size of the static array
     float max_value_all = p_all[0]; // Initialize with the first element
     int max_index_all = 0;
@@ -739,8 +742,8 @@ void analisi_csv( ){
 
     //cout<<max_index<<"  "<<max_index_all<<endl;
 
-    //if(max_value>25 && max_index!=4 && max_index!=6 && PmaxFit.at(max_index_all)!=Pmax1.at(max_index_all) ){  
-    if(max_value>25 && max_index!=4 && max_index!=6 && gaus_param_array[mask[max_index][0]][0]!=-1000 && gaus_param_array[mask[max_index][1]][0]!=-1000 && gaus_param_array[mask[max_index][2]][0]!=-1000 && gaus_param_array[mask[max_index][3]][0]!=-1000 ){  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // && max_index!=0 && max_index!=1 && max_index!=3 && max_index!=4
+    if(max_value>pmax_pixel_max && gaus_param_array[mask[max_index][0]][0]!=-1000 && gaus_param_array[mask[max_index][1]][0]!=-1000 && gaus_param_array[mask[max_index][2]][0]!=-1000 && gaus_param_array[mask[max_index][3]][0]!=-1000 ){  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       if(ch_mcp<8){
 
@@ -788,8 +791,8 @@ void analisi_csv( ){
       for (int i = 0; i < number_samplings*4; ++i) {
            f << "," << main_vec[i]; 
       }
-
-      f << max_index_all << "," << max_index;
+      
+      f << max_index_all << "," << max_index << "," << pmax_pixels[0] << "," << pmax_pixels[1] << "," << pmax_pixels[2] << "," << pmax_pixels[3] << "," << pmax_pixels[4];
       f << "\n";
 
 
@@ -797,7 +800,7 @@ void analisi_csv( ){
            f_bis << "," << main_vec_bis[i]; 
       }
 
-      f_bis << max_index_all << "," << max_index;
+      f_bis << max_index_all << "," << max_index << "," << pmax_pixels[0] << "," << pmax_pixels[1] << "," << pmax_pixels[2] << "," << pmax_pixels[3] << "," << pmax_pixels[4];
       f_bis << "\n";
 
     } 

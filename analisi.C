@@ -248,7 +248,7 @@ void analisi( ){
   width_inner.reserve(7);
   
   
-  while(myReader.Next() ){ //  && j_counter<10000
+  while(myReader.Next() && j_counter<300000 ){ //  
 
     w1_check.clear();
     t1_check.clear();
