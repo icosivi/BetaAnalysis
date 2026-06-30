@@ -45,7 +45,8 @@ class Analyzer : public TObject
   Analyzer(std::vector<float> voltage, std::vector<float> time);
   Analyzer();
   Analyzer(const Analyzer &a);
-  
+  Analyzer& operator=(const Analyzer&) = default;
+
   virtual ~Analyzer();
 
   

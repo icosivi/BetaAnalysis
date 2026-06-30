@@ -1,6 +1,0 @@
-/media/tb_pc/320935fb-07d3-4c77-8da1-ced50467a779/DC_RSD/TB8/raw/with_tracks/W15_A1_DC22_220V_Run607_tracks_with_DUT.root
-/media/tb_pc/320935fb-07d3-4c77-8da1-ced50467a779/DC_RSD/TB8/raw/with_tracks/W15_A1_DC22_280V_Run603_tracksDUT.root
-/media/tb_pc/9adef8c7-73d8-4f38-9709-6a1b0ca4f5bf/TB8/raw/with_tracks/W15_A1_DC22_240V_Run605_tracks_wDUT.root
-/media/tb_pc/9adef8c7-73d8-4f38-9709-6a1b0ca4f5bf/TB8/raw/with_tracks/W15_A1_DC22_240V_Run606_tracks_withDUT.root
-/media/tb_pc/9adef8c7-73d8-4f38-9709-6a1b0ca4f5bf/TB8/raw/with_tracks/W15_A1_DC22_290V_Run608_tracks_withDUT.root
-/media/tb_pc/9adef8c7-73d8-4f38-9709-6a1b0ca4f5bf/TB8/raw/with_tracks/W15_A1_DC22_260V_Run602_tracks_withDUT.root

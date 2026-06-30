@@ -29,7 +29,6 @@ void Compilatore(){
   gSystem->CompileMacro("src/Analyzer.cpp","kg");
   gSystem->CompileMacro("analisi.C","kg");
 
-  gROOT->ProcessLine("TrkMerge_wfm()");
   gROOT->ProcessLine("analisi()");
 
 }
