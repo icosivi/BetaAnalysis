@@ -28,6 +28,10 @@
 #include <TStyle.h>
 #include <TImage.h>
 #include <TCanvas.h>
+#include "Fit/Fitter.h"
+#include "Fit/BinData.h"
+#include "HFitInterface.h"
+#include "Math/WrappedMultiTF1.h"
 
 
 
@@ -145,6 +149,32 @@ std::pair<float, unsigned int> Analyzer::Find_Signal_Maximum(bool confineSearchR
 }
 
 
+void Analyzer::ThreadSafeGausFit(TH1D &histo, TF1 &f){
+
+  // Equivalent to histo.Fit("f","RN0Q") but bypasses ROOT's global
+  // TVirtualFitter singleton, so it is safe to call from multiple
+  // threads concurrently (e.g. inside a ROOT::TTreeProcessorMT job).
+
+  ROOT::Fit::BinData data;
+  ROOT::Fit::FillData(data, &histo, &f); // restricts to f's range, same as option "R"
+
+  ROOT::Math::WrappedMultiTF1 wf(f, f.GetNdim());
+
+  ROOT::Fit::Fitter fitter;
+  fitter.Config().SetMinimizer("Minuit2","Migrad");
+  fitter.Config().MinimizerOptions().SetPrintLevel(0); // same as option "Q"
+  fitter.SetFunction(wf, false);
+
+  fitter.Fit(data);
+
+  const ROOT::Fit::FitResult &result = fitter.Result();
+  for(int i=0; i<f.GetNpar(); i++) f.SetParameter(i, result.Parameter(i));
+  f.SetChisquare(result.Chi2());
+  f.SetNDF(result.Ndf());
+
+}
+
+
 std::array<float, 3> Analyzer::Pmax_with_GausFit(const std::pair<float, unsigned int> Pmax, unsigned int maxIndex, int samples_fit){
 
   std::array<float, 3> result;
@@ -157,14 +187,15 @@ std::array<float, 3> Analyzer::Pmax_with_GausFit(const std::pair<float, unsigned
     float time_min = this->ptime.at(pmaxIndex-( (samples_fit-1)/2 ));
     float time_max = this->ptime.at(pmaxIndex+( (samples_fit-1)/2 ));
     TH1D pmax_histo("pmax_histo","pmax_histo",samples_fit,time_min,time_max);
+    pmax_histo.SetDirectory(nullptr);
 
     bool good_fit = true;
     int points_above_zero_counter = 0;
 
     for(int i=0; i<samples_fit; i++){
 
-      if( Pmax.first*this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i)>0 ){ 
-        
+      if( Pmax.first*this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i)>0 ){
+
         pmax_histo.Fill( this->ptime.at(pmaxIndex-( (samples_fit-1)/2 )+i) , this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i) );
         points_above_zero_counter++ ;
 
@@ -193,7 +224,7 @@ std::array<float, 3> Analyzer::Pmax_with_GausFit(const std::pair<float, unsigned
     f.SetParameter(0,Pmax.first);
     f.SetParameter(1,this->ptime.at(Pmax.second));  //pmaxIndex*time_bin
     f.SetParameter(2,samples_fit*time_bin);
-    pmax_histo.Fit("f","RN0Q");
+    ThreadSafeGausFit(pmax_histo, f);
     pmax = f.GetParameter(0);
     tmax = f.GetParameter(1);
     chi2 = f.GetChisquare();
@@ -237,14 +268,15 @@ std::array<float, 3> Analyzer::Pmax_for_samples(const std::pair<float, unsigned 
     float time_min = this->ptime.at(pmaxIndex-( (samples_fit-1)/2 ));
     float time_max = this->ptime.at(pmaxIndex+( (samples_fit-1)/2 ));
     TH1D pmax_histo("pmax_histo","pmax_histo",samples_fit,time_min,time_max);
+    pmax_histo.SetDirectory(nullptr);
 
     bool good_fit = true;
     int points_above_zero_counter = 0;
 
     for(int i=0; i<samples_fit; i++){
 
-      if( Pmax.first*this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i)>0 ){ 
-        
+      if( Pmax.first*this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i)>0 ){
+
         pmax_histo.Fill( this->ptime.at(pmaxIndex-( (samples_fit-1)/2 )+i) , this->pvoltage.at(pmaxIndex-( (samples_fit-1)/2 )+i) );
         points_above_zero_counter++ ;
 
@@ -273,7 +305,7 @@ std::array<float, 3> Analyzer::Pmax_for_samples(const std::pair<float, unsigned 
     f.SetParameter(0,Pmax.first);
     f.SetParameter(1,this->ptime.at(Pmax.second));  //pmaxIndex*time_bin
     f.SetParameter(2,samples_fit*time_bin);
-    pmax_histo.Fit("f","RN0Q");
+    ThreadSafeGausFit(pmax_histo, f);
     pmax = f.GetParameter(0);
     tmax = f.GetParameter(1);
     sigma = f.GetParameter(2);
@@ -353,6 +385,7 @@ std::array<float, 3> Analyzer::Negative_Pmax_with_GausFit(const std::pair<float,
     float time_min = this->ptime.at(pmaxIndex-3);
     float time_max = this->ptime.at(pmaxIndex+3);
     TH1D pmax_histo("pmax_histo","pmax_histo",samples_fit,time_min,time_max);
+    pmax_histo.SetDirectory(nullptr);
 
     bool good_fit = true;
 
@@ -374,7 +407,7 @@ std::array<float, 3> Analyzer::Negative_Pmax_with_GausFit(const std::pair<float,
     f.SetParameter(0,-NegPmax.first);
     f.SetParameter(1,this->ptime.at(NegPmax.second));  //pmaxIndex*time_bin
     f.SetParameter(2,samples_fit*time_bin);
-    pmax_histo.Fit("f","RN0Q");
+    ThreadSafeGausFit(pmax_histo, f);
     pmax = -f.GetParameter(0);
     tmax = f.GetParameter(1);
     chi2 = f.GetChisquare();

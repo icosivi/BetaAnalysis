@@ -168,6 +168,11 @@ float Find_Time_Over_Threshold(const float thresholdLevel, const std::pair<float
   
  private:
 
+ // Thread-safe replacement for TH1::Fit("f","RN0Q"), which relies on ROOT's
+ // global TVirtualFitter singleton and is not safe to call concurrently
+ // (e.g. from ROOT::TTreeProcessorMT worker threads).
+ static void ThreadSafeGausFit(TH1D &histo, TF1 &f);
+
  std::vector<float> pvoltage;
  std::vector<float> ptime;
   
