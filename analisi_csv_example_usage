@@ -1,0 +1,16 @@
+root -l -q 'analisi_csv.C(x_min, x_max, y_min, y_max)'
+Esempio concreto (finestra spaziale 3×3 mm attorno al centro):
+
+
+root -l -q 'analisi_csv.C(-3.0, 3.0, -3.0, 3.0)'
+Output: waveforms.csv nella directory corrente.
+
+Per specificare un nome file diverso:
+
+
+root -l -q 'analisi_csv.C(-3.0, 3.0, -3.0, 3.0, "run5_centro.csv")'
+Deve essere eseguito dalla directory BetaAnalysis/ perché legge beta_config.ini da lì:
+
+
+cd /home/tb_pc/Desktop/Federico/to_git/BetaAnalysis
+root -l -q 'analisi_csv.C(-5.0, 5.0, -5.0, 5.0)'
