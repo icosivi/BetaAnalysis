@@ -1,0 +1,7 @@
+cd /home/tb_pc/Desktop/Federico/to_git/BetaAnalysis
+bash compile_splitter.sh
+
+./rawfile_splitter input.raw output_base cut1 [cut2 ...] [--root input.root]
+
+Esempio concreto:
+./rawfile_splitter /media/SSD_4TB/TB11/telescope_raw/run000100_260701233608.raw /media/SSD_4TB/TB11/split/run100 100037 200500 300001 --root /media/SSD_4TB/TB11/raw/Run7_DCsquare_500um_new_board1_tracker7_220V_20C_HG.root
